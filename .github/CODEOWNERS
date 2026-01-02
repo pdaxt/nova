@@ -1,0 +1,11 @@
+# Nova Code Owners
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# BDFL owns everything - all PRs require BDFL review
+* @pran
+
+# Specific areas (still requires BDFL approval, but helps with notifications)
+/bootstrap/       @pran
+/spec/            @pran
+/examples/        @pran
+/.github/         @pran

@@ -1,0 +1,33 @@
+# Build artifacts
+/target/
+/bootstrap/target/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rust
+Cargo.lock
+**/*.rs.bk
+
+# Nova compilation output
+*.wasm
+*.wat
+
+# Test artifacts
+*.snap.new
+
+# Coverage
+*.profraw
+*.profdata
+coverage/
+
+# Documentation build
+/docs/build/

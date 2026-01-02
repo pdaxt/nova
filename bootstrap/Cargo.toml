@@ -1,0 +1,28 @@
+[package]
+name = "nova"
+version = "0.0.1"
+edition = "2021"
+authors = ["Nova Contributors"]
+description = "Bootstrap compiler for the Nova programming language"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/nova-lang/nova"
+keywords = ["compiler", "programming-language", "verified"]
+categories = ["compilers", "development-tools"]
+
+[dependencies]
+# Minimal dependencies - keep bootstrap small
+thiserror = "1.0"      # Error handling
+ariadne = "0.4"        # Beautiful error reporting
+logos = "0.14"         # Fast lexer generator
+
+[dev-dependencies]
+insta = "1.34"         # Snapshot testing
+pretty_assertions = "1.4"
+
+[[bin]]
+name = "nova"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
