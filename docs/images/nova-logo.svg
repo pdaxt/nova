@@ -1,45 +1,35 @@
-<svg width="500" height="150" viewBox="0 0 500 150" xmlns="http://www.w3.org/2000/svg">
+<svg width="700" height="200" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
-  <rect width="500" height="150" fill="#0c1222"/>
+  <rect width="700" height="200" fill="#0c1222"/>
 
   <!-- Star Symbol -->
-  <g transform="translate(55, 62)">
-    <line x1="0" y1="-28" x2="0" y2="28" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round"/>
-    <line x1="-28" y1="0" x2="28" y2="0" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round"/>
-    <line x1="-20" y1="-20" x2="20" y2="20" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round"/>
-    <line x1="20" y1="-20" x2="-20" y2="20" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="0" cy="0" r="6" fill="#0ea5e9"/>
-    <circle cx="0" cy="0" r="3" fill="#f8fafc"/>
+  <g transform="translate(80, 80)">
+    <line x1="0" y1="-40" x2="0" y2="40" stroke="#0ea5e9" stroke-width="6" stroke-linecap="round"/>
+    <line x1="-40" y1="0" x2="40" y2="0" stroke="#0ea5e9" stroke-width="6" stroke-linecap="round"/>
+    <line x1="-28" y1="-28" x2="28" y2="28" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round"/>
+    <line x1="28" y1="-28" x2="-28" y2="28" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="10" fill="#0ea5e9"/>
+    <circle cx="0" cy="0" r="5" fill="#f8fafc"/>
   </g>
 
   <!-- N -->
-  <rect x="110" y="35" width="8" height="55" fill="#f8fafc"/>
-  <rect x="150" y="35" width="8" height="55" fill="#f8fafc"/>
-  <polygon points="114,35 122,35 154,85 154,90 146,90 114,40" fill="#f8fafc"/>
+  <rect x="160" y="40" width="14" height="85" fill="#f8fafc"/>
+  <rect x="216" y="40" width="14" height="85" fill="#f8fafc"/>
+  <polygon points="166,45 180,45 224,115 224,125 210,125 166,55" fill="#f8fafc"/>
 
-  <!-- O - as filled ring using path with cutout -->
-  <!-- Outer: 30x34 ellipse, Inner: 18x22 ellipse, centered at 195,62 -->
-  <path d="M 195 28
-           Q 230 28 230 62
-           Q 230 96 195 96
-           Q 160 96 160 62
-           Q 160 28 195 28
-           Z
-           M 195 40
-           Q 175 40 175 62
-           Q 175 84 195 84
-           Q 215 84 215 62
-           Q 215 40 195 40
-           Z"
-        fill="#f8fafc" fill-rule="evenodd"/>
+  <!-- O -->
+  <rect x="250" y="40" width="14" height="85" fill="#f8fafc"/>
+  <rect x="306" y="40" width="14" height="85" fill="#f8fafc"/>
+  <rect x="250" y="40" width="70" height="14" fill="#f8fafc"/>
+  <rect x="250" y="111" width="70" height="14" fill="#f8fafc"/>
 
   <!-- V -->
-  <polygon points="242,35 250,35 265,85 280,35 288,35 270,92 260,92" fill="#f8fafc"/>
+  <polygon points="345,40 362,40 390,115 418,40 435,40 400,125 380,125" fill="#f8fafc"/>
 
   <!-- A -->
-  <polygon points="305,90 313,90 330,40 347,90 355,90 333,35 327,35" fill="#f8fafc"/>
-  <rect x="316" y="65" width="28" height="8" fill="#f8fafc"/>
+  <polygon points="460,125 478,125 505,45 532,125 550,125 515,40 495,40" fill="#f8fafc"/>
+  <rect x="478" y="82" width="54" height="13" fill="#0c1222"/>
 
   <!-- Tagline -->
-  <text x="230" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#64748b" letter-spacing="3">CODE THAT PROVES ITSELF</text>
+  <text x="350" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#64748b" letter-spacing="4">CODE THAT PROVES ITSELF</text>
 </svg>
