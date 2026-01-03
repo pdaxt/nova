@@ -2,7 +2,7 @@
 
 This document validates WHY the foundation has exactly 5 components, breaks each into atomic pieces, and provides step-by-step implementation instructions.
 
-![The Irreducible 5 - Nova Foundation Components](docs/images/foundation-overview.png)
+![The Irreducible 5 - Nova Foundation Components](docs/images/nova-foundation-overview.png)
 
 > **Related Documents:**
 > - [DECISIONS.md](DECISIONS.md) - Full architectural decision records with alternatives considered
@@ -18,7 +18,7 @@ This document validates WHY the foundation has exactly 5 components, breaks each
 
 ## Why Exactly 5? (Research-Backed Validation)
 
-![Why Exactly 5 Components - Decision Analysis](docs/images/why-5-components.png)
+![Why Exactly 5 Components - Decision Analysis](docs/images/nova-why-5-components.png)
 
 ### The Question
 Could we have 4? Could we need 6? What is the **minimal complete** foundation?
@@ -101,7 +101,7 @@ Could we have 4? Could we need 6? What is the **minimal complete** foundation?
 > - [ADR-002: Span Size (8 bytes)](DECISIONS.md#adr-002-span-size-8-bytes) - Why exactly 8 bytes, not 16 or 12
 > - [ADR-003: FileId Outside Span](DECISIONS.md#adr-003-fileid-outside-span) - Why FileId is not embedded in Span
 
-![Span Size Comparison - Why 8 Bytes](docs/images/span-size-comparison.png)
+![Span Size Comparison - Why 8 Bytes](docs/images/nova-span-comparison.png)
 
 ### What Is It?
 A span is a range of byte offsets in source code. It's the **atomic unit of location**.
@@ -475,7 +475,7 @@ mod tests {
 > - [ADR-013: Keyword Selection](DECISIONS.md#adr-013-keyword-selection) - Why these 30 keywords
 > - [ADR-014: Operator Precedence Table](DECISIONS.md#adr-014-operator-precedence-table) - Why this precedence order
 
-![Token Memory Layout - 12 Bytes](docs/images/token-structure.png)
+![Token Memory Layout - 12 Bytes](docs/images/nova-token-structure.png)
 
 ### What Is It?
 A token is the atomic unit of syntax. It's what the lexer produces and the parser consumes.
@@ -1409,7 +1409,7 @@ mod tests {
 > **Design Decisions:**
 > - [ADR-008: Error Codes System](DECISIONS.md#adr-008-error-codes-system) - Why EXXXX codes like Rust
 
-![Error Reporting Flow](docs/images/error-flow.png)
+![Error Reporting Flow](docs/images/nova-error-flow.png)
 
 ### What Is It?
 Error creates, stores, and displays diagnostics to users.

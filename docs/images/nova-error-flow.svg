@@ -1,0 +1,184 @@
+<svg width="900" height="650" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Brand Gradients -->
+    <linearGradient id="errorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#d97706"/>
+    </linearGradient>
+    <linearGradient id="spanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4"/>
+      <stop offset="100%" style="stop-color:#0891b2"/>
+    </linearGradient>
+    <linearGradient id="sourceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+
+    <!-- Shadow -->
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- Grid pattern -->
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" stroke-width="0.5" opacity="0.5"/>
+    </pattern>
+
+    <!-- Arrow marker -->
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <!-- Background: Deep Space -->
+  <rect width="900" height="650" fill="#0c1222"/>
+  <rect width="900" height="650" fill="url(#grid)"/>
+
+  <!-- Header -->
+  <g transform="translate(450, 45)">
+    <g transform="translate(-160, 0)">
+      <line x1="0" y1="-12" x2="0" y2="12" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-12" y1="0" x2="12" y2="0" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-8" y1="-8" x2="8" y2="8" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="8" y1="-8" x2="-8" y2="8" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="3" fill="#0ea5e9"/>
+    </g>
+    <text x="0" y="8" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="26" font-weight="700" fill="#f8fafc">
+      Error Reporting Flow
+    </text>
+    <text x="0" y="32" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#64748b">
+      How Nova produces clear, actionable diagnostics
+    </text>
+  </g>
+
+  <!-- Error struct breakdown -->
+  <g transform="translate(80, 100)">
+    <text x="0" y="0" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#f8fafc">Error Structure</text>
+
+    <g transform="translate(0, 25)" filter="url(#cardShadow)">
+      <rect width="740" height="180" rx="12" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+
+      <!-- Error components -->
+      <g transform="translate(30, 30)">
+        <!-- Severity -->
+        <rect width="140" height="55" rx="8" fill="#ef4444"/>
+        <text x="70" y="25" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#f8fafc">Severity</text>
+        <text x="70" y="43" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.8)">Error/Warning/Note</text>
+      </g>
+
+      <g transform="translate(190, 30)">
+        <!-- Code -->
+        <rect width="140" height="55" rx="8" fill="#a855f7"/>
+        <text x="70" y="25" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#f8fafc">Code</text>
+        <text x="70" y="43" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.8)">E0001 - E9999</text>
+      </g>
+
+      <g transform="translate(350, 30)">
+        <!-- Message -->
+        <rect width="140" height="55" rx="8" fill="#22c55e"/>
+        <text x="70" y="25" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#f8fafc">Message</text>
+        <text x="70" y="43" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.8)">Human-readable</text>
+      </g>
+
+      <g transform="translate(510, 30)">
+        <!-- Span -->
+        <rect width="140" height="55" rx="8" fill="url(#spanGrad)"/>
+        <text x="70" y="25" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#f8fafc">Span</text>
+        <text x="70" y="43" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.8)">Where in source</text>
+      </g>
+
+      <!-- Labels array -->
+      <g transform="translate(30, 100)">
+        <rect width="620" height="55" rx="8" fill="#334155"/>
+        <text x="20" y="25" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#f8fafc">Labels</text>
+        <text x="20" y="43" font-family="JetBrains Mono, monospace" font-size="10" fill="#94a3b8">Vec&lt;(Span, String)&gt; — Additional context: suggestions, related code</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Flow diagram -->
+  <g transform="translate(80, 330)">
+    <text x="0" y="0" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#f8fafc">Error Creation → Rendering Flow</text>
+
+    <!-- Step 1: Error occurs -->
+    <g transform="translate(0, 35)" filter="url(#cardShadow)">
+      <rect width="160" height="70" rx="10" fill="url(#errorGrad)"/>
+      <text x="80" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#f8fafc">1. Error Created</text>
+      <text x="80" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.8)">in Lexer/Parser</text>
+    </g>
+
+    <line x1="165" y1="70" x2="200" y2="70" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <!-- Step 2: Span lookup -->
+    <g transform="translate(210, 35)" filter="url(#cardShadow)">
+      <rect width="160" height="70" rx="10" fill="url(#spanGrad)"/>
+      <text x="80" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#f8fafc">2. Span → Location</text>
+      <text x="80" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.8)">line:col lookup</text>
+    </g>
+
+    <line x1="375" y1="70" x2="410" y2="70" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <!-- Step 3: Source fetch -->
+    <g transform="translate(420, 35)" filter="url(#cardShadow)">
+      <rect width="160" height="70" rx="10" fill="url(#sourceGrad)"/>
+      <text x="80" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#f8fafc">3. Source Line</text>
+      <text x="80" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.8)">fetch context</text>
+    </g>
+
+    <line x1="585" y1="70" x2="620" y2="70" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <!-- Step 4: Render -->
+    <g transform="translate(630, 35)" filter="url(#cardShadow)">
+      <rect width="160" height="70" rx="10" fill="#10b981"/>
+      <text x="80" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#f8fafc">4. Render</text>
+      <text x="80" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.8)">formatted output</text>
+    </g>
+  </g>
+
+  <!-- Example output -->
+  <g transform="translate(80, 460)">
+    <text x="0" y="0" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#f8fafc">Example Output</text>
+
+    <g transform="translate(0, 20)">
+      <rect width="740" height="160" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1" filter="url(#cardShadow)"/>
+
+      <!-- Error header -->
+      <text x="20" y="35" font-family="JetBrains Mono, monospace" font-size="12">
+        <tspan fill="#ef4444" font-weight="700">error[E0308]</tspan>
+        <tspan fill="#f8fafc">: mismatched types</tspan>
+      </text>
+
+      <!-- File location -->
+      <text x="20" y="58" font-family="JetBrains Mono, monospace" font-size="11">
+        <tspan fill="#3b82f6">  --&gt;</tspan>
+        <tspan fill="#94a3b8"> src/main.nova:15:9</tspan>
+      </text>
+
+      <!-- Line number gutter -->
+      <text x="20" y="80" font-family="JetBrains Mono, monospace" font-size="11" fill="#3b82f6">   |</text>
+      <text x="20" y="98" font-family="JetBrains Mono, monospace" font-size="11">
+        <tspan fill="#3b82f6">15 |</tspan>
+        <tspan fill="#f8fafc">     let x: i32 = </tspan>
+        <tspan fill="#fbbf24">"hello"</tspan>
+        <tspan fill="#f8fafc">;</tspan>
+      </text>
+      <text x="20" y="116" font-family="JetBrains Mono, monospace" font-size="11" fill="#3b82f6">   |</text>
+      <text x="20" y="134" font-family="JetBrains Mono, monospace" font-size="11">
+        <tspan fill="#3b82f6">   |</tspan>
+        <tspan fill="#ef4444">              ^^^^^^^ expected `i32`, found `str`</tspan>
+      </text>
+
+      <!-- Color legend -->
+      <g transform="translate(550, 30)">
+        <rect width="170" height="110" rx="8" fill="#1e293b"/>
+        <text x="15" y="25" font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#64748b">COLORS</text>
+        <circle cx="25" cy="45" r="5" fill="#ef4444"/>
+        <text x="40" y="49" font-family="Inter, sans-serif" font-size="10" fill="#94a3b8">Error marker</text>
+        <circle cx="25" cy="65" r="5" fill="#3b82f6"/>
+        <text x="40" y="69" font-family="Inter, sans-serif" font-size="10" fill="#94a3b8">Location info</text>
+        <circle cx="25" cy="85" r="5" fill="#fbbf24"/>
+        <text x="40" y="89" font-family="Inter, sans-serif" font-size="10" fill="#94a3b8">Problematic code</text>
+      </g>
+    </g>
+  </g>
+</svg>

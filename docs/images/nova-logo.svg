@@ -1,0 +1,45 @@
+<svg width="400" height="120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Nova Blue Gradient -->
+    <linearGradient id="novaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9"/>
+      <stop offset="100%" style="stop-color:#0284c7"/>
+    </linearGradient>
+
+    <!-- Star glow -->
+    <filter id="starGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background (transparent for logo use) -->
+
+  <!-- Star Symbol -->
+  <g transform="translate(60, 60)" filter="url(#starGlow)">
+    <!-- Vertical ray -->
+    <line x1="0" y1="-35" x2="0" y2="35" stroke="url(#novaGradient)" stroke-width="4" stroke-linecap="round"/>
+    <!-- Horizontal ray -->
+    <line x1="-35" y1="0" x2="35" y2="0" stroke="url(#novaGradient)" stroke-width="4" stroke-linecap="round"/>
+    <!-- Diagonal rays -->
+    <line x1="-25" y1="-25" x2="25" y2="25" stroke="url(#novaGradient)" stroke-width="3" stroke-linecap="round"/>
+    <line x1="25" y1="-25" x2="-25" y2="25" stroke="url(#novaGradient)" stroke-width="3" stroke-linecap="round"/>
+    <!-- Center circle -->
+    <circle cx="0" cy="0" r="8" fill="url(#novaGradient)"/>
+    <!-- Inner glow -->
+    <circle cx="0" cy="0" r="4" fill="#f8fafc"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="120" y="75" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="56" font-weight="700" fill="#f8fafc" letter-spacing="-2">
+    NOVA
+  </text>
+
+  <!-- Tagline -->
+  <text x="122" y="100" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="#64748b" letter-spacing="2">
+    CODE THAT PROVES ITSELF
+  </text>
+</svg>

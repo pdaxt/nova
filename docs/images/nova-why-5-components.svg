@@ -1,0 +1,164 @@
+<svg width="1000" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Brand Gradients -->
+    <linearGradient id="spanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4"/>
+      <stop offset="100%" style="stop-color:#0891b2"/>
+    </linearGradient>
+    <linearGradient id="tokenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="sourceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+    <linearGradient id="errorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#d97706"/>
+    </linearGradient>
+    <linearGradient id="lexerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#14b8a6"/>
+      <stop offset="100%" style="stop-color:#0d9488"/>
+    </linearGradient>
+
+    <!-- Shadow -->
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- Grid pattern -->
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" stroke-width="0.5" opacity="0.5"/>
+    </pattern>
+  </defs>
+
+  <!-- Background: Deep Space -->
+  <rect width="1000" height="800" fill="#0c1222"/>
+  <rect width="1000" height="800" fill="url(#grid)"/>
+
+  <!-- Header -->
+  <g transform="translate(500, 50)">
+    <!-- Star icon -->
+    <g transform="translate(-200, 0)">
+      <line x1="0" y1="-12" x2="0" y2="12" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-12" y1="0" x2="12" y2="0" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-8" y1="-8" x2="8" y2="8" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="8" y1="-8" x2="-8" y2="8" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="3" fill="#0ea5e9"/>
+    </g>
+    <text x="0" y="8" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="700" fill="#f8fafc">
+      Why Exactly 5 Components?
+    </text>
+    <text x="0" y="35" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#64748b">
+      Validated across 5 production compilers: Rust, Go, Swift, TypeScript, Zig
+    </text>
+  </g>
+
+  <!-- The 5 Components in a circle layout -->
+  <!-- SPAN - Top -->
+  <g transform="translate(450, 130)" filter="url(#cardShadow)">
+    <rect width="100" height="70" rx="12" fill="url(#spanGrad)"/>
+    <text x="50" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#f8fafc">SPAN</text>
+    <text x="50" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="rgba(255,255,255,0.8)">8 bytes</text>
+  </g>
+
+  <!-- TOKEN - Top Right -->
+  <g transform="translate(680, 250)" filter="url(#cardShadow)">
+    <rect width="100" height="70" rx="12" fill="url(#tokenGrad)"/>
+    <text x="50" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#f8fafc">TOKEN</text>
+    <text x="50" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="rgba(255,255,255,0.8)">12 bytes</text>
+  </g>
+
+  <!-- SOURCE - Top Left -->
+  <g transform="translate(220, 250)" filter="url(#cardShadow)">
+    <rect width="100" height="70" rx="12" fill="url(#sourceGrad)"/>
+    <text x="50" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#f8fafc">SOURCE</text>
+    <text x="50" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="rgba(255,255,255,0.8)">content</text>
+  </g>
+
+  <!-- ERROR - Bottom Right -->
+  <g transform="translate(620, 400)" filter="url(#cardShadow)">
+    <rect width="100" height="70" rx="12" fill="url(#errorGrad)"/>
+    <text x="50" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#f8fafc">ERROR</text>
+    <text x="50" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="rgba(255,255,255,0.8)">diagnostics</text>
+  </g>
+
+  <!-- LEXER - Bottom Left -->
+  <g transform="translate(280, 400)" filter="url(#cardShadow)">
+    <rect width="100" height="70" rx="12" fill="url(#lexerGrad)"/>
+    <text x="50" y="30" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#f8fafc">LEXER</text>
+    <text x="50" y="50" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="rgba(255,255,255,0.8)">~500 lines</text>
+  </g>
+
+  <!-- Center pentagon showing interconnection -->
+  <polygon points="500,200 600,300 570,420 430,420 400,300"
+           fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- Compiler comparison table -->
+  <g transform="translate(80, 520)">
+    <rect width="840" height="240" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+
+    <!-- Table header -->
+    <rect x="0" y="0" width="840" height="40" rx="12" fill="#0f172a"/>
+    <text x="80" y="26" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#f8fafc">Compiler</text>
+    <text x="230" y="26" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#06b6d4">Span</text>
+    <text x="370" y="26" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#8b5cf6">Token</text>
+    <text x="510" y="26" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#3b82f6">Source</text>
+    <text x="650" y="26" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#f59e0b">Error</text>
+    <text x="780" y="26" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#14b8a6">Lexer</text>
+
+    <!-- Rust row -->
+    <text x="80" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#f8fafc">Rust</text>
+    <text x="230" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Span</text>
+    <text x="370" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Token</text>
+    <text x="510" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">SourceMap</text>
+    <text x="650" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Diagnostic</text>
+    <text x="780" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Lexer</text>
+
+    <!-- Go row -->
+    <line x1="20" y1="85" x2="820" y2="85" stroke="#334155" stroke-width="1"/>
+    <text x="80" y="110" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#f8fafc">Go</text>
+    <text x="230" y="110" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Pos</text>
+    <text x="370" y="110" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Token</text>
+    <text x="510" y="110" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">FileSet</text>
+    <text x="650" y="110" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Error</text>
+    <text x="780" y="110" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Scanner</text>
+
+    <!-- Swift row -->
+    <line x1="20" y1="125" x2="820" y2="125" stroke="#334155" stroke-width="1"/>
+    <text x="80" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#f8fafc">Swift</text>
+    <text x="230" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">SourceLoc</text>
+    <text x="370" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Token</text>
+    <text x="510" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">SourceMgr</text>
+    <text x="650" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Diagnostic</text>
+    <text x="780" y="150" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Lexer</text>
+
+    <!-- TypeScript row -->
+    <line x1="20" y1="165" x2="820" y2="165" stroke="#334155" stroke-width="1"/>
+    <text x="80" y="190" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#f8fafc">TypeScript</text>
+    <text x="230" y="190" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">TextSpan</text>
+    <text x="370" y="190" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">SyntaxKind</text>
+    <text x="510" y="190" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">SourceFile</text>
+    <text x="650" y="190" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Diagnostic</text>
+    <text x="780" y="190" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Scanner</text>
+
+    <!-- Zig row -->
+    <line x1="20" y1="205" x2="820" y2="205" stroke="#334155" stroke-width="1"/>
+    <text x="80" y="230" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#f8fafc">Zig</text>
+    <text x="230" y="230" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Location</text>
+    <text x="370" y="230" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Token</text>
+    <text x="510" y="230" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Source</text>
+    <text x="650" y="230" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Error</text>
+    <text x="780" y="230" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#94a3b8">Tokenizer</text>
+  </g>
+
+  <!-- Conclusion badge -->
+  <g transform="translate(350, 775)">
+    <rect width="300" height="35" rx="6" fill="#10b981" opacity="0.2"/>
+    <rect width="300" height="35" rx="6" fill="none" stroke="#10b981" stroke-width="1"/>
+    <text x="150" y="23" text-anchor="middle" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="#10b981">
+      ✓ 5/5 compilers confirm: exactly 5 components
+    </text>
+  </g>
+</svg>

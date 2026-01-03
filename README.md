@@ -1,8 +1,10 @@
+![Nova - Code That Proves Itself](docs/images/nova-logo.png)
+
 # Nova
 
 **A programming language designed for the AI age.**
 
-Verified. Efficient. Open.
+*Verified. Efficient. Open.*
 
 ---
 
@@ -56,7 +58,7 @@ where
 
 ## Compiler Pipeline
 
-![Nova Compiler Pipeline](docs/images/compiler-pipeline.png)
+![Nova Compiler Pipeline](docs/images/nova-pipeline.png)
 
 ## Project Status
 
