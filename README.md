@@ -113,7 +113,7 @@ cargo test
 
 Nova uses a **BDFL (Benevolent Dictator for Life)** governance model.
 
-- All PRs require approval from @pran before merge
+- All PRs require approval from @pdaxt before merge
 - See [GOVERNANCE.md](GOVERNANCE.md) for details
 - Contributors can open issues, PRs, and participate in discussions
 

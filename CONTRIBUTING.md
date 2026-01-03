@@ -2,7 +2,7 @@
 
 First off, thank you for considering contributing to Nova! This is an ambitious project and we need all the help we can get.
 
-> **Important:** All pull requests require approval from @pran (BDFL) before merge. See [GOVERNANCE.md](GOVERNANCE.md) for details.
+> **Important:** All pull requests require approval from @pdaxt (BDFL) before merge. See [GOVERNANCE.md](GOVERNANCE.md) for details.
 
 ## Table of Contents
 
@@ -179,10 +179,10 @@ Then open a PR on GitHub. Fill out the template.
 
 ### 6. Review
 
-- **Only @pran (BDFL) can approve and merge PRs**
+- **Only @pdaxt (BDFL) can approve and merge PRs**
 - Other contributors may comment and provide feedback (advisory)
 - Address feedback with new commits
-- Once @pran approves, the PR will be merged
+- Once @pdaxt approves, the PR will be merged
 - Be patient - review may take a few days
 
 ## Style Guidelines

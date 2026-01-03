@@ -2,7 +2,7 @@
 
 ## Project Leadership
 
-**Benevolent Dictator for Life (BDFL):** Pran (@pran)
+**Benevolent Dictator for Life (BDFL):** Pran (@pdaxt)
 
 All final decisions on direction, merges, releases, and project governance rest with the BDFL.
 

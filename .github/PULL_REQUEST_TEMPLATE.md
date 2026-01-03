@@ -26,4 +26,4 @@
 <!-- Any specific areas to focus on? -->
 
 ---
-**Note:** All PRs require approval from @pran before merge. See [GOVERNANCE.md](../GOVERNANCE.md).
+**Note:** All PRs require approval from @pdaxt before merge. See [GOVERNANCE.md](../GOVERNANCE.md).
