@@ -146,11 +146,11 @@ pub fn report(source: &str, filename: &str, error: NovaError) {
     let message = error.message();
     let code = error.code();
 
-    Report::build(ReportKind::Error, filename, span.start)
+    Report::build(ReportKind::Error, filename, span.start as usize)
         .with_code(code)
         .with_message(&message)
         .with_label(
-            Label::new((filename, span.start..span.end))
+            Label::new((filename, span.start as usize..span.end as usize))
                 .with_message(&message)
                 .with_color(Color::Red),
         )

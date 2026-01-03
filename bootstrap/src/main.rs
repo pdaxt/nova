@@ -5,6 +5,7 @@
 //!
 //! Once Stage 1 is complete, this code will be archived and no longer maintained.
 
+mod span;
 mod lexer;
 mod token;
 mod ast;

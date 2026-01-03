@@ -49,7 +49,7 @@ impl<'a> Lexer<'a> {
                 None => {
                     tokens.push(Token::new(
                         TokenKind::Eof,
-                        Span::new(self.current, self.current),
+                        Span::new(self.current as u32, self.current as u32),
                     ));
                     break;
                 }
@@ -188,12 +188,12 @@ impl<'a> Lexer<'a> {
             _ => {
                 return Err(NovaError::InvalidCharacter {
                     char: c,
-                    span: Span::new(self.start, self.current),
+                    span: Span::new(self.start as u32, self.current as u32),
                 });
             }
         };
 
-        Ok(Token::new(kind, Span::new(self.start, self.current)))
+        Ok(Token::new(kind, Span::new(self.start as u32, self.current as u32)))
     }
 
     /// Advance and return the next character
@@ -297,12 +297,12 @@ impl<'a> Lexer<'a> {
                         Some(c) => {
                             return Err(NovaError::InvalidEscape {
                                 char: c,
-                                span: Span::new(self.current - 1, self.current),
+                                span: Span::new((self.current - 1) as u32, self.current as u32),
                             });
                         }
                         None => {
                             return Err(NovaError::UnterminatedString {
-                                span: Span::new(self.start, self.current),
+                                span: Span::new(self.start as u32, self.current as u32),
                             });
                         }
                     }
@@ -310,7 +310,7 @@ impl<'a> Lexer<'a> {
                 Some(c) => value.push(c),
                 None => {
                     return Err(NovaError::UnterminatedString {
-                        span: Span::new(self.start, self.current),
+                        span: Span::new(self.start as u32, self.current as u32),
                     });
                 }
             }
@@ -377,12 +377,12 @@ impl<'a> Lexer<'a> {
 
         if is_float {
             let n: f64 = value.parse().map_err(|_| NovaError::InvalidNumber {
-                span: Span::new(self.start, self.current),
+                span: Span::new(self.start as u32, self.current as u32),
             })?;
             Ok(TokenKind::Float(n))
         } else {
             let n: i64 = value.parse().map_err(|_| NovaError::InvalidNumber {
-                span: Span::new(self.start, self.current),
+                span: Span::new(self.start as u32, self.current as u32),
             })?;
             Ok(TokenKind::Int(n))
         }

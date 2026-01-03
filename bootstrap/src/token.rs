@@ -4,25 +4,8 @@
 
 use std::fmt;
 
-/// A span in the source code
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Span {
-    pub start: usize,
-    pub end: usize,
-}
-
-impl Span {
-    pub fn new(start: usize, end: usize) -> Self {
-        Self { start, end }
-    }
-
-    pub fn merge(self, other: Span) -> Span {
-        Span {
-            start: self.start.min(other.start),
-            end: self.end.max(other.end),
-        }
-    }
-}
+// Re-export Span from the span module
+pub use crate::span::Span;
 
 /// A token with its kind and location
 #[derive(Debug, Clone, PartialEq)]
