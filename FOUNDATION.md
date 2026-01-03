@@ -2,6 +2,18 @@
 
 This document validates WHY the foundation has exactly 5 components, breaks each into atomic pieces, and provides step-by-step implementation instructions.
 
+> **Related Documents:**
+> - [DECISIONS.md](DECISIONS.md) - Full architectural decision records with alternatives considered
+> - [COMPONENTS.md](COMPONENTS.md) - Complete component breakdown (43 components)
+> - [ROADMAP.md](ROADMAP.md) - Development timeline and milestones
+
+> **Key Decisions Referenced:**
+> - [ADR-001: Five Foundation Components](DECISIONS.md#adr-001-five-foundation-components)
+> - [ADR-002: Span Size (8 bytes)](DECISIONS.md#adr-002-span-size-8-bytes)
+> - [ADR-003: FileId Outside Span](DECISIONS.md#adr-003-fileid-outside-span)
+> - [ADR-004: Token Size Optimization](DECISIONS.md#adr-004-token-size-optimization)
+> - [ADR-005: Literal Values External to Tokens](DECISIONS.md#adr-005-literal-values-external-to-tokens)
+
 ## Why Exactly 5? (Research-Backed Validation)
 
 ### The Question
@@ -80,6 +92,10 @@ Could we have 4? Could we need 6? What is the **minimal complete** foundation?
 ---
 
 ## Component 1: SPAN (The Location Primitive)
+
+> **Design Decisions:**
+> - [ADR-002: Span Size (8 bytes)](DECISIONS.md#adr-002-span-size-8-bytes) - Why exactly 8 bytes, not 16 or 12
+> - [ADR-003: FileId Outside Span](DECISIONS.md#adr-003-fileid-outside-span) - Why FileId is not embedded in Span
 
 ### What Is It?
 A span is a range of byte offsets in source code. It's the **atomic unit of location**.
@@ -446,6 +462,12 @@ mod tests {
 ---
 
 ## Component 2: TOKEN (The Lexical Unit)
+
+> **Design Decisions:**
+> - [ADR-004: Token Size Optimization](DECISIONS.md#adr-004-token-size-optimization) - Why Token is exactly 12 bytes
+> - [ADR-005: Literal Values External to Tokens](DECISIONS.md#adr-005-literal-values-external-to-tokens) - Why values aren't stored in Token
+> - [ADR-013: Keyword Selection](DECISIONS.md#adr-013-keyword-selection) - Why these 30 keywords
+> - [ADR-014: Operator Precedence Table](DECISIONS.md#adr-014-operator-precedence-table) - Why this precedence order
 
 ### What Is It?
 A token is the atomic unit of syntax. It's what the lexer produces and the parser consumes.
@@ -1032,6 +1054,10 @@ mod tests {
 
 ## Component 3: SOURCE (The Content Manager)
 
+> **Design Decisions:**
+> - [ADR-006: 1-Indexed Line/Column Numbers](DECISIONS.md#adr-006-1-indexed-linecolumn-numbers) - Why lines start at 1, not 0
+> - [ADR-007: Binary Search for Line Lookup](DECISIONS.md#adr-007-binary-search-for-line-lookup) - Why O(log n) lookup, not O(1) or O(n)
+
 ### What Is It?
 Source manages file contents and maps byte offsets to line/column positions.
 
@@ -1371,6 +1397,9 @@ mod tests {
 ---
 
 ## Component 4: ERROR (The Diagnostic System)
+
+> **Design Decisions:**
+> - [ADR-008: Error Codes System](DECISIONS.md#adr-008-error-codes-system) - Why EXXXX codes like Rust
 
 ### What Is It?
 Error creates, stores, and displays diagnostics to users.
@@ -1786,6 +1815,10 @@ pub fn undefined_variable(file_id: FileId, span: Span, name: &str) -> Diagnostic
 ---
 
 ## Component 5: LEXER (The Tokenizer)
+
+> **Design Decisions:**
+> - [ADR-009: Nested Block Comments](DECISIONS.md#adr-009-nested-block-comments) - Why `/* /* */ */` works
+> - [ADR-010: Lexer Error Recovery Strategy](DECISIONS.md#adr-010-lexer-error-recovery-strategy) - Why we continue after errors
 
 ### What Is It?
 The lexer converts source text into a stream of tokens.

@@ -60,6 +60,17 @@ where
 
 See [ROADMAP.md](ROADMAP.md) for the full plan.
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ROADMAP.md](ROADMAP.md) | Development stages and milestones |
+| [COMPONENTS.md](COMPONENTS.md) | 43-component architecture with QA criteria |
+| [FOUNDATION.md](FOUNDATION.md) | The 5 irreducible foundation components |
+| [DECISIONS.md](DECISIONS.md) | Architectural decisions with rationale |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [GOVERNANCE.md](GOVERNANCE.md) | BDFL model and approval process |
+
 ## Get Involved
 
 We're looking for contributors! Nova is designed to be built by a community.
