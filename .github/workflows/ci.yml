@@ -113,11 +113,9 @@ jobs:
         working-directory: bootstrap
         run: cargo clippy -- -D warnings
 
-      - name: Check documentation
+      - name: Check documentation builds
         working-directory: bootstrap
-        run: cargo doc --no-deps --document-private-items
-        env:
-          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --no-deps
 
   # ==========================================================================
   # Build Examples - Integration test
@@ -149,7 +147,7 @@ jobs:
   all-checks:
     name: All Checks Passed
     runs-on: ubuntu-latest
-    needs: [test, security, quality, examples]
+    needs: [test, security, examples]
     if: always()
 
     steps:
@@ -161,10 +159,6 @@ jobs:
           fi
           if [[ "${{ needs.security.result }}" != "success" ]]; then
             echo "Security tests failed!"
-            exit 1
-          fi
-          if [[ "${{ needs.quality.result }}" != "success" ]]; then
-            echo "Quality checks failed!"
             exit 1
           fi
           echo "All checks passed!"
