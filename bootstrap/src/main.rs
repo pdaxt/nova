@@ -6,6 +6,8 @@
 //! Once Stage 1 is complete, this code will be archived and no longer maintained.
 
 mod span;
+#[cfg(test)]
+mod span_attack;
 mod lexer;
 mod token;
 mod ast;

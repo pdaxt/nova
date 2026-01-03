@@ -14,7 +14,7 @@ use std::fmt;
 
 /// A span representing a range in source code.
 ///
-/// Invariant: `start <= end`
+/// Invariant: `start <= end` (enforced at construction)
 ///
 /// # Size Guarantee
 ///
@@ -23,13 +23,18 @@ use std::fmt;
 /// - `end: u32` = 4 bytes
 ///
 /// This is enforced by compile-time assertions in tests.
+///
+/// # Safety
+///
+/// Fields are private to enforce the `start <= end` invariant.
+/// Use `start()` and `end()` getters to access values.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(C)]  // Ensure predictable layout
 pub struct Span {
     /// Byte offset of the first character (inclusive)
-    pub start: u32,
+    start: u32,
     /// Byte offset after the last character (exclusive)
-    pub end: u32,
+    end: u32,
 }
 
 impl Span {
@@ -37,17 +42,32 @@ impl Span {
     ///
     /// # Panics
     ///
-    /// Panics in debug mode if `start > end`.
+    /// Panics if `start > end`.
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
-        debug_assert!(start <= end, "Span start must be <= end");
+        assert!(start <= end, "Span start must be <= end");
         Self { start, end }
     }
 
+    /// Returns the start offset (inclusive).
+    #[inline]
+    pub const fn start(&self) -> u32 {
+        self.start
+    }
+
+    /// Returns the end offset (exclusive).
+    #[inline]
+    pub const fn end(&self) -> u32 {
+        self.end
+    }
+
     /// Returns the length of this span in bytes.
+    ///
+    /// Uses saturating subtraction as defense-in-depth, though
+    /// the invariant guarantees `end >= start`.
     #[inline]
     pub const fn len(&self) -> u32 {
-        self.end - self.start
+        self.end.saturating_sub(self.start)
     }
 
     /// Returns true if the span has zero length.
@@ -83,13 +103,13 @@ impl Span {
 
 impl fmt::Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}..{}", self.start, self.end)
+        write!(f, "{}..{}", self.start(), self.end())
     }
 }
 
 impl fmt::Display for Span {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}..{}", self.start, self.end)
+        write!(f, "{}..{}", self.start(), self.end())
     }
 }
 
@@ -107,8 +127,8 @@ mod tests {
     #[test]
     fn span_new() {
         let span = Span::new(10, 20);
-        assert_eq!(span.start, 10);
-        assert_eq!(span.end, 20);
+        assert_eq!(span.start(), 10);
+        assert_eq!(span.end(), 20);
     }
 
     #[test]
@@ -177,8 +197,8 @@ mod tests {
     #[test]
     fn span_dummy() {
         let dummy = Span::dummy();
-        assert_eq!(dummy.start, 0);
-        assert_eq!(dummy.end, 0);
+        assert_eq!(dummy.start(), 0);
+        assert_eq!(dummy.end(), 0);
         assert!(dummy.is_empty());
     }
 
@@ -199,7 +219,7 @@ mod tests {
         let a = Span::new(0, 10);
         let b = a;  // Copy
         assert_eq!(a, b);
-        assert_eq!(a.start, b.start);
+        assert_eq!(a.start(), b.start());
     }
 
     #[test]
