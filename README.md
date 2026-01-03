@@ -54,6 +54,10 @@ where
 }
 ```
 
+## Compiler Pipeline
+
+![Nova Compiler Pipeline](docs/images/compiler-pipeline.png)
+
 ## Project Status
 
 🚧 **Stage 0: Bootstrap** — We're building the minimal Rust compiler that will compile the first Nova compiler.

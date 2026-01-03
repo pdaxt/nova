@@ -1,0 +1,185 @@
+<svg width="1100" height="700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="crossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#dc2626;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="checkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="700" fill="#0f172a"/>
+
+  <!-- Title -->
+  <text x="550" y="50" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="700" fill="#f8fafc">
+    Why Exactly 5 Components?
+  </text>
+  <text x="550" y="85" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" fill="#94a3b8">
+    ADR-001: Every alternative was considered and rejected
+  </text>
+
+  <!-- Column Headers -->
+  <g transform="translate(50, 120)">
+    <rect width="320" height="50" rx="8" fill="#7f1d1d"/>
+    <text x="160" y="33" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#fca5a5">
+      4 Components (Merge)
+    </text>
+  </g>
+  <g transform="translate(390, 120)">
+    <rect width="320" height="50" rx="8" fill="#14532d"/>
+    <text x="160" y="33" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#86efac">
+      5 Components (Chosen)
+    </text>
+  </g>
+  <g transform="translate(730, 120)">
+    <rect width="320" height="50" rx="8" fill="#7f1d1d"/>
+    <text x="160" y="33" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#fca5a5">
+      6 Components (Split)
+    </text>
+  </g>
+
+  <!-- 4 Components - Rejected merges -->
+  <g transform="translate(50, 190)">
+    <!-- Merge option 1 -->
+    <rect width="320" height="80" rx="8" fill="#1e293b" stroke="#7f1d1d" stroke-width="2"/>
+    <text x="20" y="30" font-family="JetBrains Mono, monospace" font-size="14" fill="#fca5a5">Merge Span + Source?</text>
+    <text x="20" y="50" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Span = 8 bytes (value type)</text>
+    <text x="20" y="68" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Source = heap (reference type)</text>
+    <circle cx="295" cy="40" r="15" fill="url(#crossGrad)"/>
+    <text x="295" y="45" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white">✕</text>
+
+    <!-- Merge option 2 -->
+    <g transform="translate(0, 95)">
+      <rect width="320" height="80" rx="8" fill="#1e293b" stroke="#7f1d1d" stroke-width="2"/>
+      <text x="20" y="30" font-family="JetBrains Mono, monospace" font-size="14" fill="#fca5a5">Merge Token + Span?</text>
+      <text x="20" y="50" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">AST also needs Span</text>
+      <text x="20" y="68" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Would need duplicate type</text>
+      <circle cx="295" cy="40" r="15" fill="url(#crossGrad)"/>
+      <text x="295" y="45" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white">✕</text>
+    </g>
+
+    <!-- Merge option 3 -->
+    <g transform="translate(0, 190)">
+      <rect width="320" height="80" rx="8" fill="#1e293b" stroke="#7f1d1d" stroke-width="2"/>
+      <text x="20" y="30" font-family="JetBrains Mono, monospace" font-size="14" fill="#fca5a5">Merge Error + Source?</text>
+      <text x="20" y="50" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Different data flow directions</text>
+      <text x="20" y="68" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Source is read, Error is write</text>
+      <circle cx="295" cy="40" r="15" fill="url(#crossGrad)"/>
+      <text x="295" y="45" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white">✕</text>
+    </g>
+
+    <!-- Merge option 4 -->
+    <g transform="translate(0, 285)">
+      <rect width="320" height="80" rx="8" fill="#1e293b" stroke="#7f1d1d" stroke-width="2"/>
+      <text x="20" y="30" font-family="JetBrains Mono, monospace" font-size="14" fill="#fca5a5">Merge Lexer + Token?</text>
+      <text x="20" y="50" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Token = data type</text>
+      <text x="20" y="68" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Lexer = process (stateful)</text>
+      <circle cx="295" cy="40" r="15" fill="url(#crossGrad)"/>
+      <text x="295" y="45" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white">✕</text>
+    </g>
+  </g>
+
+  <!-- 5 Components - The Choice -->
+  <g transform="translate(390, 190)">
+    <rect width="320" height="365" rx="12" fill="#1e293b" stroke="#22c55e" stroke-width="3"/>
+
+    <g transform="translate(20, 30)">
+      <rect width="280" height="55" rx="6" fill="#14532d"/>
+      <text x="25" y="25" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700" fill="#86efac">SPAN</text>
+      <text x="25" y="45" font-family="Inter, sans-serif" font-size="12" fill="#a7f3d0">Location tracking • 8 bytes</text>
+    </g>
+
+    <g transform="translate(20, 95)">
+      <rect width="280" height="55" rx="6" fill="#14532d"/>
+      <text x="25" y="25" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700" fill="#86efac">TOKEN</text>
+      <text x="25" y="45" font-family="Inter, sans-serif" font-size="12" fill="#a7f3d0">Lexical units • 12 bytes</text>
+    </g>
+
+    <g transform="translate(20, 160)">
+      <rect width="280" height="55" rx="6" fill="#14532d"/>
+      <text x="25" y="25" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700" fill="#86efac">SOURCE</text>
+      <text x="25" y="45" font-family="Inter, sans-serif" font-size="12" fill="#a7f3d0">File management • line map</text>
+    </g>
+
+    <g transform="translate(20, 225)">
+      <rect width="280" height="55" rx="6" fill="#14532d"/>
+      <text x="25" y="25" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700" fill="#86efac">ERROR</text>
+      <text x="25" y="45" font-family="Inter, sans-serif" font-size="12" fill="#a7f3d0">Diagnostics • pretty printing</text>
+    </g>
+
+    <g transform="translate(20, 290)">
+      <rect width="280" height="55" rx="6" fill="#14532d"/>
+      <text x="25" y="25" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700" fill="#86efac">LEXER</text>
+      <text x="25" y="45" font-family="Inter, sans-serif" font-size="12" fill="#a7f3d0">Tokenization • ~500 lines</text>
+    </g>
+
+    <circle cx="295" cy="182" r="20" fill="url(#checkGrad)"/>
+    <text x="295" y="190" text-anchor="middle" font-family="Inter, sans-serif" font-size="20" font-weight="700" fill="white">✓</text>
+  </g>
+
+  <!-- 6 Components - Rejected additions -->
+  <g transform="translate(730, 190)">
+    <!-- Add option 1 -->
+    <rect width="320" height="80" rx="8" fill="#1e293b" stroke="#7f1d1d" stroke-width="2"/>
+    <text x="20" y="30" font-family="JetBrains Mono, monospace" font-size="14" fill="#fca5a5">Add Symbol Interning?</text>
+    <text x="20" y="50" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Optimization, not required</text>
+    <text x="20" y="68" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Can add to Token later</text>
+    <circle cx="295" cy="40" r="15" fill="url(#crossGrad)"/>
+    <text x="295" y="45" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white">✕</text>
+
+    <!-- Add option 2 -->
+    <g transform="translate(0, 95)">
+      <rect width="320" height="80" rx="8" fill="#1e293b" stroke="#7f1d1d" stroke-width="2"/>
+      <text x="20" y="30" font-family="JetBrains Mono, monospace" font-size="14" fill="#fca5a5">Add Keyword Table?</text>
+      <text x="20" y="50" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Part of Lexer</text>
+      <text x="20" y="68" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Just a match statement</text>
+      <circle cx="295" cy="40" r="15" fill="url(#crossGrad)"/>
+      <text x="295" y="45" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white">✕</text>
+    </g>
+
+    <!-- Add option 3 -->
+    <g transform="translate(0, 190)">
+      <rect width="320" height="80" rx="8" fill="#1e293b" stroke="#7f1d1d" stroke-width="2"/>
+      <text x="20" y="30" font-family="JetBrains Mono, monospace" font-size="14" fill="#fca5a5">Add LineMap?</text>
+      <text x="20" y="50" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Part of Source</text>
+      <text x="20" y="68" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Tightly coupled to content</text>
+      <circle cx="295" cy="40" r="15" fill="url(#crossGrad)"/>
+      <text x="295" y="45" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white">✕</text>
+    </g>
+
+    <!-- Add option 4 -->
+    <g transform="translate(0, 285)">
+      <rect width="320" height="80" rx="8" fill="#1e293b" stroke="#7f1d1d" stroke-width="2"/>
+      <text x="20" y="30" font-family="JetBrains Mono, monospace" font-size="14" fill="#fca5a5">Add FileId separate?</text>
+      <text x="20" y="50" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">Part of Span design</text>
+      <text x="20" y="68" font-family="Inter, sans-serif" font-size="12" fill="#94a3b8">External to Span (ADR-003)</text>
+      <circle cx="295" cy="40" r="15" fill="url(#crossGrad)"/>
+      <text x="295" y="45" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="white">✕</text>
+    </g>
+  </g>
+
+  <!-- Cross-compiler evidence -->
+  <g transform="translate(50, 590)">
+    <text x="0" y="0" font-family="Inter, sans-serif" font-size="16" font-weight="600" fill="#f8fafc">
+      Cross-compiler evidence: All converge on 5 components
+    </text>
+    <g transform="translate(0, 25)">
+      <text x="0" y="0" font-family="JetBrains Mono, monospace" font-size="13" fill="#64748b">Rust:</text>
+      <text x="60" y="0" font-family="JetBrains Mono, monospace" font-size="13" fill="#94a3b8">rustc_span + token + rustc_errors + source_map + rustc_lexer</text>
+      <text x="530" y="0" font-family="Inter, sans-serif" font-size="13" fill="#22c55e">= 5</text>
+    </g>
+    <g transform="translate(0, 45)">
+      <text x="0" y="0" font-family="JetBrains Mono, monospace" font-size="13" fill="#64748b">Go:</text>
+      <text x="60" y="0" font-family="JetBrains Mono, monospace" font-size="13" fill="#94a3b8">token + scanner + position + errors + source</text>
+      <text x="530" y="0" font-family="Inter, sans-serif" font-size="13" fill="#22c55e">= 5</text>
+    </g>
+    <g transform="translate(0, 65)">
+      <text x="0" y="0" font-family="JetBrains Mono, monospace" font-size="13" fill="#64748b">Swift:</text>
+      <text x="60" y="0" font-family="JetBrains Mono, monospace" font-size="13" fill="#94a3b8">Token + Lexer + SourceLoc + Diagnostics + SourceManager</text>
+      <text x="530" y="0" font-family="Inter, sans-serif" font-size="13" fill="#22c55e">= 5</text>
+    </g>
+  </g>
+</svg>
