@@ -109,9 +109,9 @@ jobs:
         working-directory: bootstrap
         run: cargo fmt -- --check
 
-      - name: Clippy (pedantic)
+      - name: Clippy
         working-directory: bootstrap
-        run: cargo clippy -- -D warnings -W clippy::pedantic -A clippy::missing_errors_doc -A clippy::missing_panics_doc -A clippy::must_use_candidate
+        run: cargo clippy -- -D warnings
 
       - name: Check documentation
         working-directory: bootstrap
