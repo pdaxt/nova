@@ -1,6 +1,11 @@
 //! Abstract Syntax Tree definitions for Nova
 //!
 //! This module defines the AST nodes that the parser produces.
+//!
+//! NOTE: Many AST variants are defined but not yet used.
+//! This is intentional - the full grammar is defined upfront.
+
+#![allow(dead_code)]
 
 use crate::token::Span;
 

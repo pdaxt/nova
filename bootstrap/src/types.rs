@@ -8,6 +8,9 @@
 //!
 //! See: https://github.com/nova-lang/nova/issues/4
 
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use crate::ast::*;
 use crate::error::NovaError;
 
@@ -126,12 +129,9 @@ impl TypeChecker {
         let mut items = Vec::new();
 
         for item in &program.items {
-            match item {
-                Item::Function(f) => {
-                    items.push(TypedItem::Function(self.check_function(f)?));
-                }
-                // TODO: Handle other items
-                _ => {}
+            // TODO: Handle other items (struct, enum, etc.)
+            if let Item::Function(f) = item {
+                items.push(TypedItem::Function(self.check_function(f)?));
             }
         }
 
@@ -188,10 +188,7 @@ impl TypeChecker {
             stmts.push(typed_stmt);
         }
 
-        Ok(TypedBlock {
-            stmts,
-            ty: last_ty,
-        })
+        Ok(TypedBlock { stmts, ty: last_ty })
     }
 
     /// Check a statement
@@ -216,10 +213,7 @@ impl TypeChecker {
 
                 self.env.push((name.clone(), ty.clone()));
 
-                Ok((
-                    TypedStmt::Let { name, ty, value },
-                    TypeInfo::Unit,
-                ))
+                Ok((TypedStmt::Let { name, ty, value }, TypeInfo::Unit))
             }
             Stmt::Expr(expr_stmt) => {
                 let typed_expr = self.check_expr(&expr_stmt.expr)?;
@@ -280,11 +274,7 @@ impl TypeChecker {
                 let ty = self.binary_result_type(&left_typed.ty, *op, &right_typed.ty)?;
 
                 Ok(TypedExpr {
-                    kind: TypedExprKind::Binary(
-                        Box::new(left_typed),
-                        *op,
-                        Box::new(right_typed),
-                    ),
+                    kind: TypedExprKind::Binary(Box::new(left_typed), *op, Box::new(right_typed)),
                     ty,
                 })
             }
@@ -325,11 +315,7 @@ impl TypeChecker {
                 let ty = then_typed.ty.clone();
 
                 Ok(TypedExpr {
-                    kind: TypedExprKind::If(
-                        Box::new(cond_typed),
-                        then_typed,
-                        else_typed,
-                    ),
+                    kind: TypedExprKind::If(Box::new(cond_typed), then_typed, else_typed),
                     ty,
                 })
             }
@@ -384,9 +370,10 @@ impl TypeChecker {
                 }
                 Ok(TypeInfo::Tuple(resolved))
             }
-            TypeKind::Reference(mutable, inner) => {
-                Ok(TypeInfo::Reference(*mutable, Box::new(self.resolve_type(inner)?)))
-            }
+            TypeKind::Reference(mutable, inner) => Ok(TypeInfo::Reference(
+                *mutable,
+                Box::new(self.resolve_type(inner)?),
+            )),
             TypeKind::Never => Ok(TypeInfo::Never),
             TypeKind::Infer => Ok(TypeInfo::Unknown),
             _ => Ok(TypeInfo::Unknown),
@@ -398,7 +385,7 @@ impl TypeChecker {
         &self,
         left: &TypeInfo,
         op: BinOp,
-        right: &TypeInfo,
+        _right: &TypeInfo,
     ) -> Result<TypeInfo, NovaError> {
         // Simplified type rules
         match op {
@@ -439,8 +426,9 @@ mod tests {
 
     #[test]
     fn test_typecheck_simple() {
-        let tokens = lex("fn main() { let x: i32 = 42; }").unwrap();
-        let ast = parse(tokens).unwrap();
+        let source = "fn main() { let x: i32 = 42; }";
+        let tokens = lex(source).unwrap();
+        let ast = parse(source, tokens).unwrap();
         let typed = check(&ast).unwrap();
         assert_eq!(typed.items.len(), 1);
     }

@@ -80,6 +80,38 @@ nova/
 └── examples/               # Example programs
 ```
 
+## Test-First Development
+
+**Nova enforces test-first development.** Code that breaks tests cannot be committed.
+
+### Setup Automated Testing
+
+```bash
+# After cloning, run this once:
+./scripts/setup-hooks.sh
+```
+
+This installs git hooks that:
+- **pre-commit**: Runs fmt, clippy, build, and tests
+- **pre-push**: Runs security tests and size verification
+
+If any test fails, your commit/push is blocked.
+
+### Quick Test Commands
+
+```bash
+# Run all tests
+cd bootstrap && cargo test
+
+# Run full CI-equivalent locally
+./scripts/test-all.sh
+
+# Run security tests only
+cargo test span_attack token_attack
+```
+
+See [docs/TDD.md](docs/TDD.md) for the full test-driven development guide.
+
 ## Development Setup
 
 ### Prerequisites

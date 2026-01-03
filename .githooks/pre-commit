@@ -1,0 +1,54 @@
+#!/bin/bash
+# Nova Pre-Commit Hook
+# Runs tests before allowing commit. Blocks commit if tests fail.
+#
+# To install: git config core.hooksPath .githooks
+# Or run: ./scripts/setup-hooks.sh
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}Running pre-commit checks...${NC}"
+
+cd bootstrap
+
+# Check 1: Formatting
+echo -e "\n${YELLOW}[1/4] Checking formatting...${NC}"
+if ! cargo fmt -- --check; then
+    echo -e "${RED}FAILED: Code is not formatted${NC}"
+    echo -e "Run: ${YELLOW}cargo fmt${NC} to fix"
+    exit 1
+fi
+echo -e "${GREEN}Formatting OK${NC}"
+
+# Check 2: Clippy
+echo -e "\n${YELLOW}[2/4] Running clippy...${NC}"
+if ! cargo clippy -- -D warnings 2>/dev/null; then
+    echo -e "${RED}FAILED: Clippy warnings found${NC}"
+    echo -e "Run: ${YELLOW}cargo clippy${NC} to see details"
+    exit 1
+fi
+echo -e "${GREEN}Clippy OK${NC}"
+
+# Check 3: Build
+echo -e "\n${YELLOW}[3/4] Building...${NC}"
+if ! cargo build 2>/dev/null; then
+    echo -e "${RED}FAILED: Build failed${NC}"
+    exit 1
+fi
+echo -e "${GREEN}Build OK${NC}"
+
+# Check 4: Tests
+echo -e "\n${YELLOW}[4/4] Running tests...${NC}"
+if ! cargo test 2>/dev/null; then
+    echo -e "${RED}FAILED: Tests failed${NC}"
+    echo -e "Run: ${YELLOW}cargo test${NC} to see details"
+    exit 1
+fi
+echo -e "${GREEN}Tests OK${NC}"
+
+echo -e "\n${GREEN}All pre-commit checks passed!${NC}"

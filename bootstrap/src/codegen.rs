@@ -8,7 +8,10 @@
 //!
 //! See: https://github.com/nova-lang/nova/issues/5
 
-use crate::ir::{Module, Function, BasicBlock, Instruction, InstructionKind, Terminator, IrType, ValueId};
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
+use crate::ir::{BasicBlock, Function, Instruction, InstructionKind, IrType, Module, Terminator};
 
 /// Generate WebAssembly binary from IR
 pub fn generate(module: &Module) -> Vec<u8> {
@@ -77,8 +80,7 @@ impl WasmGenerator {
         loop {
             let byte = (value & 0x7F) as u8;
             value >>= 7;
-            let done = (value == 0 && (byte & 0x40) == 0)
-                || (value == -1 && (byte & 0x40) != 0);
+            let done = (value == 0 && (byte & 0x40) == 0) || (value == -1 && (byte & 0x40) != 0);
             if done {
                 self.emit_byte(byte);
                 break;
@@ -93,8 +95,7 @@ impl WasmGenerator {
         loop {
             let byte = (value & 0x7F) as u8;
             value >>= 7;
-            let done = (value == 0 && (byte & 0x40) == 0)
-                || (value == -1 && (byte & 0x40) != 0);
+            let done = (value == 0 && (byte & 0x40) == 0) || (value == -1 && (byte & 0x40) != 0);
             if done {
                 self.emit_byte(byte);
                 break;
@@ -197,7 +198,7 @@ impl WasmGenerator {
 
     /// Emit a function body
     fn emit_function(&mut self, func: &Function) -> Vec<u8> {
-        let mut body = Vec::new();
+        let body = Vec::new();
         let mut gen = WasmGenerator { output: body };
 
         // Local declarations (simplified: just count locals)
@@ -222,7 +223,7 @@ impl WasmGenerator {
         }
 
         match &block.terminator {
-            Terminator::Return(value) => {
+            Terminator::Return(_value) => {
                 // Value should already be on stack from last instruction
                 // Return is implicit at end of function
             }
@@ -337,7 +338,7 @@ impl WasmGenerator {
                 self.emit_u32(0); // align
                 self.emit_u32(0); // offset
             }
-            InstructionKind::Call(name, args) => {
+            InstructionKind::Call(_name, _args) => {
                 // TODO: Proper call handling
                 self.emit_byte(0x10); // call
                 self.emit_u32(0); // function index (placeholder)
@@ -359,9 +360,9 @@ impl WasmGenerator {
             IrType::I64 => 0x7E,
             IrType::F32 => 0x7D,
             IrType::F64 => 0x7C,
-            IrType::Bool => 0x7F, // i32
+            IrType::Bool => 0x7F,   // i32
             IrType::Ptr(_) => 0x7F, // i32 (32-bit address space)
-            IrType::Void => 0x40, // empty (for block types)
+            IrType::Void => 0x40,   // empty (for block types)
         }
     }
 }
@@ -369,15 +370,16 @@ impl WasmGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ir::lower;
     use crate::lexer::lex;
     use crate::parser::parse;
     use crate::types::check;
-    use crate::ir::lower;
 
     #[test]
     fn test_generate_simple() {
-        let tokens = lex("fn main() { return 42; }").unwrap();
-        let ast = parse(tokens).unwrap();
+        let source = "fn main() { return 42; }";
+        let tokens = lex(source).unwrap();
+        let ast = parse(source, tokens).unwrap();
         let typed = check(&ast).unwrap();
         let ir = lower(&typed);
         let wasm = generate(&ir);

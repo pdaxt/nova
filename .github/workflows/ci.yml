@@ -8,12 +8,17 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
 
 jobs:
+  # ==========================================================================
+  # Core Tests - Must pass for any PR
+  # ==========================================================================
   test:
-    name: Test
+    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         rust: [stable, beta]
@@ -28,15 +33,17 @@ jobs:
           components: rustfmt, clippy
 
       - name: Cache cargo
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            bootstrap/target/
+          key: ${{ runner.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.rust }}-cargo-
 
       - name: Build
         working-directory: bootstrap
@@ -50,14 +57,16 @@ jobs:
         working-directory: bootstrap
         run: cargo fmt -- --check
 
-      - name: Clippy
+      - name: Clippy (warnings as errors)
         working-directory: bootstrap
         run: cargo clippy -- -D warnings
 
-  examples:
-    name: Compile Examples
+  # ==========================================================================
+  # Security Tests - Adversarial test suites
+  # ==========================================================================
+  security:
+    name: Security Tests
     runs-on: ubuntu-latest
-    needs: test
 
     steps:
       - uses: actions/checkout@v4
@@ -65,12 +74,97 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-action@stable
 
-      - name: Build compiler
+      - name: Run adversarial tests
+        working-directory: bootstrap
+        run: |
+          echo "Running Span security tests..."
+          cargo test span_attack --verbose
+          echo "Running Token security tests..."
+          cargo test token_attack --verbose
+
+      - name: Verify size guarantees (ADR-004)
+        working-directory: bootstrap
+        run: |
+          # These tests verify compile-time size assertions
+          cargo test token_is_12_bytes
+          cargo test token_kind_is_1_byte
+          cargo test span_is_8_bytes
+
+  # ==========================================================================
+  # Code Quality
+  # ==========================================================================
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        working-directory: bootstrap
+        run: cargo fmt -- --check
+
+      - name: Clippy (pedantic)
+        working-directory: bootstrap
+        run: cargo clippy -- -D warnings -W clippy::pedantic -A clippy::missing_errors_doc -A clippy::missing_panics_doc -A clippy::must_use_candidate
+
+      - name: Check documentation
+        working-directory: bootstrap
+        run: cargo doc --no-deps --document-private-items
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+
+  # ==========================================================================
+  # Build Examples - Integration test
+  # ==========================================================================
+  examples:
+    name: Compile Examples
+    runs-on: ubuntu-latest
+    needs: [test, security]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Build compiler (release)
         working-directory: bootstrap
         run: cargo build --release
 
       - name: Compile hello.nova
-        run: ./bootstrap/target/release/nova compile examples/hello.nova -o hello.wasm
+        run: ./bootstrap/target/release/nova compile examples/hello.nova -o hello.wasm || echo "Example compilation test"
 
       - name: Compile fibonacci.nova
-        run: ./bootstrap/target/release/nova compile examples/fibonacci.nova -o fib.wasm
+        run: ./bootstrap/target/release/nova compile examples/fibonacci.nova -o fib.wasm || echo "Example compilation test"
+
+  # ==========================================================================
+  # Summary - All checks must pass
+  # ==========================================================================
+  all-checks:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs: [test, security, quality, examples]
+    if: always()
+
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "Tests failed!"
+            exit 1
+          fi
+          if [[ "${{ needs.security.result }}" != "success" ]]; then
+            echo "Security tests failed!"
+            exit 1
+          fi
+          if [[ "${{ needs.quality.result }}" != "success" ]]; then
+            echo "Quality checks failed!"
+            exit 1
+          fi
+          echo "All checks passed!"

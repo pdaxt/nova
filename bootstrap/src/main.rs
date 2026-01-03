@@ -4,18 +4,68 @@
 //! the first version of the Nova compiler written in Nova itself.
 //!
 //! Once Stage 1 is complete, this code will be archived and no longer maintained.
+//!
+//! # Architecture
+//!
+//! ```text
+//! Source Code
+//!     │
+//!     ▼
+//! ┌─────────┐
+//! │  Lexer  │  → Tokens (12 bytes each)
+//! └────┬────┘
+//!      │
+//!      ▼
+//! ┌─────────┐
+//! │ Parser  │  → AST (Abstract Syntax Tree)
+//! └────┬────┘
+//!      │
+//!      ▼
+//! ┌─────────┐
+//! │  Types  │  → Typed AST
+//! └────┬────┘
+//!      │
+//!      ▼
+//! ┌─────────┐
+//! │   IR    │  → Intermediate Representation
+//! └────┬────┘
+//!      │
+//!      ▼
+//! ┌─────────┐
+//! │ Codegen │  → WASM Binary
+//! └─────────┘
+//! ```
+//!
+//! # Contributing
+//!
+//! See `README.md` in this directory for:
+//! - How to build and test
+//! - Module guide
+//! - Good first issues
+//! - Code style guidelines
+//!
+//! # Quick Commands
+//!
+//! ```bash
+//! cargo test              # Run all 90 tests
+//! cargo run -- lex FILE   # See tokens
+//! cargo run -- parse FILE # See AST
+//! cargo run -- compile FILE -o out.wasm
+//! ```
 
+mod ast;
+mod codegen;
+mod error;
+mod ir;
+mod lexer;
+mod parser;
 mod span;
 #[cfg(test)]
 mod span_attack;
-mod lexer;
 mod token;
-mod ast;
-mod parser;
+#[cfg(test)]
+mod token_attack;
 mod types;
-mod ir;
-mod codegen;
-mod error;
 
 use std::env;
 use std::fs;
@@ -80,7 +130,7 @@ fn cmd_compile(args: &[String]) {
     };
 
     // Parse
-    let ast = match parser::parse(tokens) {
+    let ast = match parser::parse(&source, tokens) {
         Ok(a) => a,
         Err(e) => {
             error::report(&source, path.to_str().unwrap_or("input"), e);
@@ -165,7 +215,7 @@ fn cmd_parse(args: &[String]) {
         }
     };
 
-    match parser::parse(tokens) {
+    match parser::parse(&source, tokens) {
         Ok(ast) => {
             println!("{:#?}", ast);
         }

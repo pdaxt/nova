@@ -29,7 +29,7 @@ use std::fmt;
 /// Fields are private to enforce the `start <= end` invariant.
 /// Use `start()` and `end()` getters to access values.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-#[repr(C)]  // Ensure predictable layout
+#[repr(C)] // Ensure predictable layout
 pub struct Span {
     /// Byte offset of the first character (inclusive)
     start: u32,
@@ -66,12 +66,14 @@ impl Span {
     /// Uses saturating subtraction as defense-in-depth, though
     /// the invariant guarantees `end >= start`.
     #[inline]
+    #[allow(dead_code)]
     pub const fn len(&self) -> u32 {
         self.end.saturating_sub(self.start)
     }
 
     /// Returns true if the span has zero length.
     #[inline]
+    #[allow(dead_code)]
     pub const fn is_empty(&self) -> bool {
         self.start == self.end
     }
@@ -80,6 +82,7 @@ impl Span {
     ///
     /// The check is `start <= offset < end` (half-open interval).
     #[inline]
+    #[allow(dead_code)]
     pub const fn contains(&self, offset: u32) -> bool {
         self.start <= offset && offset < self.end
     }
@@ -89,13 +92,22 @@ impl Span {
     /// The resulting span starts at the minimum start and ends at the maximum end.
     #[inline]
     pub const fn merge(self, other: Span) -> Span {
-        let start = if self.start < other.start { self.start } else { other.start };
-        let end = if self.end > other.end { self.end } else { other.end };
+        let start = if self.start < other.start {
+            self.start
+        } else {
+            other.start
+        };
+        let end = if self.end > other.end {
+            self.end
+        } else {
+            other.end
+        };
         Span { start, end }
     }
 
     /// Creates a dummy span (0, 0) for synthetic nodes.
     #[inline]
+    #[allow(dead_code)]
     pub const fn dummy() -> Self {
         Self { start: 0, end: 0 }
     }
@@ -217,7 +229,7 @@ mod tests {
     #[test]
     fn span_copy_semantics() {
         let a = Span::new(0, 10);
-        let b = a;  // Copy
+        let b = a; // Copy
         assert_eq!(a, b);
         assert_eq!(a.start(), b.start());
     }
@@ -228,7 +240,7 @@ mod tests {
 
         let mut set = HashSet::new();
         set.insert(Span::new(0, 10));
-        set.insert(Span::new(0, 10));  // Duplicate
+        set.insert(Span::new(0, 10)); // Duplicate
         set.insert(Span::new(5, 15));
 
         assert_eq!(set.len(), 2);

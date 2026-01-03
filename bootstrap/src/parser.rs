@@ -1,35 +1,161 @@
 //! Parser for Nova
 //!
-//! Converts a stream of tokens into an AST.
+//! Converts a stream of tokens into an AST using recursive descent with
+//! Pratt parsing for expressions.
 //!
-//! # TODO
+//! # Example
 //!
-//! This module is a work in progress. Contributors welcome!
+//! ```ignore
+//! use nova::lexer::lex;
+//! use nova::parser::parse;
 //!
-//! See: https://github.com/nova-lang/nova/issues/2
+//! let source = "fn main() { return 42; }";
+//! let tokens = lex(source)?;
+//! let ast = parse(source, tokens)?;
+//! ```
+//!
+//! # Design (ADR-005)
+//!
+//! The parser requires access to the source string because tokens do not store
+//! literal values. Values are extracted from source using token spans:
+//!
+//! ```ignore
+//! let text = &source[token.span().start() as usize..token.span().end() as usize];
+//! let value: i64 = text.parse()?;
+//! ```
+//!
+//! This keeps tokens at a fixed 12 bytes regardless of literal size.
+//!
+//! # Contributing
+//!
+//! **Good first issues in this module:**
+//!
+//! - [ ] Implement `parse_struct()` for struct definitions
+//! - [ ] Implement `parse_enum()` for enum definitions
+//! - [ ] Implement `parse_match_expr()` for match expressions
+//! - [ ] Implement `parse_generics()` for generic parameters
+//! - [ ] Add better error recovery (don't stop at first error)
+//!
+//! **How to add a new syntax construct:**
+//!
+//! 1. Add AST node types in `ast.rs` if needed
+//! 2. Implement the parsing function here
+//! 3. Add tests in the `tests` module at the bottom
+//! 4. Update the spec in `spec/syntax.md`
+//! 5. Run `cargo test parser` to verify
+//!
+//! **Pratt Parsing:**
+//!
+//! We use Pratt parsing for expressions. Each operator has:
+//! - Left binding power (how tightly it binds on the left)
+//! - Right binding power (how tightly it binds on the right)
+//!
+//! See `parse_expr_bp()` for the implementation.
 
 use crate::ast::*;
 use crate::error::NovaError;
 use crate::token::{Span, Token, TokenKind};
 
-/// Parse tokens into an AST
-pub fn parse(tokens: Vec<Token>) -> Result<Program, NovaError> {
-    let mut parser = Parser::new(tokens);
+/// Parse tokens into an AST.
+///
+/// # Arguments
+///
+/// * `source` - The original source code (needed to extract literal values)
+/// * `tokens` - The tokens produced by the lexer
+pub fn parse(source: &str, tokens: Vec<Token>) -> Result<Program, NovaError> {
+    let mut parser = Parser::new(source, tokens);
     parser.parse_program()
 }
 
-/// The parser state
-struct Parser {
+/// The parser state.
+struct Parser<'a> {
+    /// The source code (for extracting literal values via span)
+    source: &'a str,
+    /// The token stream
     tokens: Vec<Token>,
+    /// Current position in token stream
     current: usize,
 }
 
-impl Parser {
-    fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0 }
+impl<'a> Parser<'a> {
+    fn new(source: &'a str, tokens: Vec<Token>) -> Self {
+        Self {
+            source,
+            tokens,
+            current: 0,
+        }
     }
 
-    /// Parse a complete program
+    // ========================================================================
+    // Source extraction helpers
+    // ========================================================================
+
+    /// Extracts the source text for a span.
+    #[inline]
+    fn text(&self, span: Span) -> &str {
+        &self.source[span.start() as usize..span.end() as usize]
+    }
+
+    /// Extracts the source text for a token.
+    #[inline]
+    #[allow(dead_code)]
+    fn token_text(&self, token: &Token) -> &str {
+        self.text(token.span())
+    }
+
+    /// Parses an integer from the source at the given span.
+    fn parse_int(&self, span: Span) -> Result<i64, NovaError> {
+        let text = self.text(span);
+
+        // Handle different bases
+        let (radix, text) = if text.starts_with("0x") || text.starts_with("0X") {
+            (16, &text[2..])
+        } else if text.starts_with("0b") || text.starts_with("0B") {
+            (2, &text[2..])
+        } else if text.starts_with("0o") || text.starts_with("0O") {
+            (8, &text[2..])
+        } else {
+            (10, text)
+        };
+
+        // Remove underscores
+        let clean: String = text.chars().filter(|c| *c != '_').collect();
+
+        i64::from_str_radix(&clean, radix).map_err(|_| NovaError::InvalidLiteral {
+            kind: "integer",
+            span,
+        })
+    }
+
+    /// Parses a float from the source at the given span.
+    fn parse_float(&self, span: Span) -> Result<f64, NovaError> {
+        let text = self.text(span);
+        let clean: String = text.chars().filter(|c| *c != '_').collect();
+        clean.parse().map_err(|_| NovaError::InvalidLiteral {
+            kind: "float",
+            span,
+        })
+    }
+
+    /// Extracts a string literal (removes quotes and unescapes).
+    fn parse_string(&self, span: Span) -> String {
+        let text = self.text(span);
+        // Remove surrounding quotes
+        let inner = &text[1..text.len() - 1];
+        // TODO: Proper escape sequence handling
+        inner
+            .replace("\\n", "\n")
+            .replace("\\t", "\t")
+            .replace("\\r", "\r")
+            .replace("\\\\", "\\")
+            .replace("\\\"", "\"")
+    }
+
+    // ========================================================================
+    // Program parsing
+    // ========================================================================
+
+    /// Parse a complete program.
     fn parse_program(&mut self) -> Result<Program, NovaError> {
         let mut items = Vec::new();
 
@@ -40,9 +166,9 @@ impl Parser {
         Ok(Program { items })
     }
 
-    /// Parse a top-level item
+    /// Parse a top-level item.
     fn parse_item(&mut self) -> Result<Item, NovaError> {
-        match self.peek().kind {
+        match self.peek().kind() {
             TokenKind::Fn => self.parse_function().map(Item::Function),
             TokenKind::Struct => self.parse_struct().map(Item::Struct),
             TokenKind::Enum => self.parse_enum().map(Item::Enum),
@@ -52,15 +178,15 @@ impl Parser {
             TokenKind::Type => self.parse_type_alias().map(Item::TypeAlias),
             _ => Err(NovaError::UnexpectedToken {
                 expected: "item".to_string(),
-                found: self.peek().kind.clone(),
-                span: self.peek().span,
+                found: self.peek().kind(),
+                span: self.peek().span(),
             }),
         }
     }
 
-    /// Parse a function definition
+    /// Parse a function definition.
     fn parse_function(&mut self) -> Result<Function, NovaError> {
-        let start = self.expect(TokenKind::Fn)?.span;
+        let start = self.expect(TokenKind::Fn)?.span();
 
         let name = self.parse_ident()?;
         let generics = self.parse_generics()?;
@@ -69,14 +195,14 @@ impl Parser {
         let params = self.parse_params()?;
         self.expect(TokenKind::RParen)?;
 
-        let return_type = if self.check(&TokenKind::Arrow) {
+        let return_type = if self.check(TokenKind::Arrow) {
             self.advance();
             Some(self.parse_type()?)
         } else {
             None
         };
 
-        let where_clause = if self.check(&TokenKind::Where) {
+        let where_clause = if self.check(TokenKind::Where) {
             Some(self.parse_where_clause()?)
         } else {
             None
@@ -96,18 +222,18 @@ impl Parser {
         })
     }
 
-    /// Parse function parameters
+    /// Parse function parameters.
     fn parse_params(&mut self) -> Result<Vec<Param>, NovaError> {
         let mut params = Vec::new();
 
-        while !self.check(&TokenKind::RParen) && !self.is_at_end() {
+        while !self.check(TokenKind::RParen) && !self.is_at_end() {
             let pattern = self.parse_pattern()?;
             self.expect(TokenKind::Colon)?;
             let ty = self.parse_type()?;
             let span = pattern.span.merge(ty.span);
             params.push(Param { pattern, ty, span });
 
-            if !self.check(&TokenKind::RParen) {
+            if !self.check(TokenKind::RParen) {
                 self.expect(TokenKind::Comma)?;
             }
         }
@@ -115,16 +241,16 @@ impl Parser {
         Ok(params)
     }
 
-    /// Parse a block
+    /// Parse a block.
     fn parse_block(&mut self) -> Result<Block, NovaError> {
-        let start = self.expect(TokenKind::LBrace)?.span;
+        let start = self.expect(TokenKind::LBrace)?.span();
         let mut stmts = Vec::new();
 
-        while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
+        while !self.check(TokenKind::RBrace) && !self.is_at_end() {
             stmts.push(self.parse_stmt()?);
         }
 
-        let end = self.expect(TokenKind::RBrace)?.span;
+        let end = self.expect(TokenKind::RBrace)?.span();
 
         Ok(Block {
             stmts,
@@ -132,16 +258,16 @@ impl Parser {
         })
     }
 
-    /// Parse a statement
+    /// Parse a statement.
     fn parse_stmt(&mut self) -> Result<Stmt, NovaError> {
-        match self.peek().kind {
+        match self.peek().kind() {
             TokenKind::Let => self.parse_let_stmt().map(Stmt::Let),
             TokenKind::Fn | TokenKind::Struct | TokenKind::Enum => {
                 self.parse_item().map(Stmt::Item)
             }
             _ => {
                 let expr = self.parse_expr()?;
-                let has_semi = self.check(&TokenKind::Semi);
+                let has_semi = self.check(TokenKind::Semi);
                 if has_semi {
                     self.advance();
                 }
@@ -155,27 +281,27 @@ impl Parser {
         }
     }
 
-    /// Parse a let statement
+    /// Parse a let statement.
     fn parse_let_stmt(&mut self) -> Result<LetStmt, NovaError> {
-        let start = self.expect(TokenKind::Let)?.span;
+        let start = self.expect(TokenKind::Let)?.span();
 
         let pattern = self.parse_pattern()?;
 
-        let ty = if self.check(&TokenKind::Colon) {
+        let ty = if self.check(TokenKind::Colon) {
             self.advance();
             Some(self.parse_type()?)
         } else {
             None
         };
 
-        let value = if self.check(&TokenKind::Eq) {
+        let value = if self.check(TokenKind::Eq) {
             self.advance();
             Some(self.parse_expr()?)
         } else {
             None
         };
 
-        let end = self.expect(TokenKind::Semi)?.span;
+        let end = self.expect(TokenKind::Semi)?.span();
 
         Ok(LetStmt {
             pattern,
@@ -185,19 +311,23 @@ impl Parser {
         })
     }
 
-    /// Parse an expression
+    // ========================================================================
+    // Expression parsing (Pratt parser)
+    // ========================================================================
+
+    /// Parse an expression.
     fn parse_expr(&mut self) -> Result<Expr, NovaError> {
         self.parse_expr_bp(0)
     }
 
-    /// Parse expression with binding power (Pratt parsing)
+    /// Parse expression with binding power (Pratt parsing).
     fn parse_expr_bp(&mut self, min_bp: u8) -> Result<Expr, NovaError> {
         // Parse prefix
         let mut lhs = self.parse_prefix()?;
 
         loop {
             // Check for postfix or infix
-            let op = match &self.peek().kind {
+            let op = match self.peek().kind() {
                 // Binary operators
                 TokenKind::Plus => Some((BinOp::Add, 10, 11)),
                 TokenKind::Minus => Some((BinOp::Sub, 10, 11)),
@@ -212,7 +342,7 @@ impl Parser {
                 TokenKind::LtLt => Some((BinOp::Shl, 9, 10)),
                 TokenKind::GtGt => Some((BinOp::Shr, 9, 10)),
                 TokenKind::EqEq => Some((BinOp::Eq, 7, 8)),
-                TokenKind::NotEq => Some((BinOp::Ne, 7, 8)),
+                TokenKind::BangEq => Some((BinOp::Ne, 7, 8)),
                 TokenKind::Lt => Some((BinOp::Lt, 8, 9)),
                 TokenKind::LtEq => Some((BinOp::Le, 8, 9)),
                 TokenKind::Gt => Some((BinOp::Gt, 8, 9)),
@@ -237,12 +367,12 @@ impl Parser {
             }
 
             // Postfix operators
-            match &self.peek().kind {
+            match self.peek().kind() {
                 TokenKind::LParen => {
                     // Function call
                     self.advance();
                     let args = self.parse_args()?;
-                    let end = self.expect(TokenKind::RParen)?.span;
+                    let end = self.expect(TokenKind::RParen)?.span();
                     let span = lhs.span.merge(end);
                     lhs = Expr {
                         kind: ExprKind::Call(Box::new(lhs), args),
@@ -253,7 +383,7 @@ impl Parser {
                     // Index
                     self.advance();
                     let index = self.parse_expr()?;
-                    let end = self.expect(TokenKind::RBracket)?.span;
+                    let end = self.expect(TokenKind::RBracket)?.span();
                     let span = lhs.span.merge(end);
                     lhs = Expr {
                         kind: ExprKind::Index(Box::new(lhs), Box::new(index)),
@@ -272,7 +402,7 @@ impl Parser {
                 }
                 TokenKind::Question => {
                     // Try operator
-                    let end = self.advance().span;
+                    let end = self.advance().span();
                     let span = lhs.span.merge(end);
                     lhs = Expr {
                         kind: ExprKind::Try(Box::new(lhs)),
@@ -286,11 +416,11 @@ impl Parser {
         Ok(lhs)
     }
 
-    /// Parse a prefix expression (primary or unary)
+    /// Parse a prefix expression (primary or unary).
     fn parse_prefix(&mut self) -> Result<Expr, NovaError> {
-        match &self.peek().kind {
+        match self.peek().kind() {
             TokenKind::Minus => {
-                let start = self.advance().span;
+                let start = self.advance().span();
                 let expr = self.parse_expr_bp(14)?; // High precedence for unary
                 let span = start.merge(expr.span);
                 Ok(Expr {
@@ -299,7 +429,7 @@ impl Parser {
                 })
             }
             TokenKind::Bang => {
-                let start = self.advance().span;
+                let start = self.advance().span();
                 let expr = self.parse_expr_bp(14)?;
                 let span = start.merge(expr.span);
                 Ok(Expr {
@@ -308,8 +438,8 @@ impl Parser {
                 })
             }
             TokenKind::Amp => {
-                let start = self.advance().span;
-                let mutable = self.check(&TokenKind::Mut);
+                let start = self.advance().span();
+                let mutable = self.check(TokenKind::Mut);
                 if mutable {
                     self.advance();
                 }
@@ -321,7 +451,7 @@ impl Parser {
                 })
             }
             TokenKind::Star => {
-                let start = self.advance().span;
+                let start = self.advance().span();
                 let expr = self.parse_expr_bp(14)?;
                 let span = start.merge(expr.span);
                 Ok(Expr {
@@ -333,47 +463,52 @@ impl Parser {
         }
     }
 
-    /// Parse a primary expression
+    /// Parse a primary expression.
     fn parse_primary(&mut self) -> Result<Expr, NovaError> {
-        let token = self.peek().clone();
+        let token = self.peek();
+        let kind = token.kind();
+        let span = token.span();
 
-        match token.kind {
-            TokenKind::Int(n) => {
+        match kind {
+            TokenKind::IntLit => {
                 self.advance();
+                let value = self.parse_int(span)?;
                 Ok(Expr {
-                    kind: ExprKind::Literal(Literal::Int(n)),
-                    span: token.span,
+                    kind: ExprKind::Literal(Literal::Int(value)),
+                    span,
                 })
             }
-            TokenKind::Float(n) => {
+            TokenKind::FloatLit => {
                 self.advance();
+                let value = self.parse_float(span)?;
                 Ok(Expr {
-                    kind: ExprKind::Literal(Literal::Float(n)),
-                    span: token.span,
+                    kind: ExprKind::Literal(Literal::Float(value)),
+                    span,
                 })
             }
-            TokenKind::String(s) => {
+            TokenKind::StringLit => {
                 self.advance();
+                let value = self.parse_string(span);
                 Ok(Expr {
-                    kind: ExprKind::Literal(Literal::String(s)),
-                    span: token.span,
+                    kind: ExprKind::Literal(Literal::String(value)),
+                    span,
                 })
             }
             TokenKind::True => {
                 self.advance();
                 Ok(Expr {
                     kind: ExprKind::Literal(Literal::Bool(true)),
-                    span: token.span,
+                    span,
                 })
             }
             TokenKind::False => {
                 self.advance();
                 Ok(Expr {
                     kind: ExprKind::Literal(Literal::Bool(false)),
-                    span: token.span,
+                    span,
                 })
             }
-            TokenKind::Ident(_) => {
+            TokenKind::Ident => {
                 let path = self.parse_path()?;
                 Ok(Expr {
                     span: path.span,
@@ -381,27 +516,27 @@ impl Parser {
                 })
             }
             TokenKind::LParen => {
-                let start = self.advance().span;
-                if self.check(&TokenKind::RParen) {
+                let start = self.advance().span();
+                if self.check(TokenKind::RParen) {
                     // Unit tuple
-                    let end = self.advance().span;
+                    let end = self.advance().span();
                     Ok(Expr {
                         kind: ExprKind::Tuple(vec![]),
                         span: start.merge(end),
                     })
                 } else {
                     let expr = self.parse_expr()?;
-                    if self.check(&TokenKind::Comma) {
+                    if self.check(TokenKind::Comma) {
                         // Tuple
                         let mut exprs = vec![expr];
-                        while self.check(&TokenKind::Comma) {
+                        while self.check(TokenKind::Comma) {
                             self.advance();
-                            if self.check(&TokenKind::RParen) {
+                            if self.check(TokenKind::RParen) {
                                 break;
                             }
                             exprs.push(self.parse_expr()?);
                         }
-                        let end = self.expect(TokenKind::RParen)?.span;
+                        let end = self.expect(TokenKind::RParen)?.span();
                         Ok(Expr {
                             kind: ExprKind::Tuple(exprs),
                             span: start.merge(end),
@@ -414,15 +549,15 @@ impl Parser {
                 }
             }
             TokenKind::LBracket => {
-                let start = self.advance().span;
+                let start = self.advance().span();
                 let mut exprs = Vec::new();
-                while !self.check(&TokenKind::RBracket) && !self.is_at_end() {
+                while !self.check(TokenKind::RBracket) && !self.is_at_end() {
                     exprs.push(self.parse_expr()?);
-                    if !self.check(&TokenKind::RBracket) {
+                    if !self.check(TokenKind::RBracket) {
                         self.expect(TokenKind::Comma)?;
                     }
                 }
-                let end = self.expect(TokenKind::RBracket)?.span;
+                let end = self.expect(TokenKind::RBracket)?.span();
                 Ok(Expr {
                     kind: ExprKind::Array(exprs),
                     span: start.merge(end),
@@ -440,8 +575,8 @@ impl Parser {
             TokenKind::While => self.parse_while_expr(),
             TokenKind::For => self.parse_for_expr(),
             TokenKind::Return => {
-                let start = self.advance().span;
-                let value = if !self.check(&TokenKind::Semi) && !self.check(&TokenKind::RBrace) {
+                let start = self.advance().span();
+                let value = if !self.check(TokenKind::Semi) && !self.check(TokenKind::RBrace) {
                     Some(Box::new(self.parse_expr()?))
                 } else {
                     None
@@ -457,8 +592,8 @@ impl Parser {
                 })
             }
             TokenKind::Break => {
-                let start = self.advance().span;
-                let value = if !self.check(&TokenKind::Semi) && !self.check(&TokenKind::RBrace) {
+                let start = self.advance().span();
+                let value = if !self.check(TokenKind::Semi) && !self.check(TokenKind::RBrace) {
                     Some(Box::new(self.parse_expr()?))
                 } else {
                     None
@@ -474,7 +609,7 @@ impl Parser {
                 })
             }
             TokenKind::Continue => {
-                let span = self.advance().span;
+                let span = self.advance().span();
                 Ok(Expr {
                     kind: ExprKind::Continue,
                     span,
@@ -482,40 +617,43 @@ impl Parser {
             }
             _ => Err(NovaError::UnexpectedToken {
                 expected: "expression".to_string(),
-                found: token.kind,
-                span: token.span,
+                found: kind,
+                span,
             }),
         }
     }
 
-    // ==================== Helpers ====================
+    // ========================================================================
+    // Helpers
+    // ========================================================================
 
-    /// Parse an identifier
+    /// Parse an identifier.
     fn parse_ident(&mut self) -> Result<Ident, NovaError> {
-        match self.peek().kind.clone() {
-            TokenKind::Ident(name) => {
-                let span = self.advance().span;
-                Ok(Ident { name, span })
-            }
-            _ => Err(NovaError::UnexpectedToken {
+        if self.peek().kind() == TokenKind::Ident {
+            let token = self.advance();
+            let span = token.span();
+            let name = self.text(span).to_string();
+            Ok(Ident { name, span })
+        } else {
+            Err(NovaError::UnexpectedToken {
                 expected: "identifier".to_string(),
-                found: self.peek().kind.clone(),
-                span: self.peek().span,
-            }),
+                found: self.peek().kind(),
+                span: self.peek().span(),
+            })
         }
     }
 
-    /// Parse a path
+    /// Parse a path.
     fn parse_path(&mut self) -> Result<Path, NovaError> {
         let mut segments = Vec::new();
-        let start = self.peek().span;
+        let start = self.peek().span();
 
         loop {
             let ident = self.parse_ident()?;
-            let generics = if self.check(&TokenKind::ColonColon) {
+            let generics = if self.check(TokenKind::ColonColon) {
                 // Check for turbofish ::<>
-                let mut chars = self.tokens.get(self.current + 1);
-                if matches!(chars, Some(Token { kind: TokenKind::Lt, .. })) {
+                let next = self.tokens.get(self.current + 1);
+                if matches!(next, Some(t) if t.kind() == TokenKind::Lt) {
                     self.advance(); // ::
                     self.parse_generic_args()?
                 } else {
@@ -531,7 +669,7 @@ impl Parser {
                 generics,
             });
 
-            if self.check(&TokenKind::ColonColon) {
+            if self.check(TokenKind::ColonColon) {
                 self.advance();
             } else {
                 break;
@@ -545,29 +683,29 @@ impl Parser {
         })
     }
 
-    /// Parse a type
+    /// Parse a type.
     fn parse_type(&mut self) -> Result<Type, NovaError> {
-        let start = self.peek().span;
+        let start = self.peek().span();
 
-        match &self.peek().kind {
+        match self.peek().kind() {
             TokenKind::LParen => {
                 self.advance();
-                if self.check(&TokenKind::RParen) {
-                    let end = self.advance().span;
+                if self.check(TokenKind::RParen) {
+                    let end = self.advance().span();
                     return Ok(Type {
                         kind: TypeKind::Tuple(vec![]),
                         span: start.merge(end),
                     });
                 }
                 let mut types = vec![self.parse_type()?];
-                while self.check(&TokenKind::Comma) {
+                while self.check(TokenKind::Comma) {
                     self.advance();
-                    if self.check(&TokenKind::RParen) {
+                    if self.check(TokenKind::RParen) {
                         break;
                     }
                     types.push(self.parse_type()?);
                 }
-                let end = self.expect(TokenKind::RParen)?.span;
+                let end = self.expect(TokenKind::RParen)?.span();
                 Ok(Type {
                     kind: TypeKind::Tuple(types),
                     span: start.merge(end),
@@ -576,16 +714,16 @@ impl Parser {
             TokenKind::LBracket => {
                 self.advance();
                 let elem_type = self.parse_type()?;
-                if self.check(&TokenKind::Semi) {
+                if self.check(TokenKind::Semi) {
                     self.advance();
                     let size = self.parse_expr()?;
-                    let end = self.expect(TokenKind::RBracket)?.span;
+                    let end = self.expect(TokenKind::RBracket)?.span();
                     Ok(Type {
                         kind: TypeKind::Array(Box::new(elem_type), Box::new(size)),
                         span: start.merge(end),
                     })
                 } else {
-                    let end = self.expect(TokenKind::RBracket)?.span;
+                    let end = self.expect(TokenKind::RBracket)?.span();
                     Ok(Type {
                         kind: TypeKind::Slice(Box::new(elem_type)),
                         span: start.merge(end),
@@ -594,7 +732,7 @@ impl Parser {
             }
             TokenKind::Amp => {
                 self.advance();
-                let mutable = self.check(&TokenKind::Mut);
+                let mutable = self.check(TokenKind::Mut);
                 if mutable {
                     self.advance();
                 }
@@ -606,13 +744,13 @@ impl Parser {
                 })
             }
             TokenKind::Bang => {
-                let span = self.advance().span;
+                let span = self.advance().span();
                 Ok(Type {
                     kind: TypeKind::Never,
                     span,
                 })
             }
-            TokenKind::Ident(_) => {
+            TokenKind::Ident => {
                 let path = self.parse_path()?;
                 Ok(Type {
                     span: path.span,
@@ -621,83 +759,86 @@ impl Parser {
             }
             _ => Err(NovaError::UnexpectedToken {
                 expected: "type".to_string(),
-                found: self.peek().kind.clone(),
-                span: self.peek().span,
+                found: self.peek().kind(),
+                span: self.peek().span(),
             }),
         }
     }
 
-    /// Parse a pattern
+    /// Parse a pattern.
     fn parse_pattern(&mut self) -> Result<Pattern, NovaError> {
-        let start = self.peek().span;
+        let start = self.peek().span();
 
-        match &self.peek().kind.clone() {
-            TokenKind::Ident(name) => {
-                let span = self.advance().span;
+        match self.peek().kind() {
+            TokenKind::Ident => {
+                let token = self.advance();
+                let span = token.span();
+                let name = self.text(span).to_string();
                 Ok(Pattern {
-                    kind: PatternKind::Ident(
-                        Ident {
-                            name: name.clone(),
-                            span,
-                        },
-                        false,
-                    ),
+                    kind: PatternKind::Ident(Ident { name, span }, false),
                     span,
                 })
             }
             TokenKind::Mut => {
                 self.advance();
-                if let TokenKind::Ident(name) = &self.peek().kind.clone() {
-                    let span = self.advance().span;
+                if self.peek().kind() == TokenKind::Ident {
+                    let token = self.advance();
+                    let span = token.span();
+                    let name = self.text(span).to_string();
                     Ok(Pattern {
-                        kind: PatternKind::Ident(
-                            Ident {
-                                name: name.clone(),
-                                span,
-                            },
-                            true,
-                        ),
+                        kind: PatternKind::Ident(Ident { name, span }, true),
                         span: start.merge(span),
                     })
                 } else {
                     Err(NovaError::UnexpectedToken {
                         expected: "identifier".to_string(),
-                        found: self.peek().kind.clone(),
-                        span: self.peek().span,
+                        found: self.peek().kind(),
+                        span: self.peek().span(),
                     })
                 }
             }
-            TokenKind::Int(n) => {
-                let span = self.advance().span;
+            TokenKind::IntLit => {
+                let token = self.advance();
+                let span = token.span();
+                let value = self.parse_int(span)?;
                 Ok(Pattern {
-                    kind: PatternKind::Literal(Literal::Int(*n)),
+                    kind: PatternKind::Literal(Literal::Int(value)),
                     span,
                 })
             }
-            TokenKind::String(s) => {
-                let s = s.clone();
-                let span = self.advance().span;
+            TokenKind::StringLit => {
+                let token = self.advance();
+                let span = token.span();
+                let value = self.parse_string(span);
                 Ok(Pattern {
-                    kind: PatternKind::Literal(Literal::String(s)),
+                    kind: PatternKind::Literal(Literal::String(value)),
                     span,
                 })
             }
             TokenKind::True => {
-                let span = self.advance().span;
+                let span = self.advance().span();
                 Ok(Pattern {
                     kind: PatternKind::Literal(Literal::Bool(true)),
                     span,
                 })
             }
             TokenKind::False => {
-                let span = self.advance().span;
+                let span = self.advance().span();
                 Ok(Pattern {
                     kind: PatternKind::Literal(Literal::Bool(false)),
                     span,
                 })
             }
+            TokenKind::Underscore => {
+                let span = self.advance().span();
+                Ok(Pattern {
+                    kind: PatternKind::Wildcard,
+                    span,
+                })
+            }
             _ => {
-                let span = self.advance().span;
+                // Default wildcard for unrecognized patterns
+                let span = self.advance().span();
                 Ok(Pattern {
                     kind: PatternKind::Wildcard,
                     span,
@@ -706,8 +847,9 @@ impl Parser {
         }
     }
 
-    // ==================== Stub implementations ====================
-    // TODO: These need to be implemented by contributors
+    // ========================================================================
+    // Stub implementations (TODO: implement by contributors)
+    // ========================================================================
 
     fn parse_generics(&mut self) -> Result<Vec<GenericParam>, NovaError> {
         // TODO: Implement generic parameter parsing
@@ -721,7 +863,7 @@ impl Parser {
 
     fn parse_where_clause(&mut self) -> Result<WhereClause, NovaError> {
         // TODO: Implement where clause parsing
-        let span = self.advance().span;
+        let span = self.advance().span();
         Ok(WhereClause {
             predicates: vec![],
             span,
@@ -759,12 +901,12 @@ impl Parser {
     }
 
     fn parse_if_expr(&mut self) -> Result<Expr, NovaError> {
-        let start = self.expect(TokenKind::If)?.span;
+        let start = self.expect(TokenKind::If)?.span();
         let cond = self.parse_expr()?;
         let then_block = self.parse_block()?;
-        let else_expr = if self.check(&TokenKind::Else) {
+        let else_expr = if self.check(TokenKind::Else) {
             self.advance();
-            if self.check(&TokenKind::If) {
+            if self.check(TokenKind::If) {
                 Some(Box::new(self.parse_if_expr()?))
             } else {
                 let block = self.parse_block()?;
@@ -793,7 +935,7 @@ impl Parser {
     }
 
     fn parse_while_expr(&mut self) -> Result<Expr, NovaError> {
-        let start = self.expect(TokenKind::While)?.span;
+        let start = self.expect(TokenKind::While)?.span();
         let cond = self.parse_expr()?;
         let body = self.parse_block()?;
         let span = start.merge(body.span);
@@ -804,7 +946,7 @@ impl Parser {
     }
 
     fn parse_for_expr(&mut self) -> Result<Expr, NovaError> {
-        let start = self.expect(TokenKind::For)?.span;
+        let start = self.expect(TokenKind::For)?.span();
         let pattern = self.parse_pattern()?;
         self.expect(TokenKind::In)?;
         let iter = self.parse_expr()?;
@@ -818,49 +960,51 @@ impl Parser {
 
     fn parse_args(&mut self) -> Result<Vec<Expr>, NovaError> {
         let mut args = Vec::new();
-        while !self.check(&TokenKind::RParen) && !self.is_at_end() {
+        while !self.check(TokenKind::RParen) && !self.is_at_end() {
             args.push(self.parse_expr()?);
-            if !self.check(&TokenKind::RParen) {
+            if !self.check(TokenKind::RParen) {
                 self.expect(TokenKind::Comma)?;
             }
         }
         Ok(args)
     }
 
-    // ==================== Token helpers ====================
+    // ========================================================================
+    // Token helpers
+    // ========================================================================
 
     fn peek(&self) -> &Token {
-        self.tokens.get(self.current).unwrap_or_else(|| {
-            self.tokens.last().expect("Token stream is empty")
-        })
+        self.tokens
+            .get(self.current)
+            .unwrap_or_else(|| self.tokens.last().expect("Token stream is empty"))
     }
 
     fn advance(&mut self) -> Token {
-        let token = self.peek().clone();
+        let token = *self.peek();
         if !self.is_at_end() {
             self.current += 1;
         }
         token
     }
 
-    fn check(&self, kind: &TokenKind) -> bool {
-        std::mem::discriminant(&self.peek().kind) == std::mem::discriminant(kind)
+    fn check(&self, kind: TokenKind) -> bool {
+        self.peek().kind() == kind
     }
 
     fn expect(&mut self, kind: TokenKind) -> Result<Token, NovaError> {
-        if self.check(&kind) {
+        if self.check(kind) {
             Ok(self.advance())
         } else {
             Err(NovaError::UnexpectedToken {
                 expected: kind.to_string(),
-                found: self.peek().kind.clone(),
-                span: self.peek().span,
+                found: self.peek().kind(),
+                span: self.peek().span(),
             })
         }
     }
 
     fn is_at_end(&self) -> bool {
-        matches!(self.peek().kind, TokenKind::Eof)
+        self.peek().kind() == TokenKind::Eof
     }
 }
 
@@ -871,15 +1015,41 @@ mod tests {
 
     #[test]
     fn test_parse_simple_fn() {
-        let tokens = lex("fn main() { return 42; }").unwrap();
-        let program = parse(tokens).unwrap();
+        let source = "fn main() { return 42; }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
         assert_eq!(program.items.len(), 1);
     }
 
     #[test]
     fn test_parse_let() {
-        let tokens = lex("fn main() { let x = 42; }").unwrap();
-        let program = parse(tokens).unwrap();
+        let source = "fn main() { let x = 42; }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        assert_eq!(program.items.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_hex_literal() {
+        let source = "fn main() { let x = 0xFF; }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        assert_eq!(program.items.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_binary_literal() {
+        let source = "fn main() { let x = 0b1010; }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        assert_eq!(program.items.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_underscore_pattern() {
+        let source = "fn main() { let _ = 42; }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
         assert_eq!(program.items.len(), 1);
     }
 }

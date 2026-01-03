@@ -8,8 +8,13 @@
 //!
 //! See: https://github.com/nova-lang/nova/issues/5
 
-use crate::types::{TypedProgram, TypedItem, TypedFunction, TypedBlock, TypedStmt, TypedExpr, TypedExprKind, TypeInfo};
-use crate::ast::{BinOp, UnaryOp, Literal};
+#![allow(dead_code)]
+
+use crate::ast::{BinOp, Literal, UnaryOp};
+use crate::types::{
+    TypeInfo, TypedBlock, TypedExpr, TypedExprKind, TypedFunction, TypedItem, TypedProgram,
+    TypedStmt,
+};
 
 /// An IR module (corresponds to a program)
 #[derive(Debug)]
@@ -202,7 +207,7 @@ impl Lowerer {
         self.next_block = 0;
 
         // Add parameters to locals
-        for (i, (name, ty)) in f.params.iter().enumerate() {
+        for (i, (name, _ty)) in f.params.iter().enumerate() {
             let value = self.emit(InstructionKind::GetParam(i));
             self.locals.push((name.clone(), value));
         }
@@ -215,7 +220,11 @@ impl Lowerer {
 
         Function {
             name: f.name.clone(),
-            params: f.params.iter().map(|(n, t)| (n.clone(), self.lower_type(t))).collect(),
+            params: f
+                .params
+                .iter()
+                .map(|(n, t)| (n.clone(), self.lower_type(t)))
+                .collect(),
             return_type: self.lower_type(&f.return_type),
             blocks: std::mem::take(&mut self.blocks),
         }
@@ -233,7 +242,7 @@ impl Lowerer {
 
     fn lower_stmt(&mut self, stmt: &TypedStmt) -> Option<ValueId> {
         match stmt {
-            TypedStmt::Let { name, ty, value } => {
+            TypedStmt::Let { name, ty: _, value } => {
                 if let Some(expr) = value {
                     let v = self.lower_expr(expr);
                     self.locals.push((name.clone(), v));
@@ -253,14 +262,13 @@ impl Lowerer {
                 Literal::String(s) => self.emit(InstructionKind::ConstString(s.clone())),
                 Literal::Char(c) => self.emit(InstructionKind::ConstInt(*c as i64)),
             },
-            TypedExprKind::Variable(name) => {
-                self.locals
-                    .iter()
-                    .rev()
-                    .find(|(n, _)| n == name)
-                    .map(|(_, v)| *v)
-                    .unwrap_or_else(|| self.emit(InstructionKind::ConstInt(0)))
-            }
+            TypedExprKind::Variable(name) => self
+                .locals
+                .iter()
+                .rev()
+                .find(|(n, _)| n == name)
+                .map(|(_, v)| *v)
+                .unwrap_or_else(|| self.emit(InstructionKind::ConstInt(0))),
             TypedExprKind::Binary(left, op, right) => {
                 let l = self.lower_expr(left);
                 let r = self.lower_expr(right);
@@ -307,17 +315,14 @@ impl Lowerer {
                 let arg_values: Vec<_> = args.iter().map(|a| self.lower_expr(a)).collect();
                 self.emit(InstructionKind::Call(name, arg_values))
             }
-            TypedExprKind::If(cond, then_block, else_expr) => {
+            TypedExprKind::If(_cond, then_block, _else_expr) => {
                 // TODO: Proper control flow
-                self.lower_block(then_block).unwrap_or_else(|| {
-                    self.emit(InstructionKind::ConstInt(0))
-                })
+                self.lower_block(then_block)
+                    .unwrap_or_else(|| self.emit(InstructionKind::ConstInt(0)))
             }
-            TypedExprKind::Block(block) => {
-                self.lower_block(block).unwrap_or_else(|| {
-                    self.emit(InstructionKind::ConstInt(0))
-                })
-            }
+            TypedExprKind::Block(block) => self
+                .lower_block(block)
+                .unwrap_or_else(|| self.emit(InstructionKind::ConstInt(0))),
             TypedExprKind::Return(value) => {
                 if let Some(v) = value {
                     self.lower_expr(v)
@@ -348,8 +353,9 @@ mod tests {
 
     #[test]
     fn test_lower_simple() {
-        let tokens = lex("fn main() { return 42; }").unwrap();
-        let ast = parse(tokens).unwrap();
+        let source = "fn main() { return 42; }";
+        let tokens = lex(source).unwrap();
+        let ast = parse(source, tokens).unwrap();
         let typed = check(&ast).unwrap();
         let ir = lower(&typed);
         assert_eq!(ir.functions.len(), 1);

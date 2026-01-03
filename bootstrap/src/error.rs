@@ -1,4 +1,8 @@
 //! Error types and reporting for Nova
+//!
+//! NOTE: Many error variants are defined for future use.
+
+#![allow(dead_code)]
 
 use crate::token::{Span, TokenKind};
 use ariadne::{Color, Label, Report, ReportKind, Source};
@@ -19,6 +23,10 @@ pub enum NovaError {
         span: Span,
     },
     InvalidNumber {
+        span: Span,
+    },
+    InvalidLiteral {
+        kind: &'static str,
         span: Span,
     },
 
@@ -67,6 +75,7 @@ impl NovaError {
             NovaError::UnterminatedString { span } => *span,
             NovaError::InvalidEscape { span, .. } => *span,
             NovaError::InvalidNumber { span } => *span,
+            NovaError::InvalidLiteral { span, .. } => *span,
             NovaError::UnexpectedToken { span, .. } => *span,
             NovaError::UnexpectedEof { span, .. } => *span,
             NovaError::TypeMismatch { span, .. } => *span,
@@ -83,22 +92,25 @@ impl NovaError {
             NovaError::InvalidCharacter { char, .. } => {
                 format!("Invalid character: {:?}", char)
             }
-            NovaError::UnterminatedString { .. } => {
-                "Unterminated string literal".to_string()
-            }
+            NovaError::UnterminatedString { .. } => "Unterminated string literal".to_string(),
             NovaError::InvalidEscape { char, .. } => {
                 format!("Invalid escape sequence: \\{}", char)
             }
-            NovaError::InvalidNumber { .. } => {
-                "Invalid number literal".to_string()
+            NovaError::InvalidNumber { .. } => "Invalid number literal".to_string(),
+            NovaError::InvalidLiteral { kind, .. } => {
+                format!("Invalid {} literal", kind)
             }
-            NovaError::UnexpectedToken { expected, found, .. } => {
+            NovaError::UnexpectedToken {
+                expected, found, ..
+            } => {
                 format!("Expected {}, found {}", expected, found)
             }
             NovaError::UnexpectedEof { expected, .. } => {
                 format!("Unexpected end of file, expected {}", expected)
             }
-            NovaError::TypeMismatch { expected, found, .. } => {
+            NovaError::TypeMismatch {
+                expected, found, ..
+            } => {
                 format!("Type mismatch: expected {}, found {}", expected, found)
             }
             NovaError::UndefinedVariable { name, .. } => {
@@ -121,6 +133,7 @@ impl NovaError {
             NovaError::UnterminatedString { .. } => "E0002",
             NovaError::InvalidEscape { .. } => "E0003",
             NovaError::InvalidNumber { .. } => "E0004",
+            NovaError::InvalidLiteral { .. } => "E0005",
             NovaError::UnexpectedToken { .. } => "E0100",
             NovaError::UnexpectedEof { .. } => "E0101",
             NovaError::TypeMismatch { .. } => "E0200",

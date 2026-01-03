@@ -7,13 +7,45 @@
 //! ```
 //! use nova::lexer::lex;
 //!
-//! let tokens = lex("let x = 42").unwrap();
+//! let tokens = lex("let x = 42;").unwrap();
+//! // Returns: [Let, Ident, Eq, IntLit, Semi, Eof]
 //! ```
+//!
+//! # Design (ADR-005)
+//!
+//! The lexer produces tokens with spans but NO literal values.
+//! Values are extracted from source text when needed:
+//!
+//! ```ignore
+//! let text = &source[span.start()..span.end()];
+//! let value: i64 = text.parse()?;
+//! ```
+//!
+//! This keeps tokens small (12 bytes) and cache-friendly.
+//!
+//! # Contributing
+//!
+//! **Good first issues in this module:**
+//!
+//! - [ ] Add raw string literals (`r"..."`, `r#"..."#`)
+//! - [ ] Improve error messages for unterminated strings
+//! - [ ] Add byte literals (`b'x'`, `b"bytes"`)
+//! - [ ] Handle Unicode escapes (`\u{1F600}`)
+//!
+//! **How to add a new token type:**
+//!
+//! 1. Add the variant to `TokenKind` in `token.rs`
+//! 2. Add lexing logic in `lex_token()` below
+//! 3. Add tests in the `tests` module at the bottom
+//! 4. Run `cargo test lexer` to verify
 
 use crate::error::NovaError;
 use crate::token::{Span, Token, TokenKind};
 
-/// Lex source code into tokens
+/// Lex source code into tokens.
+///
+/// Returns a vector of tokens ending with EOF.
+/// Literal values are NOT stored in tokens - use the span to extract from source.
 pub fn lex(source: &str) -> Result<Vec<Token>, NovaError> {
     let mut lexer = Lexer::new(source);
     lexer.lex_all()
@@ -47,10 +79,7 @@ impl<'a> Lexer<'a> {
 
             match self.advance() {
                 None => {
-                    tokens.push(Token::new(
-                        TokenKind::Eof,
-                        Span::new(self.current as u32, self.current as u32),
-                    ));
+                    tokens.push(Token::eof(self.current as u32));
                     break;
                 }
                 Some(c) => {
@@ -78,6 +107,8 @@ impl<'a> Lexer<'a> {
             '~' => TokenKind::Tilde,
             '@' => TokenKind::At,
             '?' => TokenKind::Question,
+            '#' => TokenKind::Hash,
+            '$' => TokenKind::Dollar,
 
             // Potentially multi-character tokens
             '+' => self.match_char('=', TokenKind::PlusEq, TokenKind::Plus),
@@ -121,7 +152,7 @@ impl<'a> Lexer<'a> {
                 }
             }
 
-            '!' => self.match_char('=', TokenKind::NotEq, TokenKind::Bang),
+            '!' => self.match_char('=', TokenKind::BangEq, TokenKind::Bang),
 
             '=' => {
                 if self.check('=') {
@@ -141,7 +172,12 @@ impl<'a> Lexer<'a> {
                     TokenKind::LtEq
                 } else if self.check('<') {
                     self.advance();
-                    TokenKind::LtLt
+                    if self.check('=') {
+                        self.advance();
+                        TokenKind::LtLtEq
+                    } else {
+                        TokenKind::LtLt
+                    }
                 } else {
                     TokenKind::Lt
                 }
@@ -153,7 +189,12 @@ impl<'a> Lexer<'a> {
                     TokenKind::GtEq
                 } else if self.check('>') {
                     self.advance();
-                    TokenKind::GtGt
+                    if self.check('=') {
+                        self.advance();
+                        TokenKind::GtGtEq
+                    } else {
+                        TokenKind::GtGt
+                    }
                 } else {
                     TokenKind::Gt
                 }
@@ -178,11 +219,14 @@ impl<'a> Lexer<'a> {
             // String literals
             '"' => self.lex_string()?,
 
+            // Character literals
+            '\'' => self.lex_char()?,
+
             // Numbers
-            '0'..='9' => self.lex_number(c)?,
+            '0'..='9' => self.lex_number()?,
 
             // Identifiers and keywords
-            'a'..='z' | 'A'..='Z' | '_' => self.lex_identifier(c),
+            'a'..='z' | 'A'..='Z' | '_' => self.lex_identifier(),
 
             // Unknown character
             _ => {
@@ -193,7 +237,10 @@ impl<'a> Lexer<'a> {
             }
         };
 
-        Ok(Token::new(kind, Span::new(self.start as u32, self.current as u32)))
+        Ok(Token::new(
+            kind,
+            Span::new(self.start as u32, self.current as u32),
+        ))
     }
 
     /// Advance and return the next character
@@ -218,7 +265,12 @@ impl<'a> Lexer<'a> {
     }
 
     /// Match a character, returning one of two token kinds
-    fn match_char(&mut self, expected: char, if_match: TokenKind, otherwise: TokenKind) -> TokenKind {
+    fn match_char(
+        &mut self,
+        expected: char,
+        if_match: TokenKind,
+        otherwise: TokenKind,
+    ) -> TokenKind {
         if self.check(expected) {
             self.advance();
             if_match
@@ -251,7 +303,7 @@ impl<'a> Lexer<'a> {
                             }
                         }
                         Some((_, '*')) => {
-                            // Block comment
+                            // Block comment (supports nesting)
                             self.advance(); // '/'
                             self.advance(); // '*'
                             let mut depth = 1;
@@ -278,36 +330,20 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Lex a string literal
+    /// Lex a string literal (just identifies it, doesn't parse escape sequences)
     fn lex_string(&mut self) -> Result<TokenKind, NovaError> {
-        let mut value = String::new();
-
         loop {
             match self.advance() {
                 Some('"') => break,
                 Some('\\') => {
-                    // Escape sequence
-                    match self.advance() {
-                        Some('n') => value.push('\n'),
-                        Some('r') => value.push('\r'),
-                        Some('t') => value.push('\t'),
-                        Some('\\') => value.push('\\'),
-                        Some('"') => value.push('"'),
-                        Some('0') => value.push('\0'),
-                        Some(c) => {
-                            return Err(NovaError::InvalidEscape {
-                                char: c,
-                                span: Span::new((self.current - 1) as u32, self.current as u32),
-                            });
-                        }
-                        None => {
-                            return Err(NovaError::UnterminatedString {
-                                span: Span::new(self.start as u32, self.current as u32),
-                            });
-                        }
+                    // Skip the escaped character
+                    if self.advance().is_none() {
+                        return Err(NovaError::UnterminatedString {
+                            span: Span::new(self.start as u32, self.current as u32),
+                        });
                     }
                 }
-                Some(c) => value.push(c),
+                Some(_) => {}
                 None => {
                     return Err(NovaError::UnterminatedString {
                         span: Span::new(self.start as u32, self.current as u32),
@@ -316,58 +352,128 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        Ok(TokenKind::String(value))
+        Ok(TokenKind::StringLit)
+    }
+
+    /// Lex a character literal
+    fn lex_char(&mut self) -> Result<TokenKind, NovaError> {
+        match self.advance() {
+            Some('\\') => {
+                // Escape sequence
+                if self.advance().is_none() {
+                    return Err(NovaError::UnterminatedString {
+                        span: Span::new(self.start as u32, self.current as u32),
+                    });
+                }
+            }
+            Some('\'') => {
+                // Empty char literal
+                return Err(NovaError::InvalidCharacter {
+                    char: '\'',
+                    span: Span::new(self.start as u32, self.current as u32),
+                });
+            }
+            Some(_) => {}
+            None => {
+                return Err(NovaError::UnterminatedString {
+                    span: Span::new(self.start as u32, self.current as u32),
+                });
+            }
+        }
+
+        // Expect closing quote
+        if !self.check('\'') {
+            return Err(NovaError::UnterminatedString {
+                span: Span::new(self.start as u32, self.current as u32),
+            });
+        }
+        self.advance();
+
+        Ok(TokenKind::CharLit)
     }
 
     /// Lex a number literal (integer or float)
-    fn lex_number(&mut self, first: char) -> Result<TokenKind, NovaError> {
-        let mut value = String::from(first);
+    fn lex_number(&mut self) -> Result<TokenKind, NovaError> {
         let mut is_float = false;
+
+        // Check for hex, binary, octal
+        if self.source.as_bytes().get(self.start) == Some(&b'0') {
+            match self.peek() {
+                Some('x' | 'X') => {
+                    self.advance();
+                    while let Some(c) = self.peek() {
+                        if c.is_ascii_hexdigit() || c == '_' {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+                    return Ok(TokenKind::IntLit);
+                }
+                Some('b' | 'B') => {
+                    self.advance();
+                    while let Some(c) = self.peek() {
+                        if c == '0' || c == '1' || c == '_' {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+                    return Ok(TokenKind::IntLit);
+                }
+                Some('o' | 'O') => {
+                    self.advance();
+                    while let Some(c) = self.peek() {
+                        if ('0'..='7').contains(&c) || c == '_' {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+                    return Ok(TokenKind::IntLit);
+                }
+                _ => {}
+            }
+        }
 
         // Consume digits
         while let Some(c) = self.peek() {
-            if c.is_ascii_digit() {
-                value.push(c);
-                self.advance();
-            } else if c == '.' {
-                // Check if it's a decimal point or range operator
-                let mut chars = self.chars.clone();
-                chars.next(); // consume '.'
-                if let Some((_, next)) = chars.peek() {
-                    if next.is_ascii_digit() {
-                        is_float = true;
-                        value.push('.');
-                        self.advance(); // consume '.'
-                        while let Some(c) = self.peek() {
-                            if c.is_ascii_digit() {
-                                value.push(c);
-                                self.advance();
-                            } else {
-                                break;
-                            }
-                        }
-                    }
-                }
-                break;
-            } else if c == '_' {
-                // Allow underscores in numbers (1_000_000)
+            if c.is_ascii_digit() || c == '_' {
                 self.advance();
             } else {
                 break;
             }
         }
 
+        // Check for decimal point
+        if self.check('.') {
+            // Look ahead to distinguish from range operator
+            let mut chars = self.chars.clone();
+            chars.next(); // consume '.'
+            if let Some((_, c)) = chars.peek() {
+                if c.is_ascii_digit() {
+                    is_float = true;
+                    self.advance(); // consume '.'
+                    while let Some(c) = self.peek() {
+                        if c.is_ascii_digit() || c == '_' {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         // Check for exponent
         if let Some('e' | 'E') = self.peek() {
             is_float = true;
-            value.push('e');
             self.advance();
             if let Some('+' | '-') = self.peek() {
-                value.push(self.advance().unwrap());
+                self.advance();
             }
             while let Some(c) = self.peek() {
-                if c.is_ascii_digit() {
-                    value.push(c);
+                if c.is_ascii_digit() || c == '_' {
                     self.advance();
                 } else {
                     break;
@@ -375,26 +481,17 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        if is_float {
-            let n: f64 = value.parse().map_err(|_| NovaError::InvalidNumber {
-                span: Span::new(self.start as u32, self.current as u32),
-            })?;
-            Ok(TokenKind::Float(n))
+        Ok(if is_float {
+            TokenKind::FloatLit
         } else {
-            let n: i64 = value.parse().map_err(|_| NovaError::InvalidNumber {
-                span: Span::new(self.start as u32, self.current as u32),
-            })?;
-            Ok(TokenKind::Int(n))
-        }
+            TokenKind::IntLit
+        })
     }
 
     /// Lex an identifier or keyword
-    fn lex_identifier(&mut self, first: char) -> TokenKind {
-        let mut value = String::from(first);
-
+    fn lex_identifier(&mut self) -> TokenKind {
         while let Some(c) = self.peek() {
             if c.is_ascii_alphanumeric() || c == '_' {
-                value.push(c);
                 self.advance();
             } else {
                 break;
@@ -402,7 +499,8 @@ impl<'a> Lexer<'a> {
         }
 
         // Check if it's a keyword
-        TokenKind::keyword_from_str(&value).unwrap_or(TokenKind::Ident(value))
+        let text = &self.source[self.start..self.current];
+        TokenKind::from_keyword(text).unwrap_or(TokenKind::Ident)
     }
 }
 
@@ -414,37 +512,108 @@ mod tests {
     fn test_lex_simple() {
         let tokens = lex("let x = 42").unwrap();
         assert_eq!(tokens.len(), 5); // let, x, =, 42, EOF
-        assert!(matches!(tokens[0].kind, TokenKind::Let));
-        assert!(matches!(&tokens[1].kind, TokenKind::Ident(s) if s == "x"));
-        assert!(matches!(tokens[2].kind, TokenKind::Eq));
-        assert!(matches!(tokens[3].kind, TokenKind::Int(42)));
-        assert!(matches!(tokens[4].kind, TokenKind::Eof));
+        assert_eq!(tokens[0].kind(), TokenKind::Let);
+        assert_eq!(tokens[1].kind(), TokenKind::Ident);
+        assert_eq!(tokens[2].kind(), TokenKind::Eq);
+        assert_eq!(tokens[3].kind(), TokenKind::IntLit);
+        assert_eq!(tokens[4].kind(), TokenKind::Eof);
     }
 
     #[test]
     fn test_lex_string() {
         let tokens = lex("\"hello\"").unwrap();
-        assert!(matches!(&tokens[0].kind, TokenKind::String(s) if s == "hello"));
+        assert_eq!(tokens[0].kind(), TokenKind::StringLit);
+    }
+
+    #[test]
+    fn test_lex_char() {
+        let tokens = lex("'a' '\\n'").unwrap();
+        assert_eq!(tokens[0].kind(), TokenKind::CharLit);
+        assert_eq!(tokens[1].kind(), TokenKind::CharLit);
     }
 
     #[test]
     fn test_lex_operators() {
         let tokens = lex("+ - * / == != <= >=").unwrap();
-        assert!(matches!(tokens[0].kind, TokenKind::Plus));
-        assert!(matches!(tokens[1].kind, TokenKind::Minus));
-        assert!(matches!(tokens[2].kind, TokenKind::Star));
-        assert!(matches!(tokens[3].kind, TokenKind::Slash));
-        assert!(matches!(tokens[4].kind, TokenKind::EqEq));
-        assert!(matches!(tokens[5].kind, TokenKind::NotEq));
-        assert!(matches!(tokens[6].kind, TokenKind::LtEq));
-        assert!(matches!(tokens[7].kind, TokenKind::GtEq));
+        assert_eq!(tokens[0].kind(), TokenKind::Plus);
+        assert_eq!(tokens[1].kind(), TokenKind::Minus);
+        assert_eq!(tokens[2].kind(), TokenKind::Star);
+        assert_eq!(tokens[3].kind(), TokenKind::Slash);
+        assert_eq!(tokens[4].kind(), TokenKind::EqEq);
+        assert_eq!(tokens[5].kind(), TokenKind::BangEq);
+        assert_eq!(tokens[6].kind(), TokenKind::LtEq);
+        assert_eq!(tokens[7].kind(), TokenKind::GtEq);
+    }
+
+    #[test]
+    fn test_lex_shift_assign() {
+        let tokens = lex("<<= >>=").unwrap();
+        assert_eq!(tokens[0].kind(), TokenKind::LtLtEq);
+        assert_eq!(tokens[1].kind(), TokenKind::GtGtEq);
     }
 
     #[test]
     fn test_lex_comments() {
         let tokens = lex("x // this is a comment\ny").unwrap();
         assert_eq!(tokens.len(), 3); // x, y, EOF
-        assert!(matches!(&tokens[0].kind, TokenKind::Ident(s) if s == "x"));
-        assert!(matches!(&tokens[1].kind, TokenKind::Ident(s) if s == "y"));
+        assert_eq!(tokens[0].kind(), TokenKind::Ident);
+        assert_eq!(tokens[1].kind(), TokenKind::Ident);
+    }
+
+    #[test]
+    fn test_lex_nested_comments() {
+        let tokens = lex("a /* outer /* inner */ outer */ b").unwrap();
+        assert_eq!(tokens.len(), 3); // a, b, EOF
+    }
+
+    #[test]
+    fn test_lex_hex_binary_octal() {
+        let tokens = lex("0xFF 0b1010 0o777").unwrap();
+        assert_eq!(tokens[0].kind(), TokenKind::IntLit);
+        assert_eq!(tokens[1].kind(), TokenKind::IntLit);
+        assert_eq!(tokens[2].kind(), TokenKind::IntLit);
+    }
+
+    #[test]
+    fn test_lex_float() {
+        let tokens = lex("3.14 1e10 2.5e-3").unwrap();
+        assert_eq!(tokens[0].kind(), TokenKind::FloatLit);
+        assert_eq!(tokens[1].kind(), TokenKind::FloatLit);
+        assert_eq!(tokens[2].kind(), TokenKind::FloatLit);
+    }
+
+    #[test]
+    fn test_lex_keywords() {
+        let tokens = lex("fn let if else while for return true false").unwrap();
+        assert_eq!(tokens[0].kind(), TokenKind::Fn);
+        assert_eq!(tokens[1].kind(), TokenKind::Let);
+        assert_eq!(tokens[2].kind(), TokenKind::If);
+        assert_eq!(tokens[3].kind(), TokenKind::Else);
+        assert_eq!(tokens[4].kind(), TokenKind::While);
+        assert_eq!(tokens[5].kind(), TokenKind::For);
+        assert_eq!(tokens[6].kind(), TokenKind::Return);
+        assert_eq!(tokens[7].kind(), TokenKind::True);
+        assert_eq!(tokens[8].kind(), TokenKind::False);
+    }
+
+    #[test]
+    fn test_span_accuracy() {
+        let source = "let x = 42";
+        let tokens = lex(source).unwrap();
+
+        // "let" at 0..3
+        assert_eq!(tokens[0].span().start(), 0);
+        assert_eq!(tokens[0].span().end(), 3);
+        assert_eq!(&source[0..3], "let");
+
+        // "x" at 4..5
+        assert_eq!(tokens[1].span().start(), 4);
+        assert_eq!(tokens[1].span().end(), 5);
+        assert_eq!(&source[4..5], "x");
+
+        // "42" at 8..10
+        assert_eq!(tokens[3].span().start(), 8);
+        assert_eq!(tokens[3].span().end(), 10);
+        assert_eq!(&source[8..10], "42");
     }
 }

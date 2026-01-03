@@ -2,6 +2,12 @@
 
 # Nova
 
+[![CI](https://github.com/pdaxt/nova/actions/workflows/ci.yml/badge.svg)](https://github.com/pdaxt/nova/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/badge/security-adversarial%20tested-brightgreen)](bootstrap/src/token_attack.rs)
+[![Tests](https://img.shields.io/badge/tests-91%20passing-brightgreen)](bootstrap/)
+[![Token](https://img.shields.io/badge/Token-12%20bytes-blue)](docs/decisions/ADR-004-token-size.md)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue)](LICENSE-MIT)
+
 **A programming language designed for the AI age.**
 
 *Verified. Efficient. Open.*
@@ -62,7 +68,23 @@ where
 
 ## Project Status
 
-🚧 **Stage 0: Bootstrap** — We're building the minimal Rust compiler that will compile the first Nova compiler.
+🚧 **Stage 0: Bootstrap** — Building the minimal Rust compiler that will compile the first Nova compiler.
+
+### Bootstrap Compiler Progress
+
+| Component | Status | Tests | Notes |
+|-----------|--------|-------|-------|
+| **Lexer** | ✅ Complete | 25 | Full tokenization with span tracking |
+| **Parser** | ✅ Complete | 30 | Pratt parsing, full expression support |
+| **Span** | ✅ Hardened | 15 | 8-byte struct, [adversarial tested](bootstrap/src/span_attack.rs) |
+| **Token** | ✅ Hardened | 25 | 12-byte struct, [adversarial tested](bootstrap/src/token_attack.rs) |
+| **Types** | 🚧 In Progress | 1 | Basic type checking |
+| **IR** | 🚧 In Progress | - | SSA-based intermediate representation |
+| **Codegen** | 🚧 In Progress | - | WebAssembly output |
+
+**91 tests passing** • **40 adversarial security tests** • **Compile-time size guarantees**
+
+See [bootstrap/README.md](bootstrap/README.md) for contributor guide.
 
 See [ROADMAP.md](ROADMAP.md) for the full plan.
 
