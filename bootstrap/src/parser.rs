@@ -918,14 +918,138 @@ impl<'a> Parser<'a> {
         })
     }
 
+    /// Parse a struct definition.
+    ///
+    /// Syntax: `struct Name { field: Type, ... }` or `struct Name<T> { ... }`
     fn parse_struct(&mut self) -> Result<StructDef, NovaError> {
-        // TODO: Implement struct parsing
-        todo!("Struct parsing not yet implemented")
+        let start = self.expect(TokenKind::Struct)?.span();
+
+        let name = self.parse_ident()?;
+        let generics = self.parse_generics()?;
+
+        self.expect(TokenKind::LBrace)?;
+        let mut fields = Vec::new();
+
+        while !self.check(TokenKind::RBrace) && !self.is_at_end() {
+            let field_name = self.parse_ident()?;
+            self.expect(TokenKind::Colon)?;
+            let ty = self.parse_type()?;
+            let field_span = field_name.span.merge(ty.span);
+            fields.push(Field {
+                name: field_name,
+                ty,
+                span: field_span,
+            });
+
+            // Allow trailing comma
+            if self.check(TokenKind::Comma) {
+                self.advance();
+            } else if !self.check(TokenKind::RBrace) {
+                return Err(NovaError::UnexpectedToken {
+                    expected: "comma or '}'".to_string(),
+                    found: self.peek().kind(),
+                    span: self.peek().span(),
+                });
+            }
+        }
+
+        let end = self.expect(TokenKind::RBrace)?.span();
+
+        Ok(StructDef {
+            name,
+            generics,
+            fields,
+            span: start.merge(end),
+        })
     }
 
+    /// Parse an enum definition.
+    ///
+    /// Syntax: `enum Name { Variant1, Variant2(Type), Variant3 { field: Type } }`
     fn parse_enum(&mut self) -> Result<EnumDef, NovaError> {
-        // TODO: Implement enum parsing
-        todo!("Enum parsing not yet implemented")
+        let start = self.expect(TokenKind::Enum)?.span();
+
+        let name = self.parse_ident()?;
+        let generics = self.parse_generics()?;
+
+        self.expect(TokenKind::LBrace)?;
+        let mut variants = Vec::new();
+
+        while !self.check(TokenKind::RBrace) && !self.is_at_end() {
+            let variant_name = self.parse_ident()?;
+            let variant_start = variant_name.span;
+
+            let fields = if self.check(TokenKind::LParen) {
+                // Tuple variant: Variant(Type1, Type2)
+                self.advance();
+                let mut types = Vec::new();
+                while !self.check(TokenKind::RParen) && !self.is_at_end() {
+                    types.push(self.parse_type()?);
+                    if !self.check(TokenKind::RParen) {
+                        self.expect(TokenKind::Comma)?;
+                    }
+                }
+                self.expect(TokenKind::RParen)?;
+                VariantFields::Tuple(types)
+            } else if self.check(TokenKind::LBrace) {
+                // Struct variant: Variant { field: Type }
+                self.advance();
+                let mut fields = Vec::new();
+                while !self.check(TokenKind::RBrace) && !self.is_at_end() {
+                    let field_name = self.parse_ident()?;
+                    self.expect(TokenKind::Colon)?;
+                    let ty = self.parse_type()?;
+                    let field_span = field_name.span.merge(ty.span);
+                    fields.push(Field {
+                        name: field_name,
+                        ty,
+                        span: field_span,
+                    });
+
+                    if self.check(TokenKind::Comma) {
+                        self.advance();
+                    } else if !self.check(TokenKind::RBrace) {
+                        return Err(NovaError::UnexpectedToken {
+                            expected: "comma or '}'".to_string(),
+                            found: self.peek().kind(),
+                            span: self.peek().span(),
+                        });
+                    }
+                }
+                self.expect(TokenKind::RBrace)?;
+                VariantFields::Struct(fields)
+            } else {
+                // Unit variant: Variant
+                VariantFields::Unit
+            };
+
+            let variant_end = self.peek().span();
+            variants.push(Variant {
+                name: variant_name,
+                fields,
+                span: variant_start.merge(variant_end),
+            });
+
+            // Allow trailing comma
+            if self.check(TokenKind::Comma) {
+                self.advance();
+            } else if !self.check(TokenKind::RBrace) {
+                return Err(NovaError::UnexpectedToken {
+                    expected: "comma or '}'".to_string(),
+                    found: self.peek().kind(),
+                    span: self.peek().span(),
+                });
+            }
+        }
+
+        let end = self.expect(TokenKind::RBrace)?.span();
+
+        Ok(EnumDef {
+            name,
+            generics,
+            variants,
+            span: start.merge(end),
+        })
     }
 
     fn parse_impl(&mut self) -> Result<ImplBlock, NovaError> {
@@ -1099,5 +1223,130 @@ mod tests {
         let tokens = lex(source).unwrap();
         let program = parse(source, tokens).unwrap();
         assert_eq!(program.items.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_empty_struct() {
+        let source = "struct Empty {}";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        assert_eq!(program.items.len(), 1);
+        match &program.items[0] {
+            Item::Struct(s) => {
+                assert_eq!(s.name.name, "Empty");
+                assert_eq!(s.fields.len(), 0);
+            }
+            _ => panic!("Expected struct"),
+        }
+    }
+
+    #[test]
+    fn test_parse_struct_with_fields() {
+        let source = "struct Point { x: i32, y: i32 }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        assert_eq!(program.items.len(), 1);
+        match &program.items[0] {
+            Item::Struct(s) => {
+                assert_eq!(s.name.name, "Point");
+                assert_eq!(s.fields.len(), 2);
+                assert_eq!(s.fields[0].name.name, "x");
+                assert_eq!(s.fields[1].name.name, "y");
+            }
+            _ => panic!("Expected struct"),
+        }
+    }
+
+    #[test]
+    fn test_parse_struct_trailing_comma() {
+        let source = "struct Point { x: i32, y: i32, }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        assert_eq!(program.items.len(), 1);
+        match &program.items[0] {
+            Item::Struct(s) => {
+                assert_eq!(s.fields.len(), 2);
+            }
+            _ => panic!("Expected struct"),
+        }
+    }
+
+    #[test]
+    fn test_parse_multiple_items() {
+        let source = "struct Foo { a: i32 } fn bar() { }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        assert_eq!(program.items.len(), 2);
+    }
+
+    #[test]
+    fn test_parse_unit_enum() {
+        let source = "enum Color { Red, Green, Blue }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        assert_eq!(program.items.len(), 1);
+        match &program.items[0] {
+            Item::Enum(e) => {
+                assert_eq!(e.name.name, "Color");
+                assert_eq!(e.variants.len(), 3);
+                assert_eq!(e.variants[0].name.name, "Red");
+                assert_eq!(e.variants[1].name.name, "Green");
+                assert_eq!(e.variants[2].name.name, "Blue");
+            }
+            _ => panic!("Expected enum"),
+        }
+    }
+
+    #[test]
+    fn test_parse_tuple_enum() {
+        let source = "enum Option { Some(i32), None }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        match &program.items[0] {
+            Item::Enum(e) => {
+                assert_eq!(e.variants.len(), 2);
+                match &e.variants[0].fields {
+                    VariantFields::Tuple(types) => assert_eq!(types.len(), 1),
+                    _ => panic!("Expected tuple variant"),
+                }
+                match &e.variants[1].fields {
+                    VariantFields::Unit => {}
+                    _ => panic!("Expected unit variant"),
+                }
+            }
+            _ => panic!("Expected enum"),
+        }
+    }
+
+    #[test]
+    fn test_parse_struct_enum() {
+        let source = "enum Message { Quit, Move { x: i32, y: i32 } }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        match &program.items[0] {
+            Item::Enum(e) => {
+                assert_eq!(e.variants.len(), 2);
+                match &e.variants[1].fields {
+                    VariantFields::Struct(fields) => {
+                        assert_eq!(fields.len(), 2);
+                        assert_eq!(fields[0].name.name, "x");
+                        assert_eq!(fields[1].name.name, "y");
+                    }
+                    _ => panic!("Expected struct variant"),
+                }
+            }
+            _ => panic!("Expected enum"),
+        }
+    }
+
+    #[test]
+    fn test_parse_enum_trailing_comma() {
+        let source = "enum E { A, B, C, }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        match &program.items[0] {
+            Item::Enum(e) => assert_eq!(e.variants.len(), 3),
+            _ => panic!("Expected enum"),
+        }
     }
 }
