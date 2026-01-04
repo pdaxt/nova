@@ -899,22 +899,123 @@ impl<'a> Parser<'a> {
     // Stub implementations (TODO: implement by contributors)
     // ========================================================================
 
+    /// Parse generic parameters.
+    ///
+    /// Syntax: `<T, U: Trait1 + Trait2, V>`
     fn parse_generics(&mut self) -> Result<Vec<GenericParam>, NovaError> {
-        // TODO: Implement generic parameter parsing
-        Ok(vec![])
+        if !self.check(TokenKind::Lt) {
+            return Ok(vec![]);
+        }
+        self.advance(); // consume <
+
+        let mut params = Vec::new();
+
+        while !self.check(TokenKind::Gt) && !self.is_at_end() {
+            let name = self.parse_ident()?;
+            let start = name.span;
+
+            // Parse optional bounds: `: Trait1 + Trait2`
+            let bounds = if self.check(TokenKind::Colon) {
+                self.advance();
+                let mut bounds = Vec::new();
+                bounds.push(self.parse_type()?);
+                while self.check(TokenKind::Plus) {
+                    self.advance();
+                    bounds.push(self.parse_type()?);
+                }
+                bounds
+            } else {
+                vec![]
+            };
+
+            let span = if bounds.is_empty() {
+                start
+            } else {
+                start.merge(bounds.last().unwrap().span)
+            };
+
+            params.push(GenericParam { name, bounds, span });
+
+            if self.check(TokenKind::Comma) {
+                self.advance();
+            } else if !self.check(TokenKind::Gt) {
+                return Err(NovaError::UnexpectedToken {
+                    expected: "comma or '>'".to_string(),
+                    found: self.peek().kind(),
+                    span: self.peek().span(),
+                });
+            }
+        }
+
+        self.expect(TokenKind::Gt)?;
+        Ok(params)
     }
 
+    /// Parse generic arguments (type arguments).
+    ///
+    /// Syntax: `<Type1, Type2>`
     fn parse_generic_args(&mut self) -> Result<Vec<Type>, NovaError> {
-        // TODO: Implement generic argument parsing
-        Ok(vec![])
+        if !self.check(TokenKind::Lt) {
+            return Ok(vec![]);
+        }
+        self.advance(); // consume <
+
+        let mut args = Vec::new();
+
+        while !self.check(TokenKind::Gt) && !self.is_at_end() {
+            args.push(self.parse_type()?);
+
+            if self.check(TokenKind::Comma) {
+                self.advance();
+            } else if !self.check(TokenKind::Gt) {
+                return Err(NovaError::UnexpectedToken {
+                    expected: "comma or '>'".to_string(),
+                    found: self.peek().kind(),
+                    span: self.peek().span(),
+                });
+            }
+        }
+
+        self.expect(TokenKind::Gt)?;
+        Ok(args)
     }
 
+    /// Parse a where clause.
+    ///
+    /// Syntax: `where T: Trait1 + Trait2, U: Trait3`
     fn parse_where_clause(&mut self) -> Result<WhereClause, NovaError> {
-        // TODO: Implement where clause parsing
-        let span = self.advance().span();
+        let start = self.expect(TokenKind::Where)?.span();
+        let mut predicates = Vec::new();
+
+        loop {
+            let ty = self.parse_type()?;
+            self.expect(TokenKind::Colon)?;
+
+            let mut bounds = Vec::new();
+            bounds.push(self.parse_type()?);
+            while self.check(TokenKind::Plus) {
+                self.advance();
+                bounds.push(self.parse_type()?);
+            }
+
+            let pred_span = ty.span.merge(bounds.last().unwrap().span);
+            predicates.push(WherePredicate {
+                ty,
+                bounds,
+                span: pred_span,
+            });
+
+            if self.check(TokenKind::Comma) {
+                self.advance();
+            } else {
+                break;
+            }
+        }
+
+        let end = predicates.last().map(|p| p.span).unwrap_or(start);
         Ok(WhereClause {
-            predicates: vec![],
-            span,
+            predicates,
+            span: start.merge(end),
         })
     }
 
@@ -1428,5 +1529,64 @@ mod tests {
         let tokens = lex(source).unwrap();
         let result = parse(source, tokens);
         assert!(result.is_ok(), "Match with guard should parse");
+    }
+
+    #[test]
+    fn test_parse_generic_function() {
+        let source = "fn identity<T>(x: T) -> T { x }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        match &program.items[0] {
+            Item::Function(f) => {
+                assert_eq!(f.name.name, "identity");
+                assert_eq!(f.generics.len(), 1);
+                assert_eq!(f.generics[0].name.name, "T");
+            }
+            _ => panic!("Expected function"),
+        }
+    }
+
+    #[test]
+    fn test_parse_generic_struct() {
+        let source = "struct Pair<T, U> { first: T, second: U }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        match &program.items[0] {
+            Item::Struct(s) => {
+                assert_eq!(s.name.name, "Pair");
+                assert_eq!(s.generics.len(), 2);
+                assert_eq!(s.generics[0].name.name, "T");
+                assert_eq!(s.generics[1].name.name, "U");
+            }
+            _ => panic!("Expected struct"),
+        }
+    }
+
+    #[test]
+    fn test_parse_generic_with_bound() {
+        let source = "fn print<T: Display>(x: T) { }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        match &program.items[0] {
+            Item::Function(f) => {
+                assert_eq!(f.generics.len(), 1);
+                assert_eq!(f.generics[0].bounds.len(), 1);
+            }
+            _ => panic!("Expected function"),
+        }
+    }
+
+    #[test]
+    fn test_parse_generic_multiple_bounds() {
+        let source = "fn print<T: Display + Debug>(x: T) { }";
+        let tokens = lex(source).unwrap();
+        let program = parse(source, tokens).unwrap();
+        match &program.items[0] {
+            Item::Function(f) => {
+                assert_eq!(f.generics.len(), 1);
+                assert_eq!(f.generics[0].bounds.len(), 2);
+            }
+            _ => panic!("Expected function"),
+        }
     }
 }
