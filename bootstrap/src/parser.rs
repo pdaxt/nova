@@ -1101,9 +1101,57 @@ impl<'a> Parser<'a> {
         })
     }
 
+    /// Parse a match expression.
+    ///
+    /// Syntax: `match expr { pattern => expr, pattern if guard => expr, ... }`
     fn parse_match_expr(&mut self) -> Result<Expr, NovaError> {
-        // TODO: Implement match expression parsing
-        todo!("Match parsing not yet implemented")
+        let start = self.expect(TokenKind::Match)?.span();
+        let scrutinee = self.parse_expr()?;
+
+        self.expect(TokenKind::LBrace)?;
+        let mut arms = Vec::new();
+
+        while !self.check(TokenKind::RBrace) && !self.is_at_end() {
+            let pattern = self.parse_pattern()?;
+            let arm_start = pattern.span;
+
+            // Optional guard: `if condition`
+            let guard = if self.check(TokenKind::If) {
+                self.advance();
+                Some(self.parse_expr()?)
+            } else {
+                None
+            };
+
+            self.expect(TokenKind::FatArrow)?;
+            let body = self.parse_expr()?;
+            let arm_span = arm_start.merge(body.span);
+
+            arms.push(MatchArm {
+                pattern,
+                guard,
+                body,
+                span: arm_span,
+            });
+
+            // Allow trailing comma, require comma between arms
+            if self.check(TokenKind::Comma) {
+                self.advance();
+            } else if !self.check(TokenKind::RBrace) {
+                return Err(NovaError::UnexpectedToken {
+                    expected: "comma or '}'".to_string(),
+                    found: self.peek().kind(),
+                    span: self.peek().span(),
+                });
+            }
+        }
+
+        let end = self.expect(TokenKind::RBrace)?.span();
+
+        Ok(Expr {
+            kind: ExprKind::Match(Box::new(scrutinee), arms),
+            span: start.merge(end),
+        })
     }
 
     fn parse_while_expr(&mut self) -> Result<Expr, NovaError> {
@@ -1348,5 +1396,37 @@ mod tests {
             Item::Enum(e) => assert_eq!(e.variants.len(), 3),
             _ => panic!("Expected enum"),
         }
+    }
+
+    #[test]
+    fn test_parse_match_simple() {
+        let source = "fn main() { match x { 1 => 10, 2 => 20 } }";
+        let tokens = lex(source).unwrap();
+        let result = parse(source, tokens);
+        assert!(result.is_ok(), "Simple match should parse");
+    }
+
+    #[test]
+    fn test_parse_match_with_wildcard() {
+        let source = "fn main() { match x { 1 => 10, _ => 0 } }";
+        let tokens = lex(source).unwrap();
+        let result = parse(source, tokens);
+        assert!(result.is_ok(), "Match with wildcard should parse");
+    }
+
+    #[test]
+    fn test_parse_match_trailing_comma() {
+        let source = "fn main() { match x { 1 => 10, 2 => 20, } }";
+        let tokens = lex(source).unwrap();
+        let result = parse(source, tokens);
+        assert!(result.is_ok(), "Match with trailing comma should parse");
+    }
+
+    #[test]
+    fn test_parse_match_with_guard() {
+        let source = "fn main() { match x { n if n > 0 => 1, _ => 0 } }";
+        let tokens = lex(source).unwrap();
+        let result = parse(source, tokens);
+        assert!(result.is_ok(), "Match with guard should parse");
     }
 }
