@@ -42,11 +42,39 @@
 use crate::error::NovaError;
 use crate::token::{Span, Token, TokenKind};
 
+// ============================================================================
+// Security Constants (per spec)
+// ============================================================================
+
+/// Maximum source file size (4GB - same as Span's u32 limit)
+const MAX_SOURCE_SIZE: usize = 4 * 1024 * 1024 * 1024;
+
+/// Maximum nesting depth for block comments (prevents stack overflow)
+const MAX_NESTING_DEPTH: usize = 256;
+
+// ============================================================================
+// Public API
+// ============================================================================
+
 /// Lex source code into tokens.
 ///
 /// Returns a vector of tokens ending with EOF.
 /// Literal values are NOT stored in tokens - use the span to extract from source.
+///
+/// # Errors
+///
+/// Returns `Err` if:
+/// - Source exceeds MAX_SOURCE_SIZE (4GB)
+/// - Block comment nesting exceeds MAX_NESTING_DEPTH (256)
+/// - Invalid characters or unterminated literals
 pub fn lex(source: &str) -> Result<Vec<Token>, NovaError> {
+    // Security: Check source size limit
+    if source.len() > MAX_SOURCE_SIZE {
+        return Err(NovaError::SourceTooLarge {
+            size: source.len(),
+            max: MAX_SOURCE_SIZE,
+        });
+    }
     let mut lexer = Lexer::new(source);
     lexer.lex_all()
 }
@@ -57,6 +85,8 @@ struct Lexer<'a> {
     chars: std::iter::Peekable<std::str::CharIndices<'a>>,
     start: usize,
     current: usize,
+    /// Deferred error from whitespace/comment skipping
+    pending_error: Option<NovaError>,
 }
 
 impl<'a> Lexer<'a> {
@@ -66,6 +96,7 @@ impl<'a> Lexer<'a> {
             chars: source.char_indices().peekable(),
             start: 0,
             current: 0,
+            pending_error: None,
         }
     }
 
@@ -75,6 +106,12 @@ impl<'a> Lexer<'a> {
 
         loop {
             self.skip_whitespace_and_comments();
+
+            // Check for errors from comment parsing (e.g., nesting too deep)
+            if let Some(err) = self.pending_error.take() {
+                return Err(err);
+            }
+
             self.start = self.current;
 
             match self.advance() {
@@ -303,10 +340,11 @@ impl<'a> Lexer<'a> {
                             }
                         }
                         Some((_, '*')) => {
-                            // Block comment (supports nesting)
+                            // Block comment (supports nesting with security limit)
+                            let comment_start = self.current;
                             self.advance(); // '/'
                             self.advance(); // '*'
-                            let mut depth = 1;
+                            let mut depth = 1usize;
                             while depth > 0 {
                                 match self.advance() {
                                     Some('*') if self.check('/') => {
@@ -316,6 +354,18 @@ impl<'a> Lexer<'a> {
                                     Some('/') if self.check('*') => {
                                         self.advance();
                                         depth += 1;
+                                        // Security: Check nesting depth limit
+                                        if depth > MAX_NESTING_DEPTH {
+                                            self.pending_error = Some(NovaError::NestingTooDeep {
+                                                depth,
+                                                max: MAX_NESTING_DEPTH,
+                                                span: Span::new(
+                                                    comment_start as u32,
+                                                    self.current as u32,
+                                                ),
+                                            });
+                                            return; // Exit, error will be handled in lex_all
+                                        }
                                     }
                                     Some(_) => {}
                                     None => break, // Unterminated, will error later

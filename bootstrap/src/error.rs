@@ -30,6 +30,17 @@ pub enum NovaError {
         span: Span,
     },
 
+    // Security errors (resource limits)
+    SourceTooLarge {
+        size: usize,
+        max: usize,
+    },
+    NestingTooDeep {
+        depth: usize,
+        max: usize,
+        span: Span,
+    },
+
     // Parser errors
     UnexpectedToken {
         expected: String,
@@ -76,6 +87,8 @@ impl NovaError {
             NovaError::InvalidEscape { span, .. } => *span,
             NovaError::InvalidNumber { span } => *span,
             NovaError::InvalidLiteral { span, .. } => *span,
+            NovaError::SourceTooLarge { .. } => Span::new(0, 0),
+            NovaError::NestingTooDeep { span, .. } => *span,
             NovaError::UnexpectedToken { span, .. } => *span,
             NovaError::UnexpectedEof { span, .. } => *span,
             NovaError::TypeMismatch { span, .. } => *span,
@@ -99,6 +112,18 @@ impl NovaError {
             NovaError::InvalidNumber { .. } => "Invalid number literal".to_string(),
             NovaError::InvalidLiteral { kind, .. } => {
                 format!("Invalid {} literal", kind)
+            }
+            NovaError::SourceTooLarge { size, max } => {
+                format!(
+                    "Source file too large: {} bytes (max: {} bytes)",
+                    size, max
+                )
+            }
+            NovaError::NestingTooDeep { depth, max, .. } => {
+                format!(
+                    "Nesting too deep: {} levels (max: {} levels)",
+                    depth, max
+                )
             }
             NovaError::UnexpectedToken {
                 expected, found, ..
@@ -134,6 +159,8 @@ impl NovaError {
             NovaError::InvalidEscape { .. } => "E0003",
             NovaError::InvalidNumber { .. } => "E0004",
             NovaError::InvalidLiteral { .. } => "E0005",
+            NovaError::SourceTooLarge { .. } => "E0010",
+            NovaError::NestingTooDeep { .. } => "E0011",
             NovaError::UnexpectedToken { .. } => "E0100",
             NovaError::UnexpectedEof { .. } => "E0101",
             NovaError::TypeMismatch { .. } => "E0200",
