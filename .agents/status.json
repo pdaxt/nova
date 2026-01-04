@@ -1,0 +1,21 @@
+{
+  "pipeline": "idle",
+  "current_task": null,
+  "agents": {
+    "architect": { "status": "idle", "last_run": null },
+    "implementer": { "status": "idle", "last_run": null },
+    "reviewer": { "status": "idle", "last_run": null },
+    "tester": { "status": "idle", "last_run": null },
+    "security": { "status": "idle", "last_run": null },
+    "perf": { "status": "idle", "last_run": null },
+    "docs": { "status": "idle", "last_run": null },
+    "release": { "status": "idle", "last_run": null }
+  },
+  "stats": {
+    "tasks_completed": 0,
+    "reviews_passed": 0,
+    "reviews_failed": 0,
+    "tests_passed": 0,
+    "tests_failed": 0
+  }
+}

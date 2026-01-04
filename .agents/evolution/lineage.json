@@ -1,0 +1,107 @@
+{
+  "last_updated": "2025-01-04T00:00:00Z",
+  "agents": {
+    "architect": {
+      "current_version": 1,
+      "generations": [
+        {
+          "version": 1,
+          "born": "2025-01-04T00:00:00Z",
+          "status": "active",
+          "lessons_inherited": 0
+        }
+      ]
+    },
+    "implementer": {
+      "current_version": 1,
+      "generations": [
+        {
+          "version": 1,
+          "born": "2025-01-04T00:00:00Z",
+          "status": "active",
+          "lessons_inherited": 0
+        }
+      ]
+    },
+    "reviewer": {
+      "current_version": 1,
+      "generations": [
+        {
+          "version": 1,
+          "born": "2025-01-04T00:00:00Z",
+          "status": "active",
+          "lessons_inherited": 0
+        }
+      ]
+    },
+    "tester": {
+      "current_version": 1,
+      "generations": [
+        {
+          "version": 1,
+          "born": "2025-01-04T00:00:00Z",
+          "status": "active",
+          "lessons_inherited": 0
+        }
+      ]
+    },
+    "security": {
+      "current_version": 1,
+      "generations": [
+        {
+          "version": 1,
+          "born": "2025-01-04T00:00:00Z",
+          "status": "active",
+          "lessons_inherited": 0
+        }
+      ]
+    },
+    "perf": {
+      "current_version": 1,
+      "generations": [
+        {
+          "version": 1,
+          "born": "2025-01-04T00:00:00Z",
+          "status": "active",
+          "lessons_inherited": 0
+        }
+      ]
+    },
+    "docs": {
+      "current_version": 1,
+      "generations": [
+        {
+          "version": 1,
+          "born": "2025-01-04T00:00:00Z",
+          "status": "active",
+          "lessons_inherited": 0
+        }
+      ]
+    },
+    "refactor": {
+      "current_version": 1,
+      "generations": [
+        {
+          "version": 1,
+          "born": "2025-01-04T00:00:00Z",
+          "status": "active",
+          "lessons_inherited": 0
+        }
+      ]
+    },
+    "release": {
+      "current_version": 1,
+      "generations": [
+        {
+          "version": 1,
+          "born": "2025-01-04T00:00:00Z",
+          "status": "active",
+          "lessons_inherited": 0
+        }
+      ]
+    }
+  },
+  "total_deaths": 0,
+  "total_lessons": 0,
+  "evolution_score": 0
+}

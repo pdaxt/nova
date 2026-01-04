@@ -1,0 +1,28 @@
+{
+  "id": "TASK-003",
+  "type": "implement",
+  "title": "Implement Lexer",
+  "component": "lexer",
+  "spec": "specs/lexer.md",
+  "adr": ["ADR-004", "ADR-005"],
+  "priority": "high",
+  "estimated_complexity": "large",
+  "dependencies": ["TASK-001", "TASK-002"],
+  "description": "Implement the Nova lexer that tokenizes source code into a stream of Token values.",
+  "requirements": [
+    "Single-pass O(n) lexing",
+    "All 85 token kinds supported",
+    "Proper span tracking",
+    "Unicode identifier support",
+    "Error recovery (continue after errors)",
+    "No panics on any input"
+  ],
+  "acceptance_criteria": [
+    "All unit tests pass",
+    "Adversarial tests pass",
+    "Coverage > 90%",
+    "Performance: > 100 MB/s",
+    "Memory: O(1) per token"
+  ],
+  "notes": "Reference token.rs and span.rs for existing patterns. Follow ADR-004 for token creation."
+}
