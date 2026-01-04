@@ -56,6 +56,22 @@ use crate::ast::*;
 use crate::error::NovaError;
 use crate::token::{Span, Token, TokenKind};
 
+// ============================================================================
+// Security Constants
+// ============================================================================
+
+/// Maximum expression nesting depth (prevents stack overflow)
+/// Set to 64 to stay well within typical 2MB test thread stack limits
+const MAX_EXPR_DEPTH: usize = 64;
+
+/// Maximum block nesting depth (prevents stack overflow)
+/// Set to 64 to stay well within typical 2MB test thread stack limits
+const MAX_BLOCK_DEPTH: usize = 64;
+
+// ============================================================================
+// Public API
+// ============================================================================
+
 /// Parse tokens into an AST.
 ///
 /// # Arguments
@@ -75,6 +91,10 @@ struct Parser<'a> {
     tokens: Vec<Token>,
     /// Current position in token stream
     current: usize,
+    /// Current expression nesting depth (for security limits)
+    expr_depth: usize,
+    /// Current block nesting depth (for security limits)
+    block_depth: usize,
 }
 
 impl<'a> Parser<'a> {
@@ -83,6 +103,8 @@ impl<'a> Parser<'a> {
             source,
             tokens,
             current: 0,
+            expr_depth: 0,
+            block_depth: 0,
         }
     }
 
@@ -243,6 +265,18 @@ impl<'a> Parser<'a> {
 
     /// Parse a block.
     fn parse_block(&mut self) -> Result<Block, NovaError> {
+        // Security: Check block depth limit
+        self.block_depth += 1;
+        if self.block_depth > MAX_BLOCK_DEPTH {
+            let span = self.peek().span();
+            self.block_depth -= 1;
+            return Err(NovaError::NestingTooDeep {
+                depth: self.block_depth,
+                max: MAX_BLOCK_DEPTH,
+                span,
+            });
+        }
+
         let start = self.expect(TokenKind::LBrace)?.span();
         let mut stmts = Vec::new();
 
@@ -251,6 +285,7 @@ impl<'a> Parser<'a> {
         }
 
         let end = self.expect(TokenKind::RBrace)?.span();
+        self.block_depth -= 1;
 
         Ok(Block {
             stmts,
@@ -317,7 +352,20 @@ impl<'a> Parser<'a> {
 
     /// Parse an expression.
     fn parse_expr(&mut self) -> Result<Expr, NovaError> {
-        self.parse_expr_bp(0)
+        // Security: Check expression depth limit
+        self.expr_depth += 1;
+        if self.expr_depth > MAX_EXPR_DEPTH {
+            let span = self.peek().span();
+            self.expr_depth -= 1;
+            return Err(NovaError::NestingTooDeep {
+                depth: self.expr_depth,
+                max: MAX_EXPR_DEPTH,
+                span,
+            });
+        }
+        let result = self.parse_expr_bp(0);
+        self.expr_depth -= 1;
+        result
     }
 
     /// Parse expression with binding power (Pratt parsing).

@@ -68,6 +68,8 @@ mod token_attack;
 mod types;
 #[cfg(test)]
 mod lexer_attack;
+#[cfg(test)]
+mod parser_attack;
 
 use std::env;
 use std::fs;
