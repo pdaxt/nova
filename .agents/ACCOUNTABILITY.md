@@ -161,14 +161,14 @@ Before merge:
     {"task": "TASK-025", "result": "minor_failure", "issue": "missing docs"}
   ],
   "flags": [],
-  "last_updated": "2025-01-04T10:00:00Z"
+  "last_updated": "2026-01-04T10:00:00Z"
 }
 ```
 
 ### Weekly Report
 
 ```markdown
-## Week of 2025-01-04
+## Week of 2026-01-04
 
 ### Completed
 - 15 tasks completed

@@ -205,7 +205,7 @@ All notable changes to Nova are documented here.
 ### Fixed
 - Integer overflow in span arithmetic
 
-## [0.1.0] - 2025-01-XX
+## [0.1.0] - 2026-01-XX
 
 ### Added
 - Initial lexer implementation

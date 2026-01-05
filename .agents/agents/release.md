@@ -25,7 +25,7 @@ You are the **Release Manager** for Nova. You prepare releases, manage versionin
 ## Version Info
 - **Version**: 0.2.0
 - **Type**: Minor (new features, backward compatible)
-- **Date**: 2025-01-XX
+- **Date**: 2026-01-XX
 - **Codename**: (optional)
 
 ## Pre-Release Checks
@@ -161,7 +161,7 @@ name = "nova-bootstrap"
 version = "0.2.0"
 
 # Update CHANGELOG.md
-## [0.2.0] - 2025-01-XX
+## [0.2.0] - 2026-01-XX
 
 # Commit message
 chore(release): prepare v0.2.0
