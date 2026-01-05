@@ -59,7 +59,7 @@ mod attack_tests {
         source.push_str("; }");
 
         let tokens = lex(&source).unwrap();
-        let result = parse(&source, tokens);
+        let _result = parse(&source, tokens);
 
         // Binary operations may or may not exceed depth depending on associativity
         // The key is: no panic
@@ -79,7 +79,7 @@ mod attack_tests {
         let source = format!("fn main() {{ let x = {}42; }}", ops);
 
         let tokens = lex(&source).unwrap();
-        let result = parse(&source, tokens);
+        let _result = parse(&source, tokens);
 
         // Should either error with NestingTooDeep or succeed (if optimized)
         // Key: no panic
@@ -214,7 +214,7 @@ mod attack_tests {
         let source = "fn main() { let x = 42 }";
 
         let tokens = lex(source).unwrap();
-        let result = parse(source, tokens);
+        let _result = parse(source, tokens);
 
         // This might parse as expression statement without semi
         // The key is no panic
@@ -278,7 +278,7 @@ mod attack_tests {
         let source = format!("fn test({}) {{ }}", params);
 
         let tokens = lex(&source).unwrap();
-        let result = parse(&source, tokens);
+        let _result = parse(&source, tokens);
 
         // Should succeed (or fail gracefully)
         assert!(!std::panic::catch_unwind(|| {

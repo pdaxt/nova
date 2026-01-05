@@ -196,7 +196,7 @@ mod attack_tests {
         let cases = ["0x", "0xG", "0x_", "0xFFFFFFFFFFFFFFFF"];
 
         for source in cases {
-            let result = lex(source);
+            let _result = lex(source);
             // Should not panic
             assert!(!std::panic::catch_unwind(|| lex(source)).is_err());
         }
@@ -296,7 +296,7 @@ mod attack_tests {
         let chars = [" ", "\t", "\n", "\r", "x", "0", "+", "-", "/", "*"];
 
         for source in chars {
-            let result = lex(source);
+            let _result = lex(source);
             // Should not panic
             assert!(!std::panic::catch_unwind(|| lex(source)).is_err());
         }
