@@ -1,6 +1,12 @@
-![Nova - Code That Proves Itself](docs/images/nova-logo.png)
+<p align="center">
+  <img src="docs/brand/nova-logo.svg" alt="Nova" width="200" height="200">
+</p>
 
-# Nova
+<h1 align="center">Nova</h1>
+
+<p align="center">
+  <strong>Code that proves itself.</strong>
+</p>
 
 [![CI](https://github.com/pdaxt/nova/actions/workflows/ci.yml/badge.svg)](https://github.com/pdaxt/nova/actions/workflows/ci.yml)
 [![Security](https://img.shields.io/badge/security-adversarial%20tested-brightgreen)](bootstrap/src/token_attack.rs)
@@ -64,7 +70,27 @@ where
 
 ## Compiler Pipeline
 
-![Nova Compiler Pipeline](docs/images/nova-pipeline.png)
+```mermaid
+flowchart LR
+    A[".nova"] --> B["Lexer"]
+    B --> C["Parser"]
+    C --> D["Type Checker"]
+    D --> E["Verifier"]
+    E --> F["IR"]
+    F --> G["Codegen"]
+    G --> H[".wasm"]
+
+    style A fill:#1e293b,stroke:#334155,color:#f8fafc
+    style B fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style C fill:#a855f7,stroke:#9333ea,color:#fff
+    style D fill:#ec4899,stroke:#db2777,color:#fff
+    style E fill:#ec4899,stroke:#db2777,color:#fff
+    style F fill:#f97316,stroke:#ea580c,color:#fff
+    style G fill:#22c55e,stroke:#16a34a,color:#fff
+    style H fill:#1e293b,stroke:#22c55e,color:#22c55e
+```
+
+> See [docs/DIAGRAMS.md](docs/DIAGRAMS.md) for more architecture diagrams.
 
 ## Project Status
 
@@ -98,6 +124,8 @@ See [ROADMAP.md](ROADMAP.md) for the full plan.
 | [DECISIONS.md](DECISIONS.md) | Architectural decisions with rationale |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
 | [GOVERNANCE.md](GOVERNANCE.md) | BDFL model and approval process |
+| [docs/DIAGRAMS.md](docs/DIAGRAMS.md) | Architecture diagrams (Mermaid) |
+| [docs/brand/BRAND.md](docs/brand/BRAND.md) | Brand guidelines and assets |
 
 ## Get Involved
 

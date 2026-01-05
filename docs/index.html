@@ -58,12 +58,18 @@
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
             font-size: 1.5rem;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 36px;
+            width: 36px;
         }
 
         .nav-links {
@@ -476,7 +482,10 @@
 <body>
     <nav>
         <div class="nav-container">
-            <div class="logo">Nova</div>
+            <a href="./index.html" class="logo">
+                <img src="./brand/nova-mark.svg" alt="Nova">
+                <span>Nova</span>
+            </a>
             <ul class="nav-links">
                 <li><a href="#why">Why Nova</a></li>
                 <li><a href="#features">Features</a></li>
@@ -688,6 +697,7 @@
                     <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
                     <li><a href="https://github.com/pdaxt/nova/blob/main/LICENSE-MIT">License</a></li>
                     <li><a href="https://github.com/pdaxt/nova/blob/main/GOVERNANCE.md">Governance</a></li>
+                    <li><a href="./brand/BRAND.md">Brand Assets</a></li>
                 </ul>
             </div>
         </div>

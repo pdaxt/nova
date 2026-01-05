@@ -1,0 +1,33 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="novaGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Nova burst - simplified for small sizes -->
+  <g transform="translate(64, 64)">
+    <!-- Primary rays -->
+    <line x1="0" y1="-48" x2="0" y2="-22" stroke="url(#novaGlow)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="0" y1="22" x2="0" y2="48" stroke="url(#novaGlow)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="-48" y1="0" x2="-22" y2="0" stroke="url(#novaGlow)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="22" y1="0" x2="48" y2="0" stroke="url(#novaGlow)" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Diagonal rays -->
+    <line x1="-34" y1="-34" x2="-16" y2="-16" stroke="url(#novaGlow)" stroke-width="4" stroke-linecap="round"/>
+    <line x1="16" y1="-16" x2="34" y2="-34" stroke="url(#novaGlow)" stroke-width="4" stroke-linecap="round"/>
+    <line x1="-34" y1="34" x2="-16" y2="16" stroke="url(#novaGlow)" stroke-width="4" stroke-linecap="round"/>
+    <line x1="16" y1="16" x2="34" y2="34" stroke="url(#novaGlow)" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Center with check -->
+    <circle cx="0" cy="0" r="18" fill="url(#novaGlow)"/>
+    <polyline points="-7,1 -2,6 9,-5"
+              stroke="#ffffff"
+              stroke-width="4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"/>
+  </g>
+</svg>
