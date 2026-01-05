@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova - Code That Proves Itself</title>
+    <meta name="description" content="A programming language designed for the AI age. Verified. Efficient. Open.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --gradient-start: #6366f1;
+            --gradient-end: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-cta {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 6rem 2rem 4rem;
+            background: radial-gradient(ellipse at center top, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
+        }
+
+        .hero-content {
+            max-width: 900px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--accent-light);
+            margin-bottom: 2rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Why Nova Section */
+        .section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            max-width: 600px;
+            margin: 0 auto 4rem;
+        }
+
+        /* Problem/Solution Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .comparison-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .comparison-card.problem {
+            border-left: 4px solid #ef4444;
+        }
+
+        .comparison-card.solution {
+            border-left: 4px solid var(--success);
+        }
+
+        .comparison-card h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .comparison-card.problem h3 {
+            color: #ef4444;
+        }
+
+        .comparison-card.solution h3 {
+            color: var(--success);
+        }
+
+        .comparison-card p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+        }
+
+        /* Code Example */
+        .code-section {
+            background: var(--bg-secondary);
+            padding: 6rem 2rem;
+        }
+
+        .code-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .code-block {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot.red { background: #ef4444; }
+        .code-dot.yellow { background: #f59e0b; }
+        .code-dot.green { background: #22c55e; }
+
+        .code-content {
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .code-content .comment { color: #6b7280; }
+        .code-content .keyword { color: #c084fc; }
+        .code-content .function { color: #60a5fa; }
+        .code-content .type { color: #4ade80; }
+        .code-content .string { color: #fbbf24; }
+
+        /* How It Works */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .step {
+            text-align: center;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 auto 1.5rem;
+        }
+
+        .step h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .step p {
+            color: var(--text-secondary);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 8rem 2rem;
+            background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-section p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-secondary);
+            padding: 4rem 2rem 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-brand h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-brand p {
+            color: var(--text-secondary);
+        }
+
+        .footer-links h4 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 3rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .section {
+                padding: 4rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="logo">Nova</div>
+            <ul class="nav-links">
+                <li><a href="#why">Why Nova</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#code">Code</a></li>
+                <li><a href="https://github.com/pdaxt/nova/blob/main/ROADMAP.md">Roadmap</a></li>
+                <li><a href="https://github.com/pdaxt/nova/blob/main/CONTRIBUTING.md">Contribute</a></li>
+            </ul>
+            <a href="https://github.com/pdaxt/nova" class="nav-cta">GitHub</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">Currently in Bootstrap Stage</div>
+            <h1>Code That <span>Proves Itself</span></h1>
+            <p>A programming language designed for the AI age. Every program either proves itself correct or doesn't compile. No runtime errors. No security vulnerabilities. No ambiguity.</p>
+            <div class="hero-buttons">
+                <a href="https://github.com/pdaxt/nova" class="btn-primary">Get Started</a>
+                <a href="https://github.com/pdaxt/nova/blob/main/FOUNDATION.md" class="btn-secondary">Read the Spec</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="why">
+        <h2 class="section-title">Why Nova?</h2>
+        <p class="section-subtitle">Current languages were designed for humans to write and machines to execute. Nova is designed for AI to write and machines to verify.</p>
+
+        <div class="comparison-grid">
+            <div class="comparison-card problem">
+                <h3>Today's Reality</h3>
+                <p>Runtime errors crash production systems unexpectedly</p>
+            </div>
+            <div class="comparison-card solution">
+                <h3>Nova's Vision</h3>
+                <p>Errors are impossible by construction</p>
+            </div>
+            <div class="comparison-card problem">
+                <h3>Today's Reality</h3>
+                <p>Security vulnerabilities everywhere</p>
+            </div>
+            <div class="comparison-card solution">
+                <h3>Nova's Vision</h3>
+                <p>Capabilities prevent unauthorized access</p>
+            </div>
+            <div class="comparison-card problem">
+                <h3>Today's Reality</h3>
+                <p>10x abstraction overhead in modern languages</p>
+            </div>
+            <div class="comparison-card solution">
+                <h3>Nova's Vision</h3>
+                <p>Direct hardware mapping for maximum efficiency</p>
+            </div>
+            <div class="comparison-card problem">
+                <h3>Today's Reality</h3>
+                <p>AI generates buggy, unverified code</p>
+            </div>
+            <div class="comparison-card solution">
+                <h3>Nova's Vision</h3>
+                <p>AI generates mathematically verified code</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="features">
+        <h2 class="section-title">Core Principles</h2>
+        <p class="section-subtitle">Five irreducible principles that guide every design decision.</p>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">&#10003;</div>
+                <h3>Correctness First</h3>
+                <p>Every program either proves itself correct or doesn't compile. No exceptions.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128274;</div>
+                <h3>Capability-Based</h3>
+                <p>Code can only access what it's explicitly given. No ambient authority, no hidden permissions.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#129302;</div>
+                <h3>AI-Native</h3>
+                <p>Optimized for LLMs to generate: minimal syntax, zero ambiguity, maximum verifiability.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128640;</div>
+                <h3>Self-Hosting</h3>
+                <p>The compiler is written in Nova. We eat our own dogfood from day one.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#127760;</div>
+                <h3>Radically Open</h3>
+                <p>Everything is open source: the spec, the compiler, the tools, the governance.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#9889;</div>
+                <h3>Zero Runtime</h3>
+                <p>No garbage collector, no runtime. Direct compilation to WebAssembly and native code.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="code-section" id="code">
+        <div class="code-container">
+            <h2 class="section-title" style="color: white;">See Nova in Action</h2>
+            <p class="section-subtitle">The compiler proves these properties at compile time. If the implementation doesn't satisfy them, it won't compile.</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-dot red"></span>
+                    <span class="code-dot yellow"></span>
+                    <span class="code-dot green"></span>
+                    <span style="margin-left: 1rem; color: var(--text-secondary);">sort.nova</span>
+                </div>
+                <pre class="code-content"><span class="comment">// A function that sorts a list</span>
+<span class="comment">// The compiler PROVES these properties:</span>
+<span class="comment">//   - Output has same length as input</span>
+<span class="comment">//   - Output is sorted</span>
+<span class="comment">//   - Output is a permutation of input</span>
+
+<span class="keyword">fn</span> <span class="function">sort</span>(input: <span class="type">Vec&lt;i32&gt;</span>) -> <span class="type">Vec&lt;i32&gt;</span>
+<span class="keyword">where</span>
+    <span class="keyword">ensures</span> output.len() == input.len(),
+    <span class="keyword">ensures</span> output.is_sorted(),
+    <span class="keyword">ensures</span> output.is_permutation_of(input),
+{
+    <span class="comment">// Implementation here</span>
+    <span class="comment">// If it doesn't satisfy the properties,</span>
+    <span class="comment">// it won't compile</span>
+}</pre>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-subtitle">From source to verified WebAssembly in four steps.</p>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Write Nova Code</h3>
+                <p>Express your intent with clear syntax and explicit contracts.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Compiler Verifies</h3>
+                <p>The type system proves your code satisfies all contracts.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Generate IR</h3>
+                <p>Verified code is lowered to efficient intermediate representation.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>Emit WASM</h3>
+                <p>Output compact, fast WebAssembly that runs anywhere.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <h2>Join the Movement</h2>
+        <p>Nova is open source and community-driven. Help us build the language of the AI age.</p>
+        <div class="hero-buttons">
+            <a href="https://github.com/pdaxt/nova" class="btn-primary">Star on GitHub</a>
+            <a href="https://github.com/pdaxt/nova/blob/main/CONTRIBUTING.md" class="btn-secondary">Contribute</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>Nova</h3>
+                <p>Code that proves itself.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="https://github.com/pdaxt/nova/blob/main/README.md">Documentation</a></li>
+                    <li><a href="https://github.com/pdaxt/nova/blob/main/ROADMAP.md">Roadmap</a></li>
+                    <li><a href="https://github.com/pdaxt/nova/blob/main/FOUNDATION.md">Specification</a></li>
+                    <li><a href="https://github.com/pdaxt/nova/tree/main/examples">Examples</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Community</h4>
+                <ul>
+                    <li><a href="https://github.com/pdaxt/nova/issues">Issues</a></li>
+                    <li><a href="https://github.com/pdaxt/nova/discussions">Discussions</a></li>
+                    <li><a href="https://github.com/pdaxt/nova/blob/main/CONTRIBUTING.md">Contributing</a></li>
+                    <li><a href="https://github.com/pdaxt/nova/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Project</h4>
+                <ul>
+                    <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+                    <li><a href="https://github.com/pdaxt/nova/blob/main/LICENSE-MIT">License</a></li>
+                    <li><a href="https://github.com/pdaxt/nova/blob/main/GOVERNANCE.md">Governance</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Nova Programming Language. MIT/Apache-2.0 licensed.</p>
+        </div>
+    </footer>
+</body>
+</html>
