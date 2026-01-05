@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parsers & Abstract Syntax Trees | Learn Nova</title>
+
+    <meta name="description" content="Learn how parsers transform flat tokens into tree structures that represent the meaning of your code - the Abstract Syntax Tree.">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/learn/parsers-ast.html">
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #1e1e2e;
+            --purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--success); }
+
+        .article {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .lesson-badge {
+            display: inline-block;
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--purple);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .meta {
+            display: flex;
+            gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            margin: 3rem 0 1.5rem;
+            color: var(--purple);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin: 2rem 0 1rem;
+        }
+
+        p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        strong { color: var(--text); }
+        a { color: var(--accent); }
+
+        pre {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .inline-code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .callout {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        .callout.success { border-color: var(--success); }
+        .callout.warning { border-color: var(--warning); }
+        .callout.purple { border-color: var(--purple); }
+        .callout h4 { margin-bottom: 0.5rem; }
+        .callout p { margin-bottom: 0; }
+
+        ul, ol {
+            margin: 1rem 0 1.5rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        li { margin-bottom: 0.5rem; }
+
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .analogy-box h4 {
+            color: var(--purple);
+            margin-bottom: 1rem;
+        }
+
+        /* AST visualization */
+        .ast-tree {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .ast-tree .node { color: var(--purple); font-weight: 600; }
+        .ast-tree .field { color: #60a5fa; }
+        .ast-tree .value { color: #4ade80; }
+        .ast-tree .string { color: #fbbf24; }
+
+        /* Token to AST transformation */
+        .transformation {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1rem;
+            align-items: center;
+            margin: 2rem 0;
+        }
+
+        .transformation-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .transformation-box h5 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .transformation-arrow {
+            font-size: 2rem;
+            color: var(--purple);
+        }
+
+        /* Token stream */
+        .token-stream {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .token {
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .token.keyword { background: #c084fc; color: white; }
+        .token.ident { background: #60a5fa; color: white; }
+        .token.number { background: #4ade80; color: #0a0a0f; }
+        .token.operator { background: #f472b6; color: white; }
+        .token.punctuation { background: #6b7280; color: white; }
+
+        /* Grammar box */
+        .grammar-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .grammar-box h5 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--purple);
+            margin-bottom: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .grammar-rule {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .grammar-rule .nonterminal { color: var(--purple); font-weight: 600; }
+        .grammar-rule .terminal { color: #fbbf24; }
+        .grammar-rule .meta { color: #6b7280; }
+
+        /* Stage cards */
+        .stage-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stage-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stage-number {
+            width: 40px;
+            height: 40px;
+            background: var(--purple);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .stage-card h4 { font-size: 1.1rem; }
+        .stage-card p { margin-bottom: 0; }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .lesson-nav a {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .lesson-nav a:hover { background: rgba(168, 85, 247, 0.1); }
+        .lesson-nav .label { font-size: 0.8rem; color: var(--text-secondary); }
+        .lesson-nav .title { color: var(--text); font-weight: 600; }
+
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .number { color: #4ade80; }
+        .type { color: #f472b6; }
+        .function { color: #60a5fa; }
+        .macro { color: #fb923c; }
+
+        @media (max-width: 768px) {
+            .transformation {
+                grid-template-columns: 1fr;
+            }
+            .transformation-arrow {
+                transform: rotate(90deg);
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                <span>Nova</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="./index.html" class="active">Learn</a></li>
+                <li><a href="../architecture/lexer.html">Architecture</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <article class="article">
+        <span class="lesson-badge">Lesson 4</span>
+        <h1>Parsers & AST</h1>
+        <p class="subtitle">Transforming flat tokens into a tree that represents the structure of your code.</p>
+
+        <div class="meta">
+            <span>30 min read</span>
+            <span>Intermediate</span>
+        </div>
+
+        <h2>From Tokens to Structure</h2>
+
+        <p>In the last lesson, we learned how the lexer breaks code into tokens. But tokens are just a flat list — they don't capture the <em>structure</em> of the code.</p>
+
+        <p>Consider this expression:</p>
+
+<pre><code><span class="number">2</span> + <span class="number">3</span> * <span class="number">4</span></code></pre>
+
+        <p>The lexer produces these tokens:</p>
+
+        <div class="token-stream" style="margin: 1rem 0;">
+            <span class="token number">2</span>
+            <span class="token operator">+</span>
+            <span class="token number">3</span>
+            <span class="token operator">*</span>
+            <span class="token number">4</span>
+        </div>
+
+        <p>But this flat list doesn't tell us: <strong>what's the answer?</strong></p>
+
+        <ul>
+            <li>If we evaluate left-to-right: (2 + 3) * 4 = 20</li>
+            <li>If we respect precedence: 2 + (3 * 4) = 14</li>
+        </ul>
+
+        <p>We know multiplication has higher precedence, so the answer should be 14. But how does the compiler know this? That's where the <strong>parser</strong> comes in.</p>
+
+        <div class="analogy-box">
+            <h4>Think of It Like Diagramming Sentences</h4>
+            <p>In school, you might have diagrammed sentences: "The quick brown fox jumps" becomes a tree with subject, verb, adjectives. A parser does the same thing for code — it figures out what modifies what, and builds a tree structure.</p>
+        </div>
+
+        <h2>What Is an AST?</h2>
+
+        <p>The parser builds an <strong>Abstract Syntax Tree</strong> (AST). It's "abstract" because it captures the essential structure, ignoring unimportant details like whitespace or parentheses (which only existed to guide the parsing).</p>
+
+        <p>Here's our expression as an AST:</p>
+
+        <div class="ast-tree">
+<span class="node">BinaryExpr</span>
+├── <span class="field">op:</span> <span class="value">Add</span>
+├── <span class="field">left:</span> <span class="node">Literal</span>(<span class="number">2</span>)
+└── <span class="field">right:</span> <span class="node">BinaryExpr</span>
+    ├── <span class="field">op:</span> <span class="value">Mul</span>
+    ├── <span class="field">left:</span> <span class="node">Literal</span>(<span class="number">3</span>)
+    └── <span class="field">right:</span> <span class="node">Literal</span>(<span class="number">4</span>)
+        </div>
+
+        <p>This tree structure explicitly shows that <code class="inline-code">3 * 4</code> is evaluated first (it's deeper in the tree), then added to 2.</p>
+
+        <h2>A Bigger Example</h2>
+
+        <p>Let's see how a function definition becomes an AST:</p>
+
+<pre><code><span class="keyword">fn</span> add(a: Int, b: Int) -> Int {
+    a + b
+}</code></pre>
+
+        <div class="transformation">
+            <div class="transformation-box">
+                <h5>Token Stream</h5>
+                <div class="token-stream">
+                    <span class="token keyword">fn</span>
+                    <span class="token ident">add</span>
+                    <span class="token punctuation">(</span>
+                    <span class="token ident">a</span>
+                    <span class="token punctuation">:</span>
+                    <span class="token ident">Int</span>
+                    <span class="token punctuation">,</span>
+                    <span class="token ident">b</span>
+                    <span class="token punctuation">:</span>
+                    <span class="token ident">Int</span>
+                    <span class="token punctuation">)</span>
+                    <span class="token operator">-></span>
+                    <span class="token ident">Int</span>
+                    <span class="token punctuation">{</span>
+                    <span class="token ident">a</span>
+                    <span class="token operator">+</span>
+                    <span class="token ident">b</span>
+                    <span class="token punctuation">}</span>
+                </div>
+            </div>
+            <div class="transformation-arrow">→</div>
+            <div class="transformation-box">
+                <h5>AST Node</h5>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                    FunctionDef with name, params, return_type, body
+                </div>
+            </div>
+        </div>
+
+        <div class="ast-tree">
+<span class="node">FunctionDef</span>
+├── <span class="field">name:</span> <span class="string">"add"</span>
+├── <span class="field">params:</span> [
+│   ├── <span class="node">Param</span> { <span class="field">name:</span> <span class="string">"a"</span>, <span class="field">type:</span> <span class="value">Int</span> }
+│   └── <span class="node">Param</span> { <span class="field">name:</span> <span class="string">"b"</span>, <span class="field">type:</span> <span class="value">Int</span> }
+│   ]
+├── <span class="field">return_type:</span> <span class="value">Int</span>
+└── <span class="field">body:</span> <span class="node">BinaryExpr</span>
+    ├── <span class="field">op:</span> <span class="value">Add</span>
+    ├── <span class="field">left:</span> <span class="node">Var</span>(<span class="string">"a"</span>)
+    └── <span class="field">right:</span> <span class="node">Var</span>(<span class="string">"b"</span>)
+        </div>
+
+        <p>Notice how the AST captures everything meaningful:</p>
+        <ul>
+            <li>The function is named "add"</li>
+            <li>It has two parameters, each with a name and type</li>
+            <li>It returns an Int</li>
+            <li>The body is an addition expression</li>
+        </ul>
+
+        <p>But it <em>doesn't</em> capture:</p>
+        <ul>
+            <li>Where the parentheses were</li>
+            <li>How many spaces between tokens</li>
+            <li>Whether there was a newline before the brace</li>
+        </ul>
+
+        <p>This is the "abstract" part — we keep the meaning, discard the syntax noise.</p>
+
+        <h2>Grammars: The Rules of Structure</h2>
+
+        <p>How does the parser know how to build the tree? It follows rules called a <strong>grammar</strong>. A grammar defines what valid programs look like.</p>
+
+        <div class="grammar-box">
+            <h5>Nova Grammar (Simplified)</h5>
+            <div class="grammar-rule"><span class="nonterminal">Program</span> <span class="meta">::=</span> <span class="nonterminal">Item</span>*</div>
+            <div class="grammar-rule"><span class="nonterminal">Item</span> <span class="meta">::=</span> <span class="nonterminal">FunctionDef</span> <span class="meta">|</span> <span class="nonterminal">LetBinding</span></div>
+            <div class="grammar-rule"><span class="nonterminal">FunctionDef</span> <span class="meta">::=</span> <span class="terminal">"fn"</span> <span class="nonterminal">IDENT</span> <span class="terminal">"("</span> <span class="nonterminal">Params</span> <span class="terminal">")"</span> <span class="terminal">"->"</span> <span class="nonterminal">Type</span> <span class="nonterminal">Block</span></div>
+            <div class="grammar-rule"><span class="nonterminal">Params</span> <span class="meta">::=</span> (<span class="nonterminal">Param</span> (<span class="terminal">","</span> <span class="nonterminal">Param</span>)*)?</div>
+            <div class="grammar-rule"><span class="nonterminal">Param</span> <span class="meta">::=</span> <span class="nonterminal">IDENT</span> <span class="terminal">":"</span> <span class="nonterminal">Type</span></div>
+            <div class="grammar-rule"><span class="nonterminal">Expr</span> <span class="meta">::=</span> <span class="nonterminal">Term</span> ((<span class="terminal">"+"</span> <span class="meta">|</span> <span class="terminal">"-"</span>) <span class="nonterminal">Term</span>)*</div>
+            <div class="grammar-rule"><span class="nonterminal">Term</span> <span class="meta">::=</span> <span class="nonterminal">Factor</span> ((<span class="terminal">"*"</span> <span class="meta">|</span> <span class="terminal">"/"</span>) <span class="nonterminal">Factor</span>)*</div>
+            <div class="grammar-rule"><span class="nonterminal">Factor</span> <span class="meta">::=</span> <span class="nonterminal">NUMBER</span> <span class="meta">|</span> <span class="nonterminal">IDENT</span> <span class="meta">|</span> <span class="terminal">"("</span> <span class="nonterminal">Expr</span> <span class="terminal">")"</span></div>
+        </div>
+
+        <p>Read this as:</p>
+        <ul>
+            <li>A <strong>Program</strong> is zero or more <strong>Items</strong></li>
+            <li>An <strong>Item</strong> is either a <strong>FunctionDef</strong> or a <strong>LetBinding</strong></li>
+            <li>A <strong>FunctionDef</strong> is the keyword "fn", then an identifier, then "("...</li>
+        </ul>
+
+        <div class="callout purple">
+            <h4>Precedence in Grammar</h4>
+            <p>Notice how the grammar handles <code class="inline-code">2 + 3 * 4</code>. An <strong>Expr</strong> is made of <strong>Terms</strong> connected by + or -. A <strong>Term</strong> is made of <strong>Factors</strong> connected by * or /. This structure naturally gives * and / higher precedence than + and -!</p>
+        </div>
+
+        <h2>How Parsing Works</h2>
+
+        <p>The parser reads tokens one at a time and tries to match them against the grammar rules. There are several strategies:</p>
+
+        <h3>Recursive Descent</h3>
+
+        <p>The most intuitive approach: write a function for each grammar rule. Here's what parsing expressions looks like:</p>
+
+<pre><code><span class="keyword">impl</span> <span class="type">Parser</span> {
+    <span class="comment">// Parse: Expr ::= Term (('+' | '-') Term)*</span>
+    <span class="keyword">fn</span> <span class="function">parse_expr</span>(&<span class="keyword">mut</span> <span class="keyword">self</span>) -> <span class="type">Expr</span> {
+        <span class="comment">// First, parse a Term</span>
+        <span class="keyword">let</span> <span class="keyword">mut</span> left = <span class="keyword">self</span>.<span class="function">parse_term</span>();
+
+        <span class="comment">// Then, while we see + or -, keep parsing more Terms</span>
+        <span class="keyword">while</span> <span class="keyword">self</span>.<span class="function">current_is</span>(<span class="type">Plus</span>) || <span class="keyword">self</span>.<span class="function">current_is</span>(<span class="type">Minus</span>) {
+            <span class="keyword">let</span> op = <span class="keyword">self</span>.<span class="function">advance</span>();  <span class="comment">// consume + or -</span>
+            <span class="keyword">let</span> right = <span class="keyword">self</span>.<span class="function">parse_term</span>();
+            left = <span class="type">Expr</span>::<span class="type">Binary</span> { left, op, right };
+        }
+
+        left
+    }
+
+    <span class="comment">// Parse: Term ::= Factor (('*' | '/') Factor)*</span>
+    <span class="keyword">fn</span> <span class="function">parse_term</span>(&<span class="keyword">mut</span> <span class="keyword">self</span>) -> <span class="type">Expr</span> {
+        <span class="keyword">let</span> <span class="keyword">mut</span> left = <span class="keyword">self</span>.<span class="function">parse_factor</span>();
+
+        <span class="keyword">while</span> <span class="keyword">self</span>.<span class="function">current_is</span>(<span class="type">Star</span>) || <span class="keyword">self</span>.<span class="function">current_is</span>(<span class="type">Slash</span>) {
+            <span class="keyword">let</span> op = <span class="keyword">self</span>.<span class="function">advance</span>();
+            <span class="keyword">let</span> right = <span class="keyword">self</span>.<span class="function">parse_factor</span>();
+            left = <span class="type">Expr</span>::<span class="type">Binary</span> { left, op, right };
+        }
+
+        left
+    }
+
+    <span class="comment">// Parse: Factor ::= NUMBER | IDENT | '(' Expr ')'</span>
+    <span class="keyword">fn</span> <span class="function">parse_factor</span>(&<span class="keyword">mut</span> <span class="keyword">self</span>) -> <span class="type">Expr</span> {
+        <span class="keyword">match</span> <span class="keyword">self</span>.<span class="function">current</span>() {
+            <span class="type">Number</span>(n) => {
+                <span class="keyword">self</span>.<span class="function">advance</span>();
+                <span class="type">Expr</span>::<span class="type">Literal</span>(n)
+            }
+            <span class="type">Ident</span>(name) => {
+                <span class="keyword">self</span>.<span class="function">advance</span>();
+                <span class="type">Expr</span>::<span class="type">Var</span>(name)
+            }
+            <span class="type">LParen</span> => {
+                <span class="keyword">self</span>.<span class="function">advance</span>();  <span class="comment">// consume '('</span>
+                <span class="keyword">let</span> expr = <span class="keyword">self</span>.<span class="function">parse_expr</span>();  <span class="comment">// recurse!</span>
+                <span class="keyword">self</span>.<span class="function">expect</span>(<span class="type">RParen</span>);  <span class="comment">// consume ')'</span>
+                expr
+            }
+            _ => <span class="keyword">self</span>.<span class="function">error</span>(<span class="string">"Expected expression"</span>)
+        }
+    }
+}</code></pre>
+
+        <p>Let's trace through <code class="inline-code">2 + 3 * 4</code>:</p>
+
+        <div class="stage-grid">
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">1</div>
+                    <h4>parse_expr starts</h4>
+                </div>
+                <p>Calls <code class="inline-code">parse_term()</code> to get the left side.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">2</div>
+                    <h4>parse_term starts</h4>
+                </div>
+                <p>Calls <code class="inline-code">parse_factor()</code>, sees <code class="inline-code">2</code>, returns <code class="inline-code">Literal(2)</code>. No * or /, so returns.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">3</div>
+                    <h4>parse_expr sees +</h4>
+                </div>
+                <p>Consumes +, calls <code class="inline-code">parse_term()</code> for the right side.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">4</div>
+                    <h4>parse_term for 3 * 4</h4>
+                </div>
+                <p>Gets <code class="inline-code">Literal(3)</code> from factor, sees *, gets <code class="inline-code">Literal(4)</code>. Returns <code class="inline-code">Binary(3, Mul, 4)</code>.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">5</div>
+                    <h4>parse_expr completes</h4>
+                </div>
+                <p>Returns <code class="inline-code">Binary(2, Add, Binary(3, Mul, 4))</code> — correct!</p>
+            </div>
+        </div>
+
+        <h2>Defining AST Types in Rust</h2>
+
+        <p>The AST is defined as a collection of Rust types, usually enums:</p>
+
+<pre><code><span class="comment">// An expression can be many things</span>
+<span class="keyword">pub enum</span> <span class="type">Expr</span> {
+    <span class="comment">// Literal values</span>
+    <span class="type">Literal</span>(<span class="type">Literal</span>),
+
+    <span class="comment">// Variable reference</span>
+    <span class="type">Var</span>(<span class="type">String</span>),
+
+    <span class="comment">// Binary operation: left op right</span>
+    <span class="type">Binary</span> {
+        left: <span class="type">Box</span><<span class="type">Expr</span>>,
+        op: <span class="type">BinaryOp</span>,
+        right: <span class="type">Box</span><<span class="type">Expr</span>>,
+    },
+
+    <span class="comment">// Function call: name(args)</span>
+    <span class="type">Call</span> {
+        name: <span class="type">String</span>,
+        args: <span class="type">Vec</span><<span class="type">Expr</span>>,
+    },
+
+    <span class="comment">// If expression: if cond { then } else { else }</span>
+    <span class="type">If</span> {
+        condition: <span class="type">Box</span><<span class="type">Expr</span>>,
+        then_branch: <span class="type">Box</span><<span class="type">Expr</span>>,
+        else_branch: <span class="type">Option</span><<span class="type">Box</span><<span class="type">Expr</span>>>,
+    },
+}
+
+<span class="comment">// Binary operators</span>
+<span class="keyword">pub enum</span> <span class="type">BinaryOp</span> {
+    <span class="type">Add</span>, <span class="type">Sub</span>, <span class="type">Mul</span>, <span class="type">Div</span>,
+    <span class="type">Eq</span>, <span class="type">NotEq</span>, <span class="type">Lt</span>, <span class="type">Gt</span>,
+}
+
+<span class="comment">// Literal values</span>
+<span class="keyword">pub enum</span> <span class="type">Literal</span> {
+    <span class="type">Int</span>(<span class="type">i64</span>),
+    <span class="type">Float</span>(<span class="type">f64</span>),
+    <span class="type">String</span>(<span class="type">String</span>),
+    <span class="type">Bool</span>(<span class="type">bool</span>),
+}</code></pre>
+
+        <div class="callout warning">
+            <h4>Why Box?</h4>
+            <p>In Rust, we use <code class="inline-code">Box&lt;Expr&gt;</code> because <code class="inline-code">Expr</code> is recursive — a <code class="inline-code">Binary</code> contains other <code class="inline-code">Expr</code>s. Without Box, the type would have infinite size! Box puts the nested expressions on the heap with a fixed-size pointer.</p>
+        </div>
+
+        <h2>Parser Combinators with Chumsky</h2>
+
+        <p>Writing parsers by hand is educational but tedious. Nova uses <strong>Chumsky</strong>, a parser combinator library for Rust. Instead of writing parsing functions, you <em>compose</em> small parsers into bigger ones.</p>
+
+<pre><code><span class="keyword">use</span> chumsky::prelude::*;
+
+<span class="comment">// A parser for expressions</span>
+<span class="keyword">fn</span> <span class="function">expr_parser</span>() -> <span class="keyword">impl</span> <span class="type">Parser</span><<span class="type">Token</span>, <span class="type">Expr</span>, Error = <span class="type">Simple</span><<span class="type">Token</span>>> {
+    <span class="comment">// First, define what a "factor" is</span>
+    <span class="keyword">let</span> factor = <span class="function">select!</span> {
+        <span class="type">Token</span>::<span class="type">Number</span>(n) => <span class="type">Expr</span>::<span class="type">Literal</span>(<span class="type">Literal</span>::<span class="type">Int</span>(n)),
+        <span class="type">Token</span>::<span class="type">Ident</span>(name) => <span class="type">Expr</span>::<span class="type">Var</span>(name),
+    };
+
+    <span class="comment">// Define a term: factor, optionally followed by * or / and more factors</span>
+    <span class="keyword">let</span> term = factor.<span class="function">clone</span>()
+        .<span class="function">then</span>(
+            <span class="function">just</span>(<span class="type">Token</span>::<span class="type">Star</span>).<span class="function">or</span>(<span class="function">just</span>(<span class="type">Token</span>::<span class="type">Slash</span>))
+                .<span class="function">then</span>(factor)
+                .<span class="function">repeated</span>()
+        )
+        .<span class="function">foldl</span>(|left, (op, right)| <span class="type">Expr</span>::<span class="type">Binary</span> {
+            left: <span class="type">Box</span>::<span class="function">new</span>(left),
+            op: <span class="function">to_binary_op</span>(op),
+            right: <span class="type">Box</span>::<span class="function">new</span>(right),
+        });
+
+    <span class="comment">// Define an expression: term, optionally followed by + or -</span>
+    term.<span class="function">clone</span>()
+        .<span class="function">then</span>(
+            <span class="function">just</span>(<span class="type">Token</span>::<span class="type">Plus</span>).<span class="function">or</span>(<span class="function">just</span>(<span class="type">Token</span>::<span class="type">Minus</span>))
+                .<span class="function">then</span>(term)
+                .<span class="function">repeated</span>()
+        )
+        .<span class="function">foldl</span>(|left, (op, right)| <span class="type">Expr</span>::<span class="type">Binary</span> {
+            left: <span class="type">Box</span>::<span class="function">new</span>(left),
+            op: <span class="function">to_binary_op</span>(op),
+            right: <span class="type">Box</span>::<span class="function">new</span>(right),
+        })
+}</code></pre>
+
+        <p>Key Chumsky combinators:</p>
+        <ul>
+            <li><code class="inline-code">just(token)</code> — match exactly this token</li>
+            <li><code class="inline-code">select!</code> — pattern match on tokens</li>
+            <li><code class="inline-code">.then(other)</code> — parse this, then that</li>
+            <li><code class="inline-code">.or(other)</code> — parse this or that</li>
+            <li><code class="inline-code">.repeated()</code> — parse zero or more times</li>
+            <li><code class="inline-code">.foldl(fn)</code> — combine repeated results left-to-right</li>
+        </ul>
+
+        <h2>Error Recovery</h2>
+
+        <p>A good parser doesn't just fail on the first error — it tries to recover and find more errors. This is crucial for IDE support and helpful compiler messages.</p>
+
+<pre><code><span class="comment">// Bad error experience:</span>
+error: unexpected token
+  --> main.nova:1:5
+
+<span class="comment">// Good error experience:</span>
+error: expected `)` to close function parameters
+  --> main.nova:1:15
+   |
+1  | fn add(a: Int, b: Int -> Int {
+   |               ^ expected `)` here
+   |
+   = help: you may have forgotten to close the parameter list
+
+error: expected `{` to start function body
+  --> main.nova:1:27
+   |
+   ...
+</code></pre>
+
+        <p>Nova's parser uses <strong>synchronization points</strong> — when an error occurs, it skips tokens until it finds something recognizable (like a <code class="inline-code">fn</code> keyword or <code class="inline-code">}</code>), then continues parsing.</p>
+
+        <h2>Spans in the AST</h2>
+
+        <p>Remember spans from the lexer? They're even more important in the AST. Every node carries its source location:</p>
+
+<pre><code><span class="keyword">pub struct</span> <span class="type">Spanned</span><<span class="type">T</span>> {
+    <span class="keyword">pub</span> node: <span class="type">T</span>,
+    <span class="keyword">pub</span> span: <span class="type">Span</span>,
+}
+
+<span class="comment">// Every expression knows where it came from</span>
+<span class="keyword">type</span> <span class="type">SpannedExpr</span> = <span class="type">Spanned</span><<span class="type">Expr</span>>;</code></pre>
+
+        <p>When the type checker finds an error like "can't add String to Int", it uses spans to show exactly which expression is wrong.</p>
+
+        <div class="callout success">
+            <h4>Key Takeaway</h4>
+            <p>The parser transforms a flat list of tokens into a tree structure (AST) that captures the meaning and structure of your code. The grammar defines what valid programs look like, and the parser builds the tree by following those rules. This structured representation is what the rest of the compiler works with.</p>
+        </div>
+
+        <h2>What's Next?</h2>
+
+        <p>We've built our tree, but we still don't know if the code makes sense. Is <code class="inline-code">add("hello", 5)</code> valid? That's the job of the <strong>type checker</strong>, which we'll explore in the next lesson.</p>
+
+        <nav class="lesson-nav">
+            <a href="./lexers-tokens.html">
+                <span class="label">Previous Lesson</span>
+                <span class="title">Lexers & Tokens</span>
+            </a>
+            <a href="./type-systems.html">
+                <span class="label">Next Lesson</span>
+                <span class="title">Type Systems</span>
+            </a>
+        </nav>
+    </article>
+</body>
+</html>

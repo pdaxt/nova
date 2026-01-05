@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Generation: From AST to WebAssembly | Learn Nova</title>
+
+    <meta name="description" content="Learn how Nova transforms verified source code into WebAssembly, a portable binary format that runs everywhere.">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/learn/codegen.html">
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #1e1e2e;
+            --green: #22c55e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--success); }
+
+        .article {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .lesson-badge {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--green);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .meta {
+            display: flex;
+            gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            margin: 3rem 0 1.5rem;
+            color: var(--green);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin: 2rem 0 1rem;
+        }
+
+        p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        strong { color: var(--text); }
+        a { color: var(--accent); }
+
+        pre {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .inline-code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .callout {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        .callout.success { border-color: var(--success); }
+        .callout.warning { border-color: var(--warning); }
+        .callout.error { border-color: var(--error); }
+        .callout.green { border-color: var(--green); }
+        .callout h4 { margin-bottom: 0.5rem; }
+        .callout p { margin-bottom: 0; }
+
+        ul, ol {
+            margin: 1rem 0 1.5rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        li { margin-bottom: 0.5rem; }
+
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .analogy-box h4 {
+            color: var(--green);
+            margin-bottom: 1rem;
+        }
+
+        /* Stack visualization */
+        .stack-viz {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .stack-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-end;
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 0.25rem;
+            min-width: 100px;
+        }
+
+        .stack-item {
+            background: var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .stack-label {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .stack-arrow {
+            font-size: 2rem;
+            color: var(--green);
+            align-self: center;
+        }
+
+        .instruction-box {
+            background: rgba(34, 197, 94, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            align-self: center;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        /* Pipeline diagram */
+        .pipeline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: 16px;
+        }
+
+        .pipeline-step {
+            background: var(--accent);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .pipeline-step.source { background: #1e293b; border: 2px solid #334155; }
+        .pipeline-step.verified { background: #f97316; }
+        .pipeline-step.codegen { background: var(--green); }
+        .pipeline-step.wasm { background: #6366f1; }
+        .pipeline-step.runtime { background: #1e293b; border: 2px solid var(--green); color: var(--green); }
+
+        .pipeline-arrow {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Stage cards */
+        .stage-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stage-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stage-number {
+            width: 40px;
+            height: 40px;
+            background: var(--green);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .stage-card h4 { font-size: 1.1rem; }
+        .stage-card p { margin-bottom: 0; }
+
+        /* Target platforms */
+        .platforms {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .platform-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .platform-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .platform-card h5 {
+            margin-bottom: 0.5rem;
+        }
+
+        .platform-card p {
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .lesson-nav a {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .lesson-nav a:hover { background: rgba(34, 197, 94, 0.1); }
+        .lesson-nav .label { font-size: 0.8rem; color: var(--text-secondary); }
+        .lesson-nav .title { color: var(--text); font-weight: 600; }
+
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .number { color: #4ade80; }
+        .type { color: #f472b6; }
+        .function { color: #60a5fa; }
+        .wasm { color: #22c55e; }
+
+        /* Completion box */
+        .completion-box {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(99, 102, 241, 0.15));
+            border: 2px solid var(--green);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin: 3rem 0;
+            text-align: center;
+        }
+
+        .completion-box h3 {
+            color: var(--green);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .completion-box p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .completion-cta {
+            display: inline-block;
+            background: var(--green);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .completion-cta:hover {
+            opacity: 0.9;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .stack-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .stack-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                <span>Nova</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="./index.html" class="active">Learn</a></li>
+                <li><a href="../architecture/lexer.html">Architecture</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <article class="article">
+        <span class="lesson-badge">Lesson 7</span>
+        <h1>Code Generation</h1>
+        <p class="subtitle">The final step: turning verified code into something that runs.</p>
+
+        <div class="meta">
+            <span>30 min read</span>
+            <span>Intermediate</span>
+        </div>
+
+        <h2>The Final Stage</h2>
+
+        <p>We've come a long way. Your Nova code has been:</p>
+
+        <ul>
+            <li><strong>Lexed</strong> — broken into tokens</li>
+            <li><strong>Parsed</strong> — structured into an AST</li>
+            <li><strong>Type checked</strong> — verified for type safety</li>
+            <li><strong>Contract verified</strong> — proven correct</li>
+        </ul>
+
+        <p>Now comes the final step: <strong>code generation</strong> — turning that verified AST into something a machine can execute.</p>
+
+        <div class="pipeline">
+            <div class="pipeline-step source">Nova Code</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step verified">Verified AST</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step codegen">Codegen</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step wasm">WebAssembly</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step runtime">Runs Everywhere</div>
+        </div>
+
+        <h2>Why WebAssembly?</h2>
+
+        <p>Nova compiles to <strong>WebAssembly</strong> (WASM), a portable binary format designed to run at near-native speed. Why WASM instead of x86 or ARM machine code?</p>
+
+        <div class="platforms">
+            <div class="platform-card">
+                <div class="platform-icon">🌐</div>
+                <h5>Web Browsers</h5>
+                <p>Chrome, Firefox, Safari, Edge all run WASM natively</p>
+            </div>
+            <div class="platform-card">
+                <div class="platform-icon">🖥️</div>
+                <h5>Server / Desktop</h5>
+                <p>Run with Node.js, Deno, Wasmtime, Wasmer</p>
+            </div>
+            <div class="platform-card">
+                <div class="platform-icon">📱</div>
+                <h5>Mobile</h5>
+                <p>iOS and Android via embedded runtimes</p>
+            </div>
+            <div class="platform-card">
+                <div class="platform-icon">☁️</div>
+                <h5>Edge / Serverless</h5>
+                <p>Cloudflare Workers, Fastly Compute</p>
+            </div>
+        </div>
+
+        <p><strong>Write once, run anywhere.</strong> Your Nova code compiles to a single .wasm file that works on any platform with a WASM runtime.</p>
+
+        <div class="analogy-box">
+            <h4>Think of WASM Like a Universal Translator</h4>
+            <p>Instead of compiling to x86 (Intel/AMD), ARM (Apple Silicon/phones), and RISC-V separately, you compile once to WASM. Each platform's WASM runtime translates it to native code. It's like writing a book once and having it automatically translated to every language.</p>
+        </div>
+
+        <h2>How WASM Works: Stack Machines</h2>
+
+        <p>WebAssembly is a <strong>stack-based virtual machine</strong>. Instead of registers, it uses a stack to pass values between operations.</p>
+
+        <p>Let's see how <code class="inline-code">3 + 5</code> executes:</p>
+
+        <div class="stack-viz">
+            <div class="stack-container">
+                <div>
+                    <div class="stack">
+                        <div class="stack-item" style="visibility: hidden;">_</div>
+                    </div>
+                    <div class="stack-label">Empty stack</div>
+                </div>
+
+                <div class="instruction-box">i32.const 3</div>
+
+                <div>
+                    <div class="stack">
+                        <div class="stack-item">3</div>
+                    </div>
+                    <div class="stack-label">Push 3</div>
+                </div>
+
+                <div class="instruction-box">i32.const 5</div>
+
+                <div>
+                    <div class="stack">
+                        <div class="stack-item">5</div>
+                        <div class="stack-item">3</div>
+                    </div>
+                    <div class="stack-label">Push 5</div>
+                </div>
+
+                <div class="instruction-box">i32.add</div>
+
+                <div>
+                    <div class="stack">
+                        <div class="stack-item">8</div>
+                    </div>
+                    <div class="stack-label">Pop both, push sum</div>
+                </div>
+            </div>
+        </div>
+
+        <p>Each instruction either:</p>
+        <ul>
+            <li><strong>Pushes</strong> a value onto the stack (<code class="inline-code">i32.const 3</code>)</li>
+            <li><strong>Pops</strong> values, computes, and pushes result (<code class="inline-code">i32.add</code>)</li>
+        </ul>
+
+        <h2>From Nova to WASM</h2>
+
+        <p>Let's trace how a simple function gets compiled:</p>
+
+<pre><code><span class="comment">// Nova source</span>
+<span class="keyword">fn</span> add(a: <span class="type">Int</span>, b: <span class="type">Int</span>) -> <span class="type">Int</span> {
+    a + b
+}</code></pre>
+
+<pre><code><span class="comment">;; WebAssembly output (text format)</span>
+(<span class="wasm">func</span> $add (<span class="wasm">param</span> $a <span class="type">i32</span>) (<span class="wasm">param</span> $b <span class="type">i32</span>) (<span class="wasm">result</span> <span class="type">i32</span>)
+    <span class="wasm">local.get</span> $a    <span class="comment">;; Push a onto stack</span>
+    <span class="wasm">local.get</span> $b    <span class="comment">;; Push b onto stack</span>
+    <span class="wasm">i32.add</span>         <span class="comment">;; Pop both, push sum</span>
+)</code></pre>
+
+        <p>The structure maps almost directly:</p>
+        <ul>
+            <li><code class="inline-code">fn add(a: Int, b: Int) -> Int</code> becomes <code class="inline-code">(func $add (param $a i32) (param $b i32) (result i32)</code></li>
+            <li><code class="inline-code">a + b</code> becomes <code class="inline-code">local.get $a</code>, <code class="inline-code">local.get $b</code>, <code class="inline-code">i32.add</code></li>
+        </ul>
+
+        <h3>A More Complex Example</h3>
+
+<pre><code><span class="comment">// Nova source</span>
+<span class="keyword">fn</span> factorial(n: <span class="type">Int</span>) -> <span class="type">Int</span> {
+    <span class="keyword">if</span> n <= <span class="number">1</span> {
+        <span class="number">1</span>
+    } <span class="keyword">else</span> {
+        n * factorial(n - <span class="number">1</span>)
+    }
+}</code></pre>
+
+<pre><code><span class="comment">;; WebAssembly output</span>
+(<span class="wasm">func</span> $factorial (<span class="wasm">param</span> $n <span class="type">i32</span>) (<span class="wasm">result</span> <span class="type">i32</span>)
+    <span class="comment">;; if n <= 1</span>
+    <span class="wasm">local.get</span> $n
+    <span class="wasm">i32.const</span> <span class="number">1</span>
+    <span class="wasm">i32.le_s</span>              <span class="comment">;; signed less-than-or-equal</span>
+    <span class="wasm">if</span> (<span class="wasm">result</span> <span class="type">i32</span>)
+        <span class="comment">;; then: return 1</span>
+        <span class="wasm">i32.const</span> <span class="number">1</span>
+    <span class="wasm">else</span>
+        <span class="comment">;; else: return n * factorial(n - 1)</span>
+        <span class="wasm">local.get</span> $n
+        <span class="wasm">local.get</span> $n
+        <span class="wasm">i32.const</span> <span class="number">1</span>
+        <span class="wasm">i32.sub</span>
+        <span class="wasm">call</span> $factorial       <span class="comment">;; recursive call</span>
+        <span class="wasm">i32.mul</span>
+    <span class="wasm">end</span>
+)</code></pre>
+
+        <h2>The Code Generator in Rust</h2>
+
+        <p>Nova uses the <strong>wasm-encoder</strong> crate to emit WASM bytecode. Here's a simplified view of how it works:</p>
+
+<pre><code><span class="keyword">use</span> wasm_encoder::{<span class="type">Module</span>, <span class="type">CodeSection</span>, <span class="type">Function</span>, <span class="type">Instruction</span>};
+
+<span class="keyword">fn</span> <span class="function">compile_expr</span>(expr: &<span class="type">Expr</span>, func: &<span class="keyword">mut</span> <span class="type">Function</span>) {
+    <span class="keyword">match</span> expr {
+        <span class="comment">// Literals: push constant onto stack</span>
+        <span class="type">Expr</span>::<span class="type">Literal</span>(<span class="type">Literal</span>::<span class="type">Int</span>(n)) => {
+            func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">I32Const</span>(*n <span class="keyword">as</span> <span class="type">i32</span>));
+        }
+
+        <span class="comment">// Variables: load from local</span>
+        <span class="type">Expr</span>::<span class="type">Var</span>(name) => {
+            <span class="keyword">let</span> local_index = <span class="function">lookup_local</span>(name);
+            func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">LocalGet</span>(local_index));
+        }
+
+        <span class="comment">// Binary expressions: compile both sides, then operator</span>
+        <span class="type">Expr</span>::<span class="type">Binary</span> { left, op, right } => {
+            <span class="function">compile_expr</span>(left, func);   <span class="comment">// Left value on stack</span>
+            <span class="function">compile_expr</span>(right, func);  <span class="comment">// Right value on stack</span>
+
+            <span class="keyword">match</span> op {
+                <span class="type">BinaryOp</span>::<span class="type">Add</span> => func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">I32Add</span>),
+                <span class="type">BinaryOp</span>::<span class="type">Sub</span> => func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">I32Sub</span>),
+                <span class="type">BinaryOp</span>::<span class="type">Mul</span> => func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">I32Mul</span>),
+                <span class="type">BinaryOp</span>::<span class="type">Div</span> => func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">I32DivS</span>),
+            }
+        }
+
+        <span class="comment">// If expressions: structured control flow</span>
+        <span class="type">Expr</span>::<span class="type">If</span> { condition, then_branch, else_branch } => {
+            <span class="function">compile_expr</span>(condition, func);
+
+            func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">If</span>(<span class="type">BlockType</span>::<span class="type">Result</span>(<span class="type">ValType</span>::<span class="type">I32</span>)));
+            <span class="function">compile_expr</span>(then_branch, func);
+
+            <span class="keyword">if</span> <span class="keyword">let</span> <span class="type">Some</span>(else_expr) = else_branch {
+                func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">Else</span>);
+                <span class="function">compile_expr</span>(else_expr, func);
+            }
+
+            func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">End</span>);
+        }
+
+        <span class="comment">// Function calls: compile args, then call</span>
+        <span class="type">Expr</span>::<span class="type">Call</span> { name, args } => {
+            <span class="keyword">for</span> arg <span class="keyword">in</span> args {
+                <span class="function">compile_expr</span>(arg, func);  <span class="comment">// Args on stack</span>
+            }
+            <span class="keyword">let</span> func_index = <span class="function">lookup_function</span>(name);
+            func.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">Call</span>(func_index));
+        }
+    }
+}</code></pre>
+
+        <p>The key insight: <strong>the AST structure guides code generation</strong>. We recursively walk the tree, emitting instructions as we go. The stack-based nature of WASM means we just need to emit instructions in the right order — the stack handles the plumbing.</p>
+
+        <h2>WASM Module Structure</h2>
+
+        <p>A WASM module isn't just functions. It has several sections:</p>
+
+        <div class="stage-grid">
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">1</div>
+                    <h4>Type Section</h4>
+                </div>
+                <p>Function signatures: <code class="inline-code">(i32, i32) -> i32</code></p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">2</div>
+                    <h4>Function Section</h4>
+                </div>
+                <p>Maps function indices to their type signatures</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">3</div>
+                    <h4>Memory Section</h4>
+                </div>
+                <p>Linear memory for heap data (arrays, strings)</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">4</div>
+                    <h4>Export Section</h4>
+                </div>
+                <p>Which functions are accessible from outside</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">5</div>
+                    <h4>Code Section</h4>
+                </div>
+                <p>The actual function bytecode</p>
+            </div>
+        </div>
+
+<pre><code><span class="keyword">fn</span> <span class="function">build_module</span>(program: &<span class="type">Program</span>) -> <span class="type">Vec</span><<span class="type">u8</span>> {
+    <span class="keyword">let</span> <span class="keyword">mut</span> module = <span class="type">Module</span>::<span class="function">new</span>();
+
+    <span class="comment">// Type section: declare function signatures</span>
+    <span class="keyword">let</span> <span class="keyword">mut</span> types = <span class="type">TypeSection</span>::<span class="function">new</span>();
+    <span class="keyword">for</span> func <span class="keyword">in</span> &program.functions {
+        types.<span class="function">function</span>(func.params, func.results);
+    }
+    module.<span class="function">section</span>(&types);
+
+    <span class="comment">// Function section: map functions to types</span>
+    <span class="keyword">let</span> <span class="keyword">mut</span> functions = <span class="type">FunctionSection</span>::<span class="function">new</span>();
+    <span class="keyword">for</span> (i, _) <span class="keyword">in</span> program.functions.<span class="function">iter</span>().<span class="function">enumerate</span>() {
+        functions.<span class="function">function</span>(i <span class="keyword">as</span> <span class="type">u32</span>);
+    }
+    module.<span class="function">section</span>(&functions);
+
+    <span class="comment">// Export section: make functions visible</span>
+    <span class="keyword">let</span> <span class="keyword">mut</span> exports = <span class="type">ExportSection</span>::<span class="function">new</span>();
+    exports.<span class="function">export</span>(<span class="string">"main"</span>, <span class="type">ExportKind</span>::<span class="type">Func</span>, <span class="number">0</span>);
+    module.<span class="function">section</span>(&exports);
+
+    <span class="comment">// Code section: function bodies</span>
+    <span class="keyword">let</span> <span class="keyword">mut</span> code = <span class="type">CodeSection</span>::<span class="function">new</span>();
+    <span class="keyword">for</span> func <span class="keyword">in</span> &program.functions {
+        <span class="keyword">let</span> <span class="keyword">mut</span> f = <span class="type">Function</span>::<span class="function">new</span>([]);
+        <span class="function">compile_expr</span>(&func.body, &<span class="keyword">mut</span> f);
+        f.<span class="function">instruction</span>(&<span class="type">Instruction</span>::<span class="type">End</span>);
+        code.<span class="function">function</span>(&f);
+    }
+    module.<span class="function">section</span>(&code);
+
+    module.<span class="function">finish</span>()
+}</code></pre>
+
+        <h2>Running Your WASM</h2>
+
+        <p>Once you have a .wasm file, you can run it anywhere:</p>
+
+        <h3>In the Browser</h3>
+
+<pre><code><span class="comment">// JavaScript</span>
+<span class="keyword">const</span> response = <span class="keyword">await</span> <span class="function">fetch</span>(<span class="string">'program.wasm'</span>);
+<span class="keyword">const</span> bytes = <span class="keyword">await</span> response.<span class="function">arrayBuffer</span>();
+<span class="keyword">const</span> { instance } = <span class="keyword">await</span> WebAssembly.<span class="function">instantiate</span>(bytes);
+
+<span class="comment">// Call the exported function</span>
+<span class="keyword">const</span> result = instance.exports.<span class="function">add</span>(<span class="number">3</span>, <span class="number">5</span>);
+console.<span class="function">log</span>(result);  <span class="comment">// 8</span></code></pre>
+
+        <h3>In Node.js</h3>
+
+<pre><code><span class="keyword">const</span> fs = <span class="function">require</span>(<span class="string">'fs'</span>);
+<span class="keyword">const</span> bytes = fs.<span class="function">readFileSync</span>(<span class="string">'program.wasm'</span>);
+<span class="keyword">const</span> { instance } = <span class="keyword">await</span> WebAssembly.<span class="function">instantiate</span>(bytes);
+
+console.<span class="function">log</span>(instance.exports.<span class="function">add</span>(<span class="number">3</span>, <span class="number">5</span>));  <span class="comment">// 8</span></code></pre>
+
+        <h3>With Wasmtime (Native)</h3>
+
+<pre><code><span class="comment"># Command line</span>
+$ wasmtime program.wasm --invoke add <span class="number">3</span> <span class="number">5</span>
+<span class="number">8</span></code></pre>
+
+        <div class="callout green">
+            <h4>Performance</h4>
+            <p>WASM isn't interpreted — it's JIT-compiled to native code by the runtime. Your Nova code runs at near-native speed, typically within 1-2x of hand-optimized C. And because it's sandboxed, it's secure by default.</p>
+        </div>
+
+        <h2>Future: WASM Component Model</h2>
+
+        <p>WebAssembly is evolving. The <strong>Component Model</strong> adds:</p>
+
+        <ul>
+            <li><strong>Rich types</strong> — strings, records, variants, not just i32/f64</li>
+            <li><strong>Interface types</strong> — describe APIs between components</li>
+            <li><strong>Composition</strong> — combine WASM modules like Lego blocks</li>
+        </ul>
+
+        <p>Nova is designed with the Component Model in mind. As WASM evolves, Nova's output will too — giving you access to cutting-edge capabilities while maintaining backward compatibility.</p>
+
+        <div class="callout success">
+            <h4>Key Takeaway</h4>
+            <p>Code generation transforms your verified AST into WebAssembly bytecode. WASM's stack-based model makes code generation straightforward — just emit instructions in the right order. The result is portable, fast, and secure code that runs anywhere.</p>
+        </div>
+
+        <div class="completion-box">
+            <h3>Congratulations!</h3>
+            <p>You've completed the Learn Nova course. You now understand the complete journey from source code to running program: lexing, parsing, type checking, verification, and code generation.</p>
+            <a href="https://github.com/pdaxt/nova" class="completion-cta">Explore the Source Code</a>
+        </div>
+
+        <h2>What's Next?</h2>
+
+        <p>You've learned the foundations. Here's where to go from here:</p>
+
+        <ul>
+            <li><strong>Read the Architecture docs</strong> — Dive deeper into Nova's implementation</li>
+            <li><strong>Explore the source</strong> — See how everything fits together in Rust</li>
+            <li><strong>Contribute</strong> — Nova is open source; we'd love your help!</li>
+            <li><strong>Build something</strong> — The best way to learn is by doing</li>
+        </ul>
+
+        <nav class="lesson-nav">
+            <a href="./verification.html">
+                <span class="label">Previous Lesson</span>
+                <span class="title">Verification</span>
+            </a>
+            <a href="./index.html">
+                <span class="label">Back to</span>
+                <span class="title">Course Overview</span>
+            </a>
+        </nav>
+    </article>
+</body>
+</html>

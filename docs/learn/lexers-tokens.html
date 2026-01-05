@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexers & Tokens: Breaking Code Into Pieces | Learn Nova</title>
+
+    <meta name="description" content="Learn how lexers break source code into tokens - the fundamental building blocks that compilers use to understand your code.">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/learn/lexers-tokens.html">
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #1e1e2e;
+            --cyan: #0ea5e9;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--success); }
+
+        .article {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .lesson-badge {
+            display: inline-block;
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--cyan);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .meta {
+            display: flex;
+            gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            margin: 3rem 0 1.5rem;
+            color: var(--cyan);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin: 2rem 0 1rem;
+        }
+
+        p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        strong { color: var(--text); }
+        a { color: var(--accent); }
+
+        pre {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .inline-code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .callout {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        .callout.success { border-color: var(--success); }
+        .callout.warning { border-color: var(--warning); }
+        .callout.cyan { border-color: var(--cyan); }
+        .callout h4 { margin-bottom: 0.5rem; }
+        .callout p { margin-bottom: 0; }
+
+        ul, ol {
+            margin: 1rem 0 1.5rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        li { margin-bottom: 0.5rem; }
+
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .analogy-box h4 {
+            color: var(--cyan);
+            margin-bottom: 1rem;
+        }
+
+        /* Token visualization */
+        .token-stream {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+        }
+
+        .token {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .token.keyword { background: #c084fc; color: white; }
+        .token.ident { background: #60a5fa; color: white; }
+        .token.number { background: #4ade80; color: #0a0a0f; }
+        .token.string { background: #fbbf24; color: #0a0a0f; }
+        .token.operator { background: #f472b6; color: white; }
+        .token.punctuation { background: #6b7280; color: white; }
+        .token.arrow { background: #ec4899; color: white; }
+
+        /* Token table */
+        .token-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .token-table th,
+        .token-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .token-table th {
+            background: var(--bg-card);
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .token-table td {
+            color: var(--text-secondary);
+        }
+
+        .token-table td:first-child {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--cyan);
+        }
+
+        /* Stage cards */
+        .stage-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stage-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stage-number {
+            width: 40px;
+            height: 40px;
+            background: var(--cyan);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .stage-card h4 { font-size: 1.1rem; }
+        .stage-card p { margin-bottom: 0; }
+
+        /* Transformation visual */
+        .transformation {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1rem;
+            align-items: center;
+            margin: 2rem 0;
+        }
+
+        .transformation-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .transformation-box h5 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .transformation-arrow {
+            font-size: 2rem;
+            color: var(--cyan);
+        }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .lesson-nav a {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .lesson-nav a:hover { background: rgba(14, 165, 233, 0.1); }
+        .lesson-nav .label { font-size: 0.8rem; color: var(--text-secondary); }
+        .lesson-nav .title { color: var(--text); font-weight: 600; }
+
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .number { color: #4ade80; }
+        .type { color: #f472b6; }
+        .function { color: #60a5fa; }
+        .macro { color: #fb923c; }
+
+        @media (max-width: 768px) {
+            .transformation {
+                grid-template-columns: 1fr;
+            }
+            .transformation-arrow {
+                transform: rotate(90deg);
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                <span>Nova</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="./index.html" class="active">Learn</a></li>
+                <li><a href="../architecture/lexer.html">Architecture</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <article class="article">
+        <span class="lesson-badge">Lesson 3</span>
+        <h1>Lexers & Tokens</h1>
+        <p class="subtitle">How compilers break your code into bite-sized pieces they can understand.</p>
+
+        <div class="meta">
+            <span>25 min read</span>
+            <span>Beginner friendly</span>
+        </div>
+
+        <h2>The First Step: Breaking Things Apart</h2>
+
+        <p>When you look at code, you see words, numbers, and symbols organized in a way that makes sense to you. But to a computer, your source code is just one long string of characters:</p>
+
+<pre><code>fn add(a: Int, b: Int) -> Int { a + b }</code></pre>
+
+        <p>That's 42 characters. The computer sees: <code class="inline-code">f</code>, <code class="inline-code">n</code>, <code class="inline-code"> </code>, <code class="inline-code">a</code>, <code class="inline-code">d</code>, <code class="inline-code">d</code>... one at a time. It has no idea that <code class="inline-code">fn</code> is a keyword or that <code class="inline-code">add</code> is a function name.</p>
+
+        <p>The <strong>lexer</strong> (also called a <strong>tokenizer</strong> or <strong>scanner</strong>) is the first stage of the compiler. Its job is simple but crucial: <strong>break the raw text into meaningful chunks called tokens</strong>.</p>
+
+        <div class="analogy-box">
+            <h4>Think of It Like Reading</h4>
+            <p>When you read this sentence, you don't process it letter by letter. Your brain automatically groups letters into words, recognizes punctuation, and understands spacing. A lexer does the same thing for code — it groups characters into "words" (tokens) that the rest of the compiler can work with.</p>
+        </div>
+
+        <h2>What Tokens Look Like</h2>
+
+        <p>Let's see what happens when the lexer processes our example:</p>
+
+        <div class="transformation">
+            <div class="transformation-box">
+                <h5>Source Code</h5>
+                <code>fn add(a: Int, b: Int) -> Int { a + b }</code>
+            </div>
+            <div class="transformation-arrow">→</div>
+            <div class="transformation-box">
+                <h5>Token Stream</h5>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                    FN, IDENT("add"), LPAREN, IDENT("a"), COLON, IDENT("Int"), COMMA, ...
+                </div>
+            </div>
+        </div>
+
+        <p>Here's the full token stream, visualized:</p>
+
+        <div class="token-stream">
+            <span class="token keyword">fn</span>
+            <span class="token ident">add</span>
+            <span class="token punctuation">(</span>
+            <span class="token ident">a</span>
+            <span class="token punctuation">:</span>
+            <span class="token ident">Int</span>
+            <span class="token punctuation">,</span>
+            <span class="token ident">b</span>
+            <span class="token punctuation">:</span>
+            <span class="token ident">Int</span>
+            <span class="token punctuation">)</span>
+            <span class="token arrow">-></span>
+            <span class="token ident">Int</span>
+            <span class="token punctuation">{</span>
+            <span class="token ident">a</span>
+            <span class="token operator">+</span>
+            <span class="token ident">b</span>
+            <span class="token punctuation">}</span>
+        </div>
+
+        <p>Each colored box is a <strong>token</strong>. Notice how:</p>
+
+        <ul>
+            <li><span class="token keyword" style="display: inline-block;">fn</span> is recognized as a <strong>keyword</strong> (reserved word in the language)</li>
+            <li><span class="token ident" style="display: inline-block;">add</span>, <span class="token ident" style="display: inline-block;">a</span>, <span class="token ident" style="display: inline-block;">b</span>, <span class="token ident" style="display: inline-block;">Int</span> are <strong>identifiers</strong> (names for things)</li>
+            <li><span class="token punctuation" style="display: inline-block;">(</span> <span class="token punctuation" style="display: inline-block;">)</span> <span class="token punctuation" style="display: inline-block;">{</span> <span class="token punctuation" style="display: inline-block;">}</span> are <strong>punctuation</strong></li>
+            <li><span class="token arrow" style="display: inline-block;">-></span> is an <strong>arrow</strong> (two characters that form one token!)</li>
+            <li><span class="token operator" style="display: inline-block;">+</span> is an <strong>operator</strong></li>
+        </ul>
+
+        <h2>Token Types in Nova</h2>
+
+        <p>Every token has a <strong>type</strong> (what kind of thing it is) and sometimes a <strong>value</strong> (the actual content). Here are Nova's main token types:</p>
+
+        <table class="token-table">
+            <thead>
+                <tr>
+                    <th>Token Type</th>
+                    <th>Examples</th>
+                    <th>What It Represents</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Keyword</td>
+                    <td><code>fn</code>, <code>let</code>, <code>if</code>, <code>else</code>, <code>return</code></td>
+                    <td>Reserved words with special meaning</td>
+                </tr>
+                <tr>
+                    <td>Identifier</td>
+                    <td><code>add</code>, <code>myVariable</code>, <code>User</code></td>
+                    <td>Names for functions, variables, types</td>
+                </tr>
+                <tr>
+                    <td>Integer</td>
+                    <td><code>42</code>, <code>0</code>, <code>1_000_000</code></td>
+                    <td>Whole numbers</td>
+                </tr>
+                <tr>
+                    <td>Float</td>
+                    <td><code>3.14</code>, <code>0.5</code>, <code>1e10</code></td>
+                    <td>Decimal numbers</td>
+                </tr>
+                <tr>
+                    <td>String</td>
+                    <td><code>"hello"</code>, <code>"world"</code></td>
+                    <td>Text enclosed in quotes</td>
+                </tr>
+                <tr>
+                    <td>Operator</td>
+                    <td><code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>==</code>, <code>!=</code></td>
+                    <td>Mathematical and comparison operations</td>
+                </tr>
+                <tr>
+                    <td>Punctuation</td>
+                    <td><code>(</code>, <code>)</code>, <code>{</code>, <code>}</code>, <code>:</code>, <code>,</code></td>
+                    <td>Structure and grouping symbols</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>How the Lexer Works</h2>
+
+        <p>The lexer reads the source code character by character, using <strong>patterns</strong> to recognize tokens. Here's the algorithm in plain English:</p>
+
+        <div class="stage-grid">
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">1</div>
+                    <h4>Skip Whitespace</h4>
+                </div>
+                <p>Spaces, tabs, and newlines don't mean anything in most contexts. Skip them. (But remember their positions for error messages!)</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">2</div>
+                    <h4>Look at the Current Character</h4>
+                </div>
+                <p>What is it? A letter? A digit? A symbol? This tells us what kind of token we're starting.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">3</div>
+                    <h4>Read the Full Token</h4>
+                </div>
+                <p>If it's a letter, keep reading until we hit something that's not a letter or digit — that's an identifier. If it's a digit, read the whole number. If it's a quote, read until the closing quote.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">4</div>
+                    <h4>Emit the Token</h4>
+                </div>
+                <p>Package up what we found (type + value + position) and move to the next character. Repeat until we hit the end of the file.</p>
+            </div>
+        </div>
+
+        <h2>Real Rust Code</h2>
+
+        <p>Nova's lexer is written in Rust. Here's a simplified version showing how we define tokens:</p>
+
+<pre><code><span class="comment">// Token types in Nova</span>
+<span class="keyword">pub enum</span> <span class="type">TokenKind</span> {
+    <span class="comment">// Keywords</span>
+    <span class="type">Fn</span>,           <span class="comment">// fn</span>
+    <span class="type">Let</span>,          <span class="comment">// let</span>
+    <span class="type">If</span>,           <span class="comment">// if</span>
+    <span class="type">Else</span>,         <span class="comment">// else</span>
+    <span class="type">Return</span>,       <span class="comment">// return</span>
+    <span class="type">Where</span>,        <span class="comment">// where</span>
+    <span class="type">Requires</span>,     <span class="comment">// requires</span>
+    <span class="type">Ensures</span>,      <span class="comment">// ensures</span>
+
+    <span class="comment">// Literals</span>
+    <span class="type">Integer</span>(<span class="type">i64</span>),        <span class="comment">// 42, 1_000</span>
+    <span class="type">Float</span>(<span class="type">f64</span>),          <span class="comment">// 3.14</span>
+    <span class="type">String</span>(<span class="type">String</span>),      <span class="comment">// "hello"</span>
+    <span class="type">Identifier</span>(<span class="type">String</span>), <span class="comment">// myVar, add</span>
+
+    <span class="comment">// Operators</span>
+    <span class="type">Plus</span>,     <span class="comment">// +</span>
+    <span class="type">Minus</span>,    <span class="comment">// -</span>
+    <span class="type">Star</span>,     <span class="comment">// *</span>
+    <span class="type">Slash</span>,    <span class="comment">// /</span>
+    <span class="type">Eq</span>,       <span class="comment">// ==</span>
+    <span class="type">NotEq</span>,    <span class="comment">// !=</span>
+    <span class="type">Lt</span>,       <span class="comment">// <</span>
+    <span class="type">Gt</span>,       <span class="comment">// ></span>
+
+    <span class="comment">// Punctuation</span>
+    <span class="type">LParen</span>,   <span class="comment">// (</span>
+    <span class="type">RParen</span>,   <span class="comment">// )</span>
+    <span class="type">LBrace</span>,   <span class="comment">// {</span>
+    <span class="type">RBrace</span>,   <span class="comment">// }</span>
+    <span class="type">Colon</span>,    <span class="comment">// :</span>
+    <span class="type">Comma</span>,    <span class="comment">// ,</span>
+    <span class="type">Arrow</span>,    <span class="comment">// -></span>
+}</code></pre>
+
+        <p>And here's how the lexer matches characters to tokens:</p>
+
+<pre><code><span class="keyword">impl</span> <span class="type">Lexer</span> {
+    <span class="keyword">fn</span> <span class="function">next_token</span>(&<span class="keyword">mut</span> <span class="keyword">self</span>) -> <span class="type">Token</span> {
+        <span class="comment">// Skip whitespace</span>
+        <span class="keyword">self</span>.<span class="function">skip_whitespace</span>();
+
+        <span class="comment">// Check what character we're looking at</span>
+        <span class="keyword">match</span> <span class="keyword">self</span>.<span class="function">current_char</span>() {
+            <span class="comment">// Single character tokens</span>
+            <span class="string">'('</span> => <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">LParen</span>),
+            <span class="string">')'</span> => <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">RParen</span>),
+            <span class="string">'{'</span> => <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">LBrace</span>),
+            <span class="string">'}'</span> => <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">RBrace</span>),
+            <span class="string">':'</span> => <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">Colon</span>),
+            <span class="string">','</span> => <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">Comma</span>),
+            <span class="string">'+'</span> => <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">Plus</span>),
+            <span class="string">'*'</span> => <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">Star</span>),
+            <span class="string">'/'</span> => <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">Slash</span>),
+
+            <span class="comment">// Two-character tokens (need lookahead)</span>
+            <span class="string">'-'</span> => {
+                <span class="keyword">if</span> <span class="keyword">self</span>.<span class="function">peek</span>() == <span class="string">'>'</span> {
+                    <span class="keyword">self</span>.<span class="function">advance</span>();  <span class="comment">// consume the '>'</span>
+                    <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">Arrow</span>)
+                } <span class="keyword">else</span> {
+                    <span class="keyword">self</span>.<span class="function">make_token</span>(<span class="type">Minus</span>)
+                }
+            }
+
+            <span class="comment">// Strings</span>
+            <span class="string">'"'</span> => <span class="keyword">self</span>.<span class="function">read_string</span>(),
+
+            <span class="comment">// Numbers</span>
+            c <span class="keyword">if</span> c.<span class="function">is_ascii_digit</span>() => <span class="keyword">self</span>.<span class="function">read_number</span>(),
+
+            <span class="comment">// Identifiers and keywords</span>
+            c <span class="keyword">if</span> c.<span class="function">is_alphabetic</span>() || c == <span class="string">'_'</span> => <span class="keyword">self</span>.<span class="function">read_identifier</span>(),
+
+            <span class="comment">// Unknown character = error!</span>
+            c => <span class="keyword">self</span>.<span class="function">error</span>(<span class="string">"Unexpected character"</span>, c),
+        }
+    }
+}</code></pre>
+
+        <div class="callout cyan">
+            <h4>Key Insight: Lookahead</h4>
+            <p>Notice how <code class="inline-code">-</code> needs to check the next character. Is it <code class="inline-code">-></code> (arrow) or just <code class="inline-code">-</code> (minus)? This is called <strong>lookahead</strong> — sometimes you need to peek at the next character to decide what token you're building.</p>
+        </div>
+
+        <h2>Tracking Position: Spans</h2>
+
+        <p>Tokens aren't just about <em>what</em> you found — they're also about <em>where</em> you found it. When something goes wrong, we need to tell the user exactly where the error is.</p>
+
+        <p>Every token includes a <strong>span</strong>: its position in the source code.</p>
+
+<pre><code><span class="keyword">pub struct</span> <span class="type">Span</span> {
+    <span class="keyword">pub</span> start: <span class="type">usize</span>,  <span class="comment">// byte offset where token starts</span>
+    <span class="keyword">pub</span> end: <span class="type">usize</span>,    <span class="comment">// byte offset where token ends</span>
+}
+
+<span class="keyword">pub struct</span> <span class="type">Token</span> {
+    <span class="keyword">pub</span> kind: <span class="type">TokenKind</span>,
+    <span class="keyword">pub</span> span: <span class="type">Span</span>,
+}</code></pre>
+
+        <p>When we report an error like "undefined variable <code class="inline-code">foo</code> at line 5, column 12", we use the span to:</p>
+
+        <ol>
+            <li>Calculate line/column from the byte offset</li>
+            <li>Highlight the exact location in the source</li>
+            <li>Show context around the error</li>
+        </ol>
+
+<pre><code><span class="comment">// Error reporting with spans</span>
+error[E0001]: undefined variable
+  --> main.nova:5:12
+   |
+5  |     let x = foo + 1;
+   |             <span style="color: #ef4444;">^^^</span> not found in this scope
+   |</code></pre>
+
+        <p>Without spans, we couldn't show those pretty error messages!</p>
+
+        <h2>Edge Cases and Gotchas</h2>
+
+        <p>Lexing seems simple, but there are tricky cases:</p>
+
+        <h3>Numbers with Underscores</h3>
+        <p>Nova allows <code class="inline-code">1_000_000</code> for readability. The lexer must recognize this as a single number, not multiple tokens.</p>
+
+<pre><code><span class="keyword">fn</span> <span class="function">read_number</span>(&<span class="keyword">mut</span> <span class="keyword">self</span>) -> <span class="type">Token</span> {
+    <span class="keyword">let</span> <span class="keyword">mut</span> value = <span class="type">String</span>::<span class="function">new</span>();
+
+    <span class="keyword">while</span> <span class="keyword">self</span>.<span class="function">current_char</span>().<span class="function">is_ascii_digit</span>()
+          || <span class="keyword">self</span>.<span class="function">current_char</span>() == <span class="string">'_'</span>
+    {
+        <span class="keyword">if</span> <span class="keyword">self</span>.<span class="function">current_char</span>() != <span class="string">'_'</span> {
+            value.<span class="function">push</span>(<span class="keyword">self</span>.<span class="function">current_char</span>());
+        }
+        <span class="keyword">self</span>.<span class="function">advance</span>();
+    }
+
+    <span class="comment">// Parse "1000000" (underscores stripped)</span>
+    <span class="type">Token</span>::<span class="type">Integer</span>(value.<span class="function">parse</span>().<span class="function">unwrap</span>())
+}</code></pre>
+
+        <h3>String Escape Sequences</h3>
+        <p>Inside strings, <code class="inline-code">\n</code> means newline, <code class="inline-code">\"</code> means a literal quote. The lexer must handle these.</p>
+
+<pre><code><span class="string">"Hello\nWorld"</span>   <span class="comment">// Contains a newline character</span>
+<span class="string">"Say \"hi\""</span>     <span class="comment">// Contains literal quotes</span></code></pre>
+
+        <h3>Comments</h3>
+        <p>Comments are stripped out by the lexer. They never become tokens — they're just ignored.</p>
+
+<pre><code><span class="keyword">fn</span> add(a: Int, b: Int) -> Int {
+    <span class="comment">// This is a comment - the lexer skips it entirely</span>
+    a + b
+}</code></pre>
+
+        <div class="callout warning">
+            <h4>Common Mistake</h4>
+            <p>Beginners often try to handle comments in the parser. Don't! Comments should be stripped by the lexer so the parser never sees them. This keeps the parser simpler.</p>
+        </div>
+
+        <h2>Using Logos for Lexing</h2>
+
+        <p>Writing a lexer by hand is educational, but production compilers often use libraries. Nova uses <strong>Logos</strong>, a fast Rust lexer generator:</p>
+
+<pre><code><span class="keyword">use</span> logos::<span class="type">Logos</span>;
+
+<span class="macro">#[derive(Logos, Debug, PartialEq)]</span>
+<span class="keyword">pub enum</span> <span class="type">Token</span> {
+    <span class="macro">#[token("fn")]</span>
+    <span class="type">Fn</span>,
+
+    <span class="macro">#[token("let")]</span>
+    <span class="type">Let</span>,
+
+    <span class="macro">#[token("(")]</span>
+    <span class="type">LParen</span>,
+
+    <span class="macro">#[token("->")]</span>
+    <span class="type">Arrow</span>,
+
+    <span class="macro">#[regex(r"[a-zA-Z_][a-zA-Z0-9_]*")]</span>
+    <span class="type">Identifier</span>,
+
+    <span class="macro">#[regex(r"[0-9][0-9_]*")]</span>
+    <span class="type">Integer</span>,
+
+    <span class="macro">#[regex(r#""[^"]*""#)]</span>
+    <span class="type">String</span>,
+
+    <span class="macro">#[regex(r"//[^\n]*", logos::skip)]</span>  <span class="comment">// Skip comments!</span>
+    <span class="macro">#[regex(r"[ \t\n\r]+", logos::skip)]</span> <span class="comment">// Skip whitespace!</span>
+}</code></pre>
+
+        <p>With Logos, you define tokens using <strong>attributes</strong>:</p>
+        <ul>
+            <li><code class="inline-code">#[token("fn")]</code> — matches exactly "fn"</li>
+            <li><code class="inline-code">#[regex(r"[0-9]+")]</code> — matches any sequence of digits</li>
+            <li><code class="inline-code">logos::skip</code> — skip this pattern (whitespace, comments)</li>
+        </ul>
+
+        <p>Logos generates a fast, optimized lexer at compile time. No runtime overhead!</p>
+
+        <h2>Putting It All Together</h2>
+
+        <p>Let's trace through a complete example:</p>
+
+<pre><code><span class="keyword">let</span> x = <span class="number">42</span>;</code></pre>
+
+        <p>The lexer processes this character by character:</p>
+
+        <table class="token-table">
+            <thead>
+                <tr>
+                    <th>Position</th>
+                    <th>Characters</th>
+                    <th>Action</th>
+                    <th>Token</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>0-3</td>
+                    <td><code>let</code></td>
+                    <td>Identifier starting with 'l', matches keyword</td>
+                    <td><span class="token keyword">Let</span></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><code> </code></td>
+                    <td>Whitespace, skip</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td><code>x</code></td>
+                    <td>Identifier (not a keyword)</td>
+                    <td><span class="token ident">Identifier("x")</span></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td><code> </code></td>
+                    <td>Whitespace, skip</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td><code>=</code></td>
+                    <td>Single character operator</td>
+                    <td><span class="token operator">Assign</span></td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td><code> </code></td>
+                    <td>Whitespace, skip</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td>8-10</td>
+                    <td><code>42</code></td>
+                    <td>Digit, read number</td>
+                    <td><span class="token number">Integer(42)</span></td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td><code>;</code></td>
+                    <td>Semicolon punctuation</td>
+                    <td><span class="token punctuation">Semicolon</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>Final token stream:</p>
+
+        <div class="token-stream">
+            <span class="token keyword">let</span>
+            <span class="token ident">x</span>
+            <span class="token operator">=</span>
+            <span class="token number">42</span>
+            <span class="token punctuation">;</span>
+        </div>
+
+        <p>This token stream is now ready for the parser!</p>
+
+        <div class="callout success">
+            <h4>Key Takeaway</h4>
+            <p>The lexer transforms a stream of characters into a stream of tokens. Each token has a type (what it is), optionally a value (its content), and a span (where it is). This structured data is much easier for the next stage — the parser — to work with.</p>
+        </div>
+
+        <h2>What's Next?</h2>
+
+        <p>Now you understand how code becomes tokens. But tokens are still a flat list — we don't yet know that <code class="inline-code">fn add(...) { ... }</code> is a function definition.</p>
+
+        <p>In the next lesson, we'll learn about <strong>parsers and ASTs</strong> — how we build a tree structure that represents the meaning of the code.</p>
+
+        <nav class="lesson-nav">
+            <a href="./compiler-basics.html">
+                <span class="label">Previous Lesson</span>
+                <span class="title">What Is a Compiler?</span>
+            </a>
+            <a href="./parsers-ast.html">
+                <span class="label">Next Lesson</span>
+                <span class="title">Parsers & AST</span>
+            </a>
+        </nav>
+    </article>
+</body>
+</html>

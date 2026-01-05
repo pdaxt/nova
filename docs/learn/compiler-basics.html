@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Is a Compiler? The 10,000-Foot View | Learn Nova</title>
+
+    <meta name="description" content="Learn what a compiler does, how it transforms source code into machine code, and understand the compilation pipeline from start to finish.">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/learn/compiler-basics.html">
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #1e1e2e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--success); }
+
+        .article {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .lesson-badge {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .meta {
+            display: flex;
+            gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            margin: 3rem 0 1.5rem;
+            color: var(--accent);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin: 2rem 0 1rem;
+        }
+
+        p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        strong { color: var(--text); }
+        a { color: var(--accent); }
+
+        pre {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .inline-code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .callout {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        .callout.success { border-color: var(--success); }
+        .callout h4 { margin-bottom: 0.5rem; }
+        .callout p { margin-bottom: 0; }
+
+        ul, ol {
+            margin: 1rem 0 1.5rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        li { margin-bottom: 0.5rem; }
+
+        /* Pipeline diagram */
+        .pipeline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: 16px;
+        }
+
+        .pipeline-step {
+            background: var(--accent);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .pipeline-step.source { background: #1e293b; border: 2px solid #334155; }
+        .pipeline-step.lexer { background: #0ea5e9; }
+        .pipeline-step.parser { background: #a855f7; }
+        .pipeline-step.types { background: #ec4899; }
+        .pipeline-step.codegen { background: #22c55e; }
+        .pipeline-step.output { background: #1e293b; border: 2px solid #22c55e; color: #22c55e; }
+
+        .pipeline-arrow {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Stage cards */
+        .stage-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stage-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stage-number {
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .stage-card h4 { font-size: 1.1rem; }
+        .stage-card p { margin-bottom: 0; }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .lesson-nav a {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .lesson-nav a:hover { background: rgba(99, 102, 241, 0.1); }
+        .lesson-nav .label { font-size: 0.8rem; color: var(--text-secondary); }
+        .lesson-nav .title { color: var(--text); font-weight: 600; }
+
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .analogy-box h4 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .number { color: #4ade80; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                <span>Nova</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="./index.html" class="active">Learn</a></li>
+                <li><a href="../architecture/lexer.html">Architecture</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <article class="article">
+        <span class="lesson-badge">Lesson 2</span>
+        <h1>What Is a Compiler?</h1>
+        <p class="subtitle">The 10,000-foot view of how source code becomes something a computer can run.</p>
+
+        <div class="meta">
+            <span>20 min read</span>
+            <span>Beginner friendly</span>
+        </div>
+
+        <h2>The Simple Answer</h2>
+
+        <p>A compiler is a program that <strong>translates code from one language to another</strong>.</p>
+
+        <p>That's it. Really.</p>
+
+        <p>When you write <code class="inline-code">print("Hello")</code> in Python, your computer doesn't understand that. It only understands machine code — ones and zeros. Something has to translate your human-readable code into machine-readable instructions.</p>
+
+        <div class="analogy-box">
+            <h4>Think of It Like Translation</h4>
+            <p>You speak English. Your computer speaks Machine. A compiler is the translator in between. But unlike human translation, it's <em>perfect</em> — the meaning is preserved exactly, every single time.</p>
+        </div>
+
+        <h2>The Compilation Pipeline</h2>
+
+        <p>Every compiler follows roughly the same pipeline. The source code flows through a series of transformations, each one bringing it closer to machine code.</p>
+
+        <div class="pipeline">
+            <div class="pipeline-step source">Source Code</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step lexer">Lexer</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step parser">Parser</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step types">Type Checker</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step codegen">Codegen</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step output">Machine Code</div>
+        </div>
+
+        <p>Let's walk through each stage with a simple example. Say you write this Nova code:</p>
+
+<pre><code><span class="keyword">fn</span> add(a: Int, b: Int) -> Int {
+    a + b
+}
+
+add(<span class="number">3</span>, <span class="number">5</span>)</code></pre>
+
+        <div class="stage-grid">
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number" style="background: #0ea5e9;">1</div>
+                    <h4>Lexer: Breaking Into Tokens</h4>
+                </div>
+                <p>The lexer reads your source code character by character and groups them into <strong>tokens</strong> — the atomic units of your language.</p>
+<pre><code><span class="comment">// Your code becomes a stream of tokens:</span>
+[FN] [IDENT:"add"] [LPAREN] [IDENT:"a"] [COLON] [IDENT:"Int"]
+[COMMA] [IDENT:"b"] [COLON] [IDENT:"Int"] [RPAREN] [ARROW]
+[IDENT:"Int"] [LBRACE] [IDENT:"a"] [PLUS] [IDENT:"b"] [RBRACE]
+[IDENT:"add"] [LPAREN] [NUMBER:3] [COMMA] [NUMBER:5] [RPAREN]</code></pre>
+                <p>It doesn't understand what the code <em>means</em> yet. It just identifies the pieces.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number" style="background: #a855f7;">2</div>
+                    <h4>Parser: Building a Tree</h4>
+                </div>
+                <p>The parser takes the flat stream of tokens and builds a tree structure called an <strong>Abstract Syntax Tree (AST)</strong>. This represents the <em>structure</em> of your code.</p>
+<pre><code><span class="comment">// Your code becomes a tree:</span>
+Program
+├── FunctionDef
+│   ├── name: "add"
+│   ├── params: [(a, Int), (b, Int)]
+│   ├── return_type: Int
+│   └── body: BinaryExpr
+│       ├── op: Add
+│       ├── left: Var("a")
+│       └── right: Var("b")
+└── FunctionCall
+    ├── name: "add"
+    └── args: [Literal(3), Literal(5)]</code></pre>
+                <p>Now we understand the <em>grammar</em> — what's a function, what's an expression, how they nest.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number" style="background: #ec4899;">3</div>
+                    <h4>Type Checker: Ensuring Correctness</h4>
+                </div>
+                <p>The type checker walks the AST and verifies that everything makes sense. Does <code class="inline-code">a + b</code> work if both are Ints? Is <code class="inline-code">add(3, 5)</code> calling the function with the right types?</p>
+<pre><code><span class="comment">// Type checking passes:</span>
+✓ add: (Int, Int) -> Int
+✓ a: Int, b: Int
+✓ a + b: Int (Int + Int = Int)
+✓ add(3, 5): Int (call matches signature)</code></pre>
+                <p>If you tried <code class="inline-code">add("hello", 5)</code>, the type checker would catch it <em>before</em> the code ever runs.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number" style="background: #22c55e;">4</div>
+                    <h4>Code Generation: Emit Machine Code</h4>
+                </div>
+                <p>Finally, the code generator walks the type-checked AST and emits actual machine code (or in Nova's case, WebAssembly).</p>
+<pre><code><span class="comment">// WebAssembly output:</span>
+(func $add (param $a i32) (param $b i32) (result i32)
+    local.get $a
+    local.get $b
+    i32.add)
+
+<span class="comment">// Calling add(3, 5):</span>
+i32.const 3
+i32.const 5
+call $add</code></pre>
+                <p>This is what actually runs on your machine. The computer finally understands!</p>
+            </div>
+        </div>
+
+        <h2>Compiler vs. Interpreter</h2>
+
+        <p>You might wonder: "What about Python? It doesn't compile to machine code."</p>
+
+        <p>Good catch! There are actually two approaches:</p>
+
+        <ul>
+            <li><strong>Compilers</strong> (Rust, C, Go, Nova) translate your entire program to machine code <em>before</em> running it. Compilation happens once, then you run the fast machine code many times.</li>
+            <li><strong>Interpreters</strong> (Python, JavaScript, Ruby) read and execute your code line by line, <em>while</em> running. No separate compilation step.</li>
+        </ul>
+
+        <div class="callout">
+            <h4>The Reality Is Messier</h4>
+            <p>Most modern languages use a hybrid approach. Python compiles to bytecode, then interprets it. JavaScript engines (V8) compile hot paths to machine code on the fly (JIT compilation). Nova compiles to WebAssembly, which is then compiled to native code by the browser or runtime.</p>
+        </div>
+
+        <h2>Why This Matters for Nova</h2>
+
+        <p>Nova adds extra stages to the pipeline that most languages skip:</p>
+
+        <div class="pipeline">
+            <div class="pipeline-step source">Source</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step lexer">Lexer</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step parser">Parser</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step types">Types</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step" style="background: #f97316;">Verifier</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step codegen">Codegen</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step output">WASM</div>
+        </div>
+
+        <p>That <strong>Verifier</strong> stage is what makes Nova special. It uses an SMT solver (a kind of mathematical proof engine) to verify that your code satisfies its contracts.</p>
+
+        <p>If you write:</p>
+
+<pre><code><span class="keyword">fn</span> divide(a: Int, b: Int) -> Int
+<span class="keyword">where</span>
+    <span class="keyword">requires</span> b != <span class="number">0</span>
+{
+    a / b
+}</code></pre>
+
+        <p>Nova's verifier will <em>prove</em> that every call to <code class="inline-code">divide</code> has a non-zero second argument. Not by testing — by mathematical proof.</p>
+
+        <h2>The Foundation: 5 Components</h2>
+
+        <p>Every compiler needs at least these 5 fundamental components:</p>
+
+        <ol>
+            <li><strong>Span</strong> — Where in the source code? (line, column, file)</li>
+            <li><strong>Token</strong> — What did we see? (keyword, number, identifier)</li>
+            <li><strong>Source</strong> — What is the source code? (file contents)</li>
+            <li><strong>Error</strong> — What went wrong? (diagnostics, messages)</li>
+            <li><strong>Lexer</strong> — How do we tokenize? (the first transformer)</li>
+        </ol>
+
+        <p>Every production compiler (Rust, Go, Swift, TypeScript) has exactly these 5 components. We'll build each one in the coming lessons.</p>
+
+        <div class="callout success">
+            <h4>Key Takeaway</h4>
+            <p>A compiler is just a series of transformations: text → tokens → tree → type-checked tree → machine code. Each stage gets us closer to something the computer understands, while catching more errors along the way.</p>
+        </div>
+
+        <h2>What's Next?</h2>
+
+        <p>Now you understand the big picture. In the next lesson, we'll zoom into the first stage: <strong>Lexers and Tokens</strong>. You'll see actual Rust code that tokenizes source text, and understand how the lexer identifies keywords, numbers, and symbols.</p>
+
+        <nav class="lesson-nav">
+            <a href="./why-nova.html">
+                <span class="label">Previous Lesson</span>
+                <span class="title">Why Nova?</span>
+            </a>
+            <a href="./lexers-tokens.html">
+                <span class="label">Next Lesson</span>
+                <span class="title">Lexers & Tokens</span>
+            </a>
+        </nav>
+    </article>
+</body>
+</html>

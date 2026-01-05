@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Type Systems: Catching Errors Before They Happen | Learn Nova</title>
+
+    <meta name="description" content="Learn how type systems catch bugs at compile time, understand type inference, and discover Nova's powerful refinement types.">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/learn/type-systems.html">
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #1e1e2e;
+            --pink: #ec4899;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--success); }
+
+        .article {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .lesson-badge {
+            display: inline-block;
+            background: rgba(236, 72, 153, 0.1);
+            border: 1px solid rgba(236, 72, 153, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--pink);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .meta {
+            display: flex;
+            gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            margin: 3rem 0 1.5rem;
+            color: var(--pink);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin: 2rem 0 1rem;
+        }
+
+        p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        strong { color: var(--text); }
+        a { color: var(--accent); }
+
+        pre {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .inline-code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .callout {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        .callout.success { border-color: var(--success); }
+        .callout.warning { border-color: var(--warning); }
+        .callout.error { border-color: var(--error); }
+        .callout.pink { border-color: var(--pink); }
+        .callout h4 { margin-bottom: 0.5rem; }
+        .callout p { margin-bottom: 0; }
+
+        ul, ol {
+            margin: 1rem 0 1.5rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        li { margin-bottom: 0.5rem; }
+
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(236, 72, 153, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .analogy-box h4 {
+            color: var(--pink);
+            margin-bottom: 1rem;
+        }
+
+        /* Comparison boxes */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .comparison-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .comparison-box.good {
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .comparison-box.bad {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .comparison-box h5 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .comparison-box.good h5 { color: var(--success); }
+        .comparison-box.bad h5 { color: var(--error); }
+
+        /* Type diagram */
+        .type-diagram {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .type-hierarchy {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .type-node {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .type-node.base { background: #6b7280; }
+        .type-node.refined { background: var(--pink); }
+        .type-node.super-refined { background: var(--success); }
+
+        .type-arrow {
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+        }
+
+        /* Stage cards */
+        .stage-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stage-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stage-number {
+            width: 40px;
+            height: 40px;
+            background: var(--pink);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .stage-card h4 { font-size: 1.1rem; }
+        .stage-card p { margin-bottom: 0; }
+
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .lesson-nav a {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .lesson-nav a:hover { background: rgba(236, 72, 153, 0.1); }
+        .lesson-nav .label { font-size: 0.8rem; color: var(--text-secondary); }
+        .lesson-nav .title { color: var(--text); font-weight: 600; }
+
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .number { color: #4ade80; }
+        .type { color: #f472b6; }
+        .function { color: #60a5fa; }
+        .error-msg { color: #ef4444; }
+
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                <span>Nova</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="./index.html" class="active">Learn</a></li>
+                <li><a href="../architecture/lexer.html">Architecture</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <article class="article">
+        <span class="lesson-badge">Lesson 5</span>
+        <h1>Type Systems</h1>
+        <p class="subtitle">How the compiler catches bugs before your code ever runs.</p>
+
+        <div class="meta">
+            <span>30 min read</span>
+            <span>Intermediate</span>
+        </div>
+
+        <h2>Why Types Matter</h2>
+
+        <p>Every value in your program has a <strong>type</strong> — a classification that tells us what operations are valid. The number <code class="inline-code">42</code> is an <code class="inline-code">Int</code>. The text <code class="inline-code">"hello"</code> is a <code class="inline-code">String</code>. The function <code class="inline-code">add</code> has type <code class="inline-code">(Int, Int) -> Int</code>.</p>
+
+        <p>Types let the compiler catch mistakes:</p>
+
+        <div class="comparison">
+            <div class="comparison-box bad">
+                <h5>Without Types (Runtime Error)</h5>
+<pre><code><span class="comment"># Python</span>
+<span class="keyword">def</span> add(a, b):
+    <span class="keyword">return</span> a + b
+
+add(<span class="string">"hello"</span>, <span class="number">5</span>)
+<span class="comment"># TypeError at runtime!</span>
+<span class="comment"># Can only concatenate str to str</span></code></pre>
+            </div>
+            <div class="comparison-box good">
+                <h5>With Types (Compile Error)</h5>
+<pre><code><span class="comment">// Nova</span>
+<span class="keyword">fn</span> add(a: <span class="type">Int</span>, b: <span class="type">Int</span>) -> <span class="type">Int</span> {
+    a + b
+}
+
+add(<span class="string">"hello"</span>, <span class="number">5</span>)
+<span class="comment">// Error at compile time!</span>
+<span class="comment">// Expected Int, found String</span></code></pre>
+            </div>
+        </div>
+
+        <p>The difference is <strong>when</strong> you find the bug. In Python, you find it when a user triggers that code path. In Nova, you find it before anyone runs the program.</p>
+
+        <div class="analogy-box">
+            <h4>Think of Types Like Units in Physics</h4>
+            <p>You can't add 5 meters to 10 kilograms — the units don't match. Types are the same: you can't add a String to an Int because they're fundamentally different things. The type checker is like a dimensional analysis that catches unit mismatches.</p>
+        </div>
+
+        <h2>Static vs. Dynamic Typing</h2>
+
+        <p>Languages fall into two camps:</p>
+
+        <ul>
+            <li><strong>Dynamically typed</strong> (Python, JavaScript, Ruby): Types are checked at runtime. Variables can hold any type. Flexibility but more runtime errors.</li>
+            <li><strong>Statically typed</strong> (Rust, Go, Nova, TypeScript): Types are checked at compile time. Variables have fixed types. More upfront work but fewer runtime errors.</li>
+        </ul>
+
+        <p>Nova is statically typed, but with <strong>type inference</strong> — you don't always need to write types explicitly. The compiler figures them out.</p>
+
+<pre><code><span class="comment">// You can write types explicitly</span>
+<span class="keyword">let</span> x: <span class="type">Int</span> = <span class="number">42</span>;
+<span class="keyword">let</span> name: <span class="type">String</span> = <span class="string">"Nova"</span>;
+
+<span class="comment">// Or let the compiler infer them</span>
+<span class="keyword">let</span> x = <span class="number">42</span>;           <span class="comment">// Inferred: Int</span>
+<span class="keyword">let</span> name = <span class="string">"Nova"</span>;    <span class="comment">// Inferred: String</span>
+<span class="keyword">let</span> sum = x + <span class="number">10</span>;     <span class="comment">// Inferred: Int</span></code></pre>
+
+        <h2>How Type Checking Works</h2>
+
+        <p>The type checker walks the AST and assigns types to every expression. It follows rules like:</p>
+
+        <div class="stage-grid">
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">1</div>
+                    <h4>Literals Have Known Types</h4>
+                </div>
+                <p><code class="inline-code">42</code> is <code class="inline-code">Int</code>. <code class="inline-code">3.14</code> is <code class="inline-code">Float</code>. <code class="inline-code">"hello"</code> is <code class="inline-code">String</code>. <code class="inline-code">true</code> is <code class="inline-code">Bool</code>.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">2</div>
+                    <h4>Variables Get Types From Their Definitions</h4>
+                </div>
+                <p>If you write <code class="inline-code">let x = 5</code>, then <code class="inline-code">x</code> has type <code class="inline-code">Int</code>. Every use of <code class="inline-code">x</code> must treat it as an <code class="inline-code">Int</code>.</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">3</div>
+                    <h4>Operators Have Type Rules</h4>
+                </div>
+                <p><code class="inline-code">Int + Int = Int</code>. <code class="inline-code">String + String = String</code>. But <code class="inline-code">Int + String</code>? Error!</p>
+            </div>
+
+            <div class="stage-card">
+                <div class="stage-header">
+                    <div class="stage-number">4</div>
+                    <h4>Function Calls Check Arguments</h4>
+                </div>
+                <p>If <code class="inline-code">add</code> expects <code class="inline-code">(Int, Int)</code>, then <code class="inline-code">add(1, 2)</code> is OK, but <code class="inline-code">add("x", 2)</code> is an error.</p>
+            </div>
+        </div>
+
+        <h3>Type Checking in Code</h3>
+
+<pre><code><span class="keyword">impl</span> <span class="type">TypeChecker</span> {
+    <span class="keyword">fn</span> <span class="function">check_expr</span>(&<span class="keyword">mut</span> <span class="keyword">self</span>, expr: &<span class="type">Expr</span>) -> <span class="type">Type</span> {
+        <span class="keyword">match</span> expr {
+            <span class="comment">// Literals have known types</span>
+            <span class="type">Expr</span>::<span class="type">Literal</span>(<span class="type">Literal</span>::<span class="type">Int</span>(_)) => <span class="type">Type</span>::<span class="type">Int</span>,
+            <span class="type">Expr</span>::<span class="type">Literal</span>(<span class="type">Literal</span>::<span class="type">Float</span>(_)) => <span class="type">Type</span>::<span class="type">Float</span>,
+            <span class="type">Expr</span>::<span class="type">Literal</span>(<span class="type">Literal</span>::<span class="type">String</span>(_)) => <span class="type">Type</span>::<span class="type">String</span>,
+
+            <span class="comment">// Variables: look up in environment</span>
+            <span class="type">Expr</span>::<span class="type">Var</span>(name) => <span class="keyword">self</span>.env.<span class="function">lookup</span>(name),
+
+            <span class="comment">// Binary expressions: check both sides</span>
+            <span class="type">Expr</span>::<span class="type">Binary</span> { left, op, right } => {
+                <span class="keyword">let</span> left_type = <span class="keyword">self</span>.<span class="function">check_expr</span>(left);
+                <span class="keyword">let</span> right_type = <span class="keyword">self</span>.<span class="function">check_expr</span>(right);
+
+                <span class="keyword">match</span> (op, left_type, right_type) {
+                    <span class="comment">// Int + Int = Int</span>
+                    (<span class="type">Add</span>, <span class="type">Type</span>::<span class="type">Int</span>, <span class="type">Type</span>::<span class="type">Int</span>) => <span class="type">Type</span>::<span class="type">Int</span>,
+                    <span class="comment">// String + String = String</span>
+                    (<span class="type">Add</span>, <span class="type">Type</span>::<span class="type">String</span>, <span class="type">Type</span>::<span class="type">String</span>) => <span class="type">Type</span>::<span class="type">String</span>,
+                    <span class="comment">// Comparison operators return Bool</span>
+                    (<span class="type">Eq</span> | <span class="type">Lt</span> | <span class="type">Gt</span>, _, _) => <span class="type">Type</span>::<span class="type">Bool</span>,
+                    <span class="comment">// Everything else is an error</span>
+                    _ => <span class="keyword">self</span>.<span class="function">error</span>(<span class="string">"Type mismatch"</span>),
+                }
+            }
+
+            <span class="comment">// Function calls: check arguments match parameters</span>
+            <span class="type">Expr</span>::<span class="type">Call</span> { name, args } => {
+                <span class="keyword">let</span> func_type = <span class="keyword">self</span>.env.<span class="function">lookup_fn</span>(name);
+                <span class="keyword">for</span> (arg, param_type) <span class="keyword">in</span> args.<span class="function">iter</span>().<span class="function">zip</span>(&func_type.params) {
+                    <span class="keyword">let</span> arg_type = <span class="keyword">self</span>.<span class="function">check_expr</span>(arg);
+                    <span class="keyword">if</span> arg_type != *param_type {
+                        <span class="keyword">self</span>.<span class="function">error</span>(<span class="string">"Argument type mismatch"</span>);
+                    }
+                }
+                func_type.return_type
+            }
+        }
+    }
+}</code></pre>
+
+        <h2>Bidirectional Type Checking</h2>
+
+        <p>Nova uses <strong>bidirectional type checking</strong> — information flows both ways. Sometimes we <em>synthesize</em> a type from an expression (bottom-up), and sometimes we <em>check</em> an expression against an expected type (top-down).</p>
+
+<pre><code><span class="comment">// Synthesizing: figure out the type from the expression</span>
+<span class="keyword">let</span> x = <span class="number">42</span>;  <span class="comment">// Synthesize: 42 has type Int, so x has type Int</span>
+
+<span class="comment">// Checking: verify expression matches expected type</span>
+<span class="keyword">let</span> y: <span class="type">Int</span> = <span class="number">42</span>;  <span class="comment">// Check: does 42 have type Int? Yes!</span>
+
+<span class="comment">// Checking helps with ambiguous literals</span>
+<span class="keyword">let</span> z: <span class="type">Float</span> = <span class="number">42</span>;  <span class="comment">// Check: 42 can be Float, so z is Float</span></code></pre>
+
+        <p>This bidirectional flow is especially useful for complex expressions where context helps resolve ambiguity.</p>
+
+        <h2>Nova's Special Power: Refinement Types</h2>
+
+        <p>Most languages stop at basic types like <code class="inline-code">Int</code> and <code class="inline-code">String</code>. But Nova goes further with <strong>refinement types</strong> — types with constraints.</p>
+
+        <div class="type-diagram">
+            <div class="type-hierarchy">
+                <div class="type-node base">Int</div>
+                <div class="type-arrow">↓</div>
+                <div class="type-node refined">Int where x > 0</div>
+                <div class="type-arrow">↓</div>
+                <div class="type-node super-refined">Int where x > 0 && x < 100</div>
+            </div>
+            <p style="margin-top: 1.5rem; color: var(--text-secondary); font-size: 0.9rem;">Each level adds more constraints, catching more bugs at compile time.</p>
+        </div>
+
+        <p>Here's what this looks like in Nova:</p>
+
+<pre><code><span class="comment">// Regular types: can only check "is it an Int?"</span>
+<span class="keyword">fn</span> divide(a: <span class="type">Int</span>, b: <span class="type">Int</span>) -> <span class="type">Int</span> {
+    a / b  <span class="comment">// What if b is 0? Runtime error!</span>
+}
+
+<span class="comment">// Refinement types: can check "is it a non-zero Int?"</span>
+<span class="keyword">fn</span> divide(a: <span class="type">Int</span>, b: <span class="type">Int</span>) -> <span class="type">Int</span>
+<span class="keyword">where</span>
+    <span class="keyword">requires</span> b != <span class="number">0</span>  <span class="comment">// Compile-time guarantee!</span>
+{
+    a / b  <span class="comment">// Now we KNOW b is never 0</span>
+}</code></pre>
+
+        <p>With the <code class="inline-code">requires</code> clause, Nova refuses to compile code that might pass 0:</p>
+
+<pre><code><span class="keyword">let</span> result = divide(<span class="number">10</span>, <span class="number">0</span>);  <span class="comment">// Compile error!</span>
+
+<span class="keyword">let</span> x = get_user_input();
+<span class="keyword">let</span> result = divide(<span class="number">10</span>, x);  <span class="comment">// Also error! x might be 0</span>
+
+<span class="comment">// You must prove x is not 0</span>
+<span class="keyword">if</span> x != <span class="number">0</span> {
+    <span class="keyword">let</span> result = divide(<span class="number">10</span>, x);  <span class="comment">// Now OK!</span>
+}</code></pre>
+
+        <div class="callout pink">
+            <h4>This Is Revolutionary</h4>
+            <p>Most languages can't express "this number is never zero" in the type system. You have to either check at runtime, trust the programmer, or hope for the best. Nova's refinement types make these guarantees part of the type, checked at compile time.</p>
+        </div>
+
+        <h3>More Refinement Type Examples</h3>
+
+<pre><code><span class="comment">// Array access: index must be in bounds</span>
+<span class="keyword">fn</span> get(arr: [<span class="type">T</span>], index: <span class="type">Int</span>) -> <span class="type">T</span>
+<span class="keyword">where</span>
+    <span class="keyword">requires</span> index >= <span class="number">0</span>
+    <span class="keyword">requires</span> index < arr.len()
+{
+    arr[index]  <span class="comment">// Guaranteed safe!</span>
+}
+
+<span class="comment">// User age: must be positive and reasonable</span>
+<span class="keyword">type</span> <span class="type">Age</span> = <span class="type">Int</span> <span class="keyword">where</span> <span class="keyword">self</span> > <span class="number">0</span> && <span class="keyword">self</span> < <span class="number">150</span>;
+
+<span class="comment">// Percentage: must be 0-100</span>
+<span class="keyword">type</span> <span class="type">Percentage</span> = <span class="type">Float</span> <span class="keyword">where</span> <span class="keyword">self</span> >= <span class="number">0.0</span> && <span class="keyword">self</span> <= <span class="number">100.0</span>;
+
+<span class="comment">// Non-empty string</span>
+<span class="keyword">type</span> <span class="type">NonEmptyString</span> = <span class="type">String</span> <span class="keyword">where</span> <span class="keyword">self</span>.len() > <span class="number">0</span>;</code></pre>
+
+        <h2>The Type Environment</h2>
+
+        <p>As the type checker walks the AST, it builds an <strong>environment</strong> — a map from names to types. Each scope creates a new layer in the environment.</p>
+
+<pre><code><span class="keyword">fn</span> example() {
+    <span class="keyword">let</span> x = <span class="number">5</span>;           <span class="comment">// env: { x: Int }</span>
+    <span class="keyword">let</span> y = <span class="number">10</span>;          <span class="comment">// env: { x: Int, y: Int }</span>
+
+    {
+        <span class="keyword">let</span> z = <span class="number">15</span>;      <span class="comment">// env: { x: Int, y: Int, z: Int }</span>
+        <span class="keyword">let</span> sum = x + y + z;
+    }                    <span class="comment">// z goes out of scope</span>
+
+    <span class="comment">// env: { x: Int, y: Int }</span>
+    <span class="comment">// z is no longer accessible here</span>
+}</code></pre>
+
+        <h2>Function Types</h2>
+
+        <p>Functions have types too. The type of a function tells you what arguments it takes and what it returns:</p>
+
+<pre><code><span class="keyword">fn</span> add(a: <span class="type">Int</span>, b: <span class="type">Int</span>) -> <span class="type">Int</span>
+<span class="comment">// Type: (Int, Int) -> Int</span>
+
+<span class="keyword">fn</span> greet(name: <span class="type">String</span>) -> <span class="type">String</span>
+<span class="comment">// Type: (String) -> String</span>
+
+<span class="keyword">fn</span> print(msg: <span class="type">String</span>) -> <span class="type">()</span>
+<span class="comment">// Type: (String) -> ()   (returns nothing)</span></code></pre>
+
+        <p>This is crucial for higher-order functions — functions that take other functions as arguments:</p>
+
+<pre><code><span class="keyword">fn</span> map(arr: [<span class="type">Int</span>], f: (<span class="type">Int</span>) -> <span class="type">Int</span>) -> [<span class="type">Int</span>]
+<span class="comment">// f is a function from Int to Int</span>
+
+<span class="keyword">fn</span> double(x: <span class="type">Int</span>) -> <span class="type">Int</span> { x * <span class="number">2</span> }
+
+<span class="keyword">let</span> result = map([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>], double);  <span class="comment">// [2, 4, 6]</span></code></pre>
+
+        <h2>Generic Types</h2>
+
+        <p>Sometimes you want a function that works with multiple types. Nova supports <strong>generics</strong> — type parameters that get filled in at call sites:</p>
+
+<pre><code><span class="comment">// A generic function: works for any type T</span>
+<span class="keyword">fn</span> identity<T>(x: <span class="type">T</span>) -> <span class="type">T</span> {
+    x
+}
+
+<span class="comment">// At each call site, T gets a concrete type</span>
+identity(<span class="number">42</span>)       <span class="comment">// T = Int</span>
+identity(<span class="string">"hello"</span>) <span class="comment">// T = String</span>
+
+<span class="comment">// Generic types can have constraints</span>
+<span class="keyword">fn</span> add<T: <span class="type">Numeric</span>>(a: <span class="type">T</span>, b: <span class="type">T</span>) -> <span class="type">T</span> {
+    a + b
+}
+<span class="comment">// T must implement the Numeric trait (Int, Float, etc.)</span></code></pre>
+
+        <h2>Error Messages That Help</h2>
+
+        <p>A good type system isn't just about catching errors — it's about explaining them clearly:</p>
+
+<pre><code><span class="error-msg">error[E0308]</span>: mismatched types
+  --> main.nova:5:12
+   |
+4  |     fn add(a: Int, b: Int) -> Int { a + b }
+   |                                     ----- expected `Int` because of return type
+5  |     add("hello", 5)
+   |         <span class="error-msg">^^^^^^^</span>
+   |         |
+   |         expected `Int`, found `String`
+   |
+   = note: arguments to `add` must be `Int`, not `String`
+   = help: try converting the string to an integer:
+           add("hello".parse()?, 5)</code></pre>
+
+        <p>Nova's type checker uses spans (from the lexer and parser) to point exactly at the problematic code, and provides suggestions for fixing the issue.</p>
+
+        <div class="callout success">
+            <h4>Key Takeaway</h4>
+            <p>Type systems catch bugs at compile time by ensuring operations are valid for their operands. Nova's bidirectional type checking enables powerful type inference, and refinement types let you encode constraints like "non-zero" or "in bounds" directly in the type system. This catches entire classes of bugs that other languages only find at runtime.</p>
+        </div>
+
+        <h2>What's Next?</h2>
+
+        <p>Type checking ensures your code is well-typed, but it doesn't verify deeper properties. Can you prove your sorting function actually sorts? That your search algorithm terminates? That's where <strong>verification</strong> comes in — Nova's most advanced feature.</p>
+
+        <nav class="lesson-nav">
+            <a href="./parsers-ast.html">
+                <span class="label">Previous Lesson</span>
+                <span class="title">Parsers & AST</span>
+            </a>
+            <a href="./verification.html">
+                <span class="label">Next Lesson</span>
+                <span class="title">Verification</span>
+            </a>
+        </nav>
+    </article>
+</body>
+</html>

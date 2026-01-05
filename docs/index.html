@@ -3,8 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova - Code That Proves Itself</title>
-    <meta name="description" content="A programming language designed for the AI age. Verified. Efficient. Open.">
+    <title>Nova - Code That Proves Itself | Learn to Build a Programming Language</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Learn how programming languages work by building one! Nova is an open-source language designed for the AI age. Free tutorials on compilers, lexers, parsers, and type systems.">
+    <meta name="keywords" content="programming language, compiler, lexer, parser, type system, learn programming, open source, rust, webassembly, AI, verified code">
+    <meta name="author" content="Nova Project">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pdaxt.github.io/nova/">
+    <meta property="og:title" content="Nova - Code That Proves Itself">
+    <meta property="og:description" content="Learn how programming languages work by building one! Free tutorials on compilers, lexers, parsers, and type systems.">
+    <meta property="og:image" content="https://pdaxt.github.io/nova/brand/nova-logo.svg">
+    <meta property="og:site_name" content="Nova Programming Language">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Nova - Code That Proves Itself">
+    <meta name="twitter:description" content="Learn how programming languages work by building one! Free tutorials on compilers, lexers, parsers, and type systems.">
+    <meta name="twitter:image" content="https://pdaxt.github.io/nova/brand/nova-logo.svg">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="./brand/nova-mark.svg">
+    <link rel="apple-touch-icon" href="./brand/nova-mark.svg">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#6366f1">
+
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "Nova Programming Language",
+        "description": "A programming language designed for the AI age where code proves itself correct",
+        "programmingLanguage": "Nova",
+        "codeRepository": "https://github.com/pdaxt/nova",
+        "license": "https://opensource.org/licenses/MIT",
+        "author": {
+            "@type": "Organization",
+            "name": "Nova Project"
+        }
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -87,6 +132,15 @@
 
         .nav-links a:hover {
             color: var(--text-primary);
+        }
+
+        .nav-links a.nav-learn {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .nav-links a.nav-learn:hover {
+            color: #4ade80;
         }
 
         .nav-cta {
@@ -489,9 +543,8 @@
             <ul class="nav-links">
                 <li><a href="#why">Why Nova</a></li>
                 <li><a href="#features">Features</a></li>
-                <li><a href="#code">Code</a></li>
+                <li><a href="./learn/index.html" class="nav-learn">Learn</a></li>
                 <li><a href="./architecture/lexer.html">Architecture</a></li>
-                <li><a href="https://github.com/pdaxt/nova/blob/main/ROADMAP.md">Roadmap</a></li>
                 <li><a href="https://github.com/pdaxt/nova/blob/main/CONTRIBUTING.md">Contribute</a></li>
             </ul>
             <a href="https://github.com/pdaxt/nova" class="nav-cta">GitHub</a>
@@ -662,6 +715,16 @@
             <div class="footer-brand">
                 <h3>Nova</h3>
                 <p>Code that proves itself.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Learn</h4>
+                <ul>
+                    <li><a href="./learn/index.html">Start Here</a></li>
+                    <li><a href="./learn/why-nova.html">Why Nova?</a></li>
+                    <li><a href="./learn/compiler-basics.html">Compiler Basics</a></li>
+                    <li><a href="./learn/lexers-tokens.html">Lexers & Tokens</a></li>
+                    <li><a href="./learn/parsers-ast.html">Parsers & AST</a></li>
+                </ul>
             </div>
             <div class="footer-links">
                 <h4>Resources</h4>

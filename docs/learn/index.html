@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Nova - Build a Programming Language From Scratch</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Free course: Learn how programming languages work by building one! Understand compilers, lexers, parsers, and type systems through hands-on tutorials.">
+    <meta name="keywords" content="learn programming language, compiler tutorial, lexer tutorial, parser tutorial, build programming language, free course">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/learn/">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Learn Nova - Build a Programming Language">
+    <meta property="og:description" content="Free course: Learn how programming languages work by building one!">
+    <meta property="og:image" content="https://pdaxt.github.io/nova/brand/nova-logo.svg">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+    <meta name="theme-color" content="#22c55e">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #1a1a24;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --code-bg: #1e1e2e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; width: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--success); }
+
+        /* Hero */
+        .hero {
+            padding: 8rem 2rem 4rem;
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--success);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--success), #4ade80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Course Overview */
+        .section {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Course Cards */
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .course-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .course-card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .course-number {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            margin-bottom: 1rem;
+        }
+
+        .course-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .course-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .course-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .course-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Journey Section */
+        .journey {
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg) 100%);
+            border-radius: 24px;
+            padding: 3rem;
+            margin: 2rem 0;
+        }
+
+        .journey h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .journey-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .journey-step {
+            text-align: center;
+        }
+
+        .step-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+        }
+
+        .journey-step h4 {
+            margin-bottom: 0.5rem;
+        }
+
+        .journey-step p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Problem Section */
+        .problem-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .problem-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .problem-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .problem-card.old {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .problem-card.new {
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .problem-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .problem-card.old h3 { color: #ef4444; }
+        .problem-card.new h3 { color: var(--success); }
+
+        .problem-card ul {
+            list-style: none;
+        }
+
+        .problem-card li {
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(34, 197, 94, 0.1));
+            border-radius: 24px;
+            margin: 2rem 0;
+        }
+
+        .cta-section h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--success), #16a34a);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-left: 1rem;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+
+        /* Prerequisites */
+        .prereq-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .prereq-item {
+            background: var(--bg-card);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .prereq-item.yes { border: 1px solid rgba(34, 197, 94, 0.3); }
+        .prereq-item.no { border: 1px solid rgba(239, 68, 68, 0.3); }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                <span>Nova</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="./index.html" class="active">Learn</a></li>
+                <li><a href="../architecture/lexer.html">Architecture</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-badge">Free & Open Source</div>
+        <h1>Learn to Build a <span>Programming Language</span></h1>
+        <p>
+            Ever wondered how Python, JavaScript, or Rust actually work? In this course, you'll learn by building Nova from scratch. No PhD required. Just curiosity.
+        </p>
+
+        <div class="hero-stats">
+            <div class="stat">
+                <div class="stat-value">7</div>
+                <div class="stat-label">Lessons</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">Free</div>
+                <div class="stat-label">Forever</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">Open</div>
+                <div class="stat-label">Source</div>
+            </div>
+        </div>
+
+        <div class="prereq-list">
+            <div class="prereq-item yes">Basic programming knowledge</div>
+            <div class="prereq-item no">No compiler experience needed</div>
+            <div class="prereq-item no">No CS degree required</div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-header">
+            <h2>Why Build a Programming Language?</h2>
+            <p>Understanding compilers makes you a 10x better developer. You'll see code differently forever.</p>
+        </div>
+
+        <div class="problem-grid">
+            <div class="problem-card old">
+                <h3>The Old Way</h3>
+                <ul>
+                    <li>Code crashes at runtime with cryptic errors</li>
+                    <li>Security vulnerabilities everywhere</li>
+                    <li>AI generates buggy, untested code</li>
+                    <li>Debugging feels like guessing</li>
+                    <li>Languages designed 30+ years ago</li>
+                </ul>
+            </div>
+            <div class="problem-card new">
+                <h3>The Nova Way</h3>
+                <ul>
+                    <li>Errors caught at compile time</li>
+                    <li>Code proves itself correct</li>
+                    <li>AI generates verified, safe code</li>
+                    <li>Debugging with mathematical precision</li>
+                    <li>Designed for the AI age</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="journey">
+            <h2>Your Learning Journey</h2>
+            <div class="journey-steps">
+                <div class="journey-step">
+                    <div class="step-icon">1</div>
+                    <h4>Understand</h4>
+                    <p>Learn why we need new languages</p>
+                </div>
+                <div class="journey-step">
+                    <div class="step-icon">2</div>
+                    <h4>Tokenize</h4>
+                    <p>Break code into tokens</p>
+                </div>
+                <div class="journey-step">
+                    <div class="step-icon">3</div>
+                    <h4>Parse</h4>
+                    <p>Build syntax trees</p>
+                </div>
+                <div class="journey-step">
+                    <div class="step-icon">4</div>
+                    <h4>Type Check</h4>
+                    <p>Catch errors early</p>
+                </div>
+                <div class="journey-step">
+                    <div class="step-icon">5</div>
+                    <h4>Verify</h4>
+                    <p>Prove code correct</p>
+                </div>
+                <div class="journey-step">
+                    <div class="step-icon">6</div>
+                    <h4>Generate</h4>
+                    <p>Emit WebAssembly</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-header">
+            <h2>The Curriculum</h2>
+            <p>Start from zero, end up understanding how every programming language works.</p>
+        </div>
+
+        <div class="course-grid">
+            <a href="./why-nova.html" class="course-card">
+                <span class="course-number">Lesson 1</span>
+                <h3>Why Nova? The Problem with Old Languages</h3>
+                <p>Understand why we're building a new language and what's wrong with the current ones. Runtime errors, security holes, and why AI needs better languages.</p>
+                <div class="course-meta">
+                    <span>15 min read</span>
+                    <span>Beginner</span>
+                </div>
+            </a>
+
+            <a href="./compiler-basics.html" class="course-card">
+                <span class="course-number">Lesson 2</span>
+                <h3>What Is a Compiler?</h3>
+                <p>The 10,000-foot view. What happens when you run your code? From source text to machine execution, demystified.</p>
+                <div class="course-meta">
+                    <span>20 min read</span>
+                    <span>Beginner</span>
+                </div>
+            </a>
+
+            <a href="./lexers-tokens.html" class="course-card">
+                <span class="course-number">Lesson 3</span>
+                <h3>Lexers & Tokens: Breaking Code Apart</h3>
+                <p>Your first real compiler code! Learn how lexers turn source text into tokens. We'll build one from scratch.</p>
+                <div class="course-meta">
+                    <span>30 min read</span>
+                    <span>Intermediate</span>
+                </div>
+            </a>
+
+            <a href="./parsers-ast.html" class="course-card">
+                <span class="course-number">Lesson 4</span>
+                <h3>Parsers & AST: Understanding Structure</h3>
+                <p>Tokens become trees. Learn how parsers understand grammar and build Abstract Syntax Trees.</p>
+                <div class="course-meta">
+                    <span>35 min read</span>
+                    <span>Intermediate</span>
+                </div>
+            </a>
+
+            <a href="./type-systems.html" class="course-card">
+                <span class="course-number">Lesson 5</span>
+                <h3>Type Systems: Catching Errors Early</h3>
+                <p>Why types matter. How type checkers work. Bidirectional type inference explained simply.</p>
+                <div class="course-meta">
+                    <span>30 min read</span>
+                    <span>Intermediate</span>
+                </div>
+            </a>
+
+            <a href="./verification.html" class="course-card">
+                <span class="course-number">Lesson 6</span>
+                <h3>Verification: Code That Proves Itself</h3>
+                <p>Nova's secret weapon. Refinement types and SMT solvers. How code can mathematically prove its own correctness.</p>
+                <div class="course-meta">
+                    <span>25 min read</span>
+                    <span>Advanced</span>
+                </div>
+            </a>
+
+            <a href="./codegen.html" class="course-card">
+                <span class="course-number">Lesson 7</span>
+                <h3>Code Generation: Emitting WebAssembly</h3>
+                <p>The final step. Turn your AST into actual runnable code. Target WebAssembly for universal execution.</p>
+                <div class="course-meta">
+                    <span>35 min read</span>
+                    <span>Advanced</span>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="cta-section">
+            <h2>Ready to Start?</h2>
+            <p>Join hundreds of developers learning how programming languages really work.</p>
+            <a href="./why-nova.html" class="btn btn-primary">Start Lesson 1</a>
+            <a href="https://github.com/pdaxt/nova" class="btn btn-secondary">View on GitHub</a>
+        </div>
+    </section>
+
+    <footer>
+        <p>Nova is open source under MIT/Apache-2.0. <a href="https://github.com/pdaxt/nova">Contribute on GitHub</a>.</p>
+    </footer>
+</body>
+</html>
