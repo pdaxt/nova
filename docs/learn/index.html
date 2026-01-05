@@ -7,8 +7,13 @@
 
     <!-- SEO -->
     <meta name="description" content="Free course: Learn how programming languages work by building one! Understand compilers, lexers, parsers, and type systems through hands-on tutorials.">
-    <meta name="keywords" content="learn programming language, compiler tutorial, lexer tutorial, parser tutorial, build programming language, free course">
+    <meta name="keywords" content="learn programming language, compiler tutorial, lexer tutorial, parser tutorial, build programming language, free course, Pranjal Gupta, DataXLR8">
+    <meta name="author" content="Pranjal Gupta">
     <link rel="canonical" href="https://pdaxt.github.io/nova/learn/">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:creator" content="@pikisnoop">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Learn Nova - Build a Programming Language">
@@ -391,6 +396,105 @@
             color: var(--accent);
         }
 
+        footer .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .author-section {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(34, 197, 94, 0.05));
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 3rem auto;
+            max-width: 700px;
+            text-align: left;
+        }
+
+        .author-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .author-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .author-info h4 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .author-info span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .author-section p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.7;
+        }
+
+        .author-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .author-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .author-link:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-1px);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--text);
+        }
+
+        .footer-tagline {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
         /* Prerequisites */
         .prereq-list {
             display: flex;
@@ -613,10 +717,43 @@
             <a href="./why-nova.html" class="btn btn-primary">Start Lesson 1</a>
             <a href="https://github.com/pdaxt/nova" class="btn btn-secondary">View on GitHub</a>
         </div>
+
+        <div class="author-section">
+            <div class="author-header">
+                <div class="author-avatar">PG</div>
+                <div class="author-info">
+                    <h4>Pranjal Gupta</h4>
+                    <span>AI Engineer & Language Designer</span>
+                </div>
+            </div>
+            <p>
+                I build AI systems that actually work in production. Nova is my exploration of what programming languages should look like in the age of AI — where code proves itself correct and AI can generate verified, safe software. Currently building enterprise AI at <a href="https://dataxlr8.ai">DataXLR8</a>.
+            </p>
+            <div class="author-links">
+                <a href="https://bskiller.com" class="author-link">
+                    <span>BSKiller</span> — AI without the hype
+                </a>
+                <a href="https://dataxlr8.ai" class="author-link">
+                    <span>DataXLR8</span> — Enterprise AI
+                </a>
+                <a href="https://github.com/pdaxt" class="author-link">
+                    <span>GitHub</span> — @pdaxt
+                </a>
+            </div>
+        </div>
     </section>
 
     <footer>
-        <p>Nova is open source under MIT/Apache-2.0. <a href="https://github.com/pdaxt/nova">Contribute on GitHub</a>.</p>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="https://github.com/pdaxt/nova">GitHub</a>
+                <a href="https://bskiller.com">BSKiller Newsletter</a>
+                <a href="https://dataxlr8.ai">DataXLR8</a>
+                <a href="https://twitter.com/pikisnoop">Twitter</a>
+            </div>
+            <p>Nova is open source under MIT/Apache-2.0. Built by <a href="https://bskiller.com">Pranjal Gupta</a>.</p>
+            <p class="footer-tagline">Get ahead with AI — without falling for the hype.</p>
+        </div>
     </footer>
 </body>
 </html>
