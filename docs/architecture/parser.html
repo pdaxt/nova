@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parser Architecture - Nova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --code-bg: #1e1e2e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+        .container { max-width: 900px; margin: 0 auto; padding: 4rem 2rem; }
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        h2 { font-size: 1.75rem; margin: 3rem 0 1rem; color: var(--accent); }
+        h3 { font-size: 1.25rem; margin: 2rem 0 1rem; }
+        p { color: var(--text-secondary); margin-bottom: 1rem; }
+        a { color: var(--accent); }
+        .badge { display: inline-block; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.875rem; color: var(--accent); margin-bottom: 1rem; }
+        pre { background: var(--code-bg); border-radius: 12px; padding: 1.5rem; overflow-x: auto; margin: 1.5rem 0; border: 1px solid rgba(255,255,255,0.1); }
+        code { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        th { color: var(--text); font-weight: 600; }
+        td { color: var(--text-secondary); }
+        .pros { color: var(--success); }
+        .cons { color: #ef4444; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border: 1px solid rgba(255,255,255,0.05); }
+        .card h4 { margin-bottom: 0.5rem; }
+        .nav { padding: 1rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .nav a { color: var(--text-secondary); text-decoration: none; margin-right: 1.5rem; }
+        .nav a:hover { color: var(--text); }
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .type { color: #4ade80; }
+        .function { color: #60a5fa; }
+        .macro { color: #f472b6; }
+        ul { margin-left: 1.5rem; color: var(--text-secondary); }
+        li { margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="./lexer.html">Lexer</a>
+        <a href="./errors.html">Errors</a>
+        <a href="./types.html">Types</a>
+        <a href="./codegen.html">Codegen</a>
+    </nav>
+
+    <div class="container">
+        <div class="badge">Architecture</div>
+        <h1>Parser Architecture</h1>
+        <p>How Nova transforms tokens into an Abstract Syntax Tree, and the libraries we evaluated.</p>
+
+        <h2>Library Comparison</h2>
+        <p>We evaluated five main approaches for parsing in Rust:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Library</th>
+                    <th>Type</th>
+                    <th>Error Recovery</th>
+                    <th>Learning Curve</th>
+                    <th>Best For</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><a href="https://github.com/zesterer/chumsky">Chumsky</a></td>
+                    <td>Combinator</td>
+                    <td>Excellent</td>
+                    <td>Medium</td>
+                    <td>Languages with good errors</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/lalrpop/lalrpop">LALRPOP</a></td>
+                    <td>Generator (LR)</td>
+                    <td>Basic</td>
+                    <td>Medium</td>
+                    <td>Traditional grammars</td>
+                </tr>
+                <tr>
+                    <td><a href="https://pest.rs/">Pest</a></td>
+                    <td>Generator (PEG)</td>
+                    <td>Good</td>
+                    <td>Easy</td>
+                    <td>Quick prototyping</td>
+                </tr>
+                <tr>
+                    <td><a href="https://docs.rs/winnow">Winnow</a></td>
+                    <td>Combinator</td>
+                    <td>Manual</td>
+                    <td>Medium</td>
+                    <td>Performance-critical</td>
+                </tr>
+                <tr>
+                    <td>Hand-rolled (Pratt)</td>
+                    <td>Manual</td>
+                    <td>Full control</td>
+                    <td>Higher</td>
+                    <td>Maximum flexibility</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Option 1: Chumsky (Recommended for Most)</h2>
+        <p><a href="https://github.com/zesterer/chumsky">Chumsky</a> is a parser combinator library designed for ergonomics and excellent error recovery. It produces beautiful error messages out of the box.</p>
+
+        <div class="card">
+            <h4 class="pros">Pros</h4>
+            <p>Best-in-class error recovery, declarative API, strong typing, active development</p>
+            <h4 class="cons" style="margin-top: 1rem;">Cons</h4>
+            <p>Compile times can be slow for complex grammars, learning curve for combinators</p>
+        </div>
+
+        <h3>Example: Nova Expression Parser with Chumsky</h3>
+        <pre><code><span class="keyword">use</span> chumsky::prelude::*;
+
+<span class="macro">#[derive(Debug, Clone)]</span>
+<span class="keyword">pub enum</span> <span class="type">Expr</span> {
+    Int(<span class="type">i64</span>),
+    Ident(<span class="type">String</span>),
+    Binary {
+        op: <span class="type">BinOp</span>,
+        lhs: <span class="type">Box</span>&lt;<span class="type">Expr</span>&gt;,
+        rhs: <span class="type">Box</span>&lt;<span class="type">Expr</span>&gt;,
+    },
+    Call {
+        name: <span class="type">String</span>,
+        args: <span class="type">Vec</span>&lt;<span class="type">Expr</span>&gt;,
+    },
+    If {
+        cond: <span class="type">Box</span>&lt;<span class="type">Expr</span>&gt;,
+        then: <span class="type">Box</span>&lt;<span class="type">Expr</span>&gt;,
+        else_: <span class="type">Option</span>&lt;<span class="type">Box</span>&lt;<span class="type">Expr</span>&gt;&gt;,
+    },
+}
+
+<span class="macro">#[derive(Debug, Clone)]</span>
+<span class="keyword">pub enum</span> <span class="type">BinOp</span> { Add, Sub, Mul, Div, Eq, Ne, Lt, Gt }
+
+<span class="keyword">fn</span> <span class="function">parser</span>&lt;'a&gt;() -> <span class="keyword">impl</span> Parser&lt;'a, &'a <span class="type">str</span>, <span class="type">Expr</span>, extra::Err&lt;Rich&lt;'a, <span class="type">char</span>&gt;&gt;&gt; {
+    <span class="keyword">let</span> ident = text::ident()
+        .map(|s: &<span class="type">str</span>| s.to_string());
+
+    <span class="keyword">let</span> int = text::int(10)
+        .map(|s: &<span class="type">str</span>| <span class="type">Expr</span>::Int(s.parse().unwrap()));
+
+    <span class="comment">// Recursive expression parser</span>
+    recursive(|expr| {
+        <span class="keyword">let</span> atom = choice((
+            int,
+            ident.clone().map(<span class="type">Expr</span>::Ident),
+            expr.clone()
+                .delimited_by(just('('), just(')'))
+                .padded(),
+        ));
+
+        <span class="comment">// Function calls</span>
+        <span class="keyword">let</span> call = ident.clone()
+            .then(
+                expr.clone()
+                    .separated_by(just(',').padded())
+                    .collect()
+                    .delimited_by(just('('), just(')'))
+            )
+            .map(|(name, args)| <span class="type">Expr</span>::Call { name, args });
+
+        <span class="keyword">let</span> primary = choice((call, atom));
+
+        <span class="comment">// Binary operators with precedence</span>
+        <span class="keyword">let</span> op = |c| just(c).padded();
+
+        <span class="keyword">let</span> product = primary.clone()
+            .foldl(
+                choice((
+                    op('*').to(<span class="type">BinOp</span>::Mul),
+                    op('/').to(<span class="type">BinOp</span>::Div),
+                ))
+                .then(primary)
+                .repeated(),
+                |lhs, (op, rhs)| <span class="type">Expr</span>::Binary {
+                    op,
+                    lhs: <span class="type">Box</span>::new(lhs),
+                    rhs: <span class="type">Box</span>::new(rhs),
+                },
+            );
+
+        <span class="keyword">let</span> sum = product.clone()
+            .foldl(
+                choice((
+                    op('+').to(<span class="type">BinOp</span>::Add),
+                    op('-').to(<span class="type">BinOp</span>::Sub),
+                ))
+                .then(product)
+                .repeated(),
+                |lhs, (op, rhs)| <span class="type">Expr</span>::Binary {
+                    op,
+                    lhs: <span class="type">Box</span>::new(lhs),
+                    rhs: <span class="type">Box</span>::new(rhs),
+                },
+            );
+
+        sum
+    })
+}</code></pre>
+
+        <h3>Cargo.toml</h3>
+        <pre><code>[dependencies]
+chumsky = "1.0.0-alpha.8"</code></pre>
+
+        <h2>Option 2: LALRPOP</h2>
+        <p><a href="https://lalrpop.github.io/lalrpop/">LALRPOP</a> is a parser generator that takes a grammar file and produces Rust code. It uses LR(1) parsing.</p>
+
+        <div class="card">
+            <h4 class="pros">Pros</h4>
+            <p>Generates typed AST directly, powerful for context-free grammars, macro-like syntax</p>
+            <h4 class="cons" style="margin-top: 1rem;">Cons</h4>
+            <p>Separate grammar file, built-in lexer is limited, requires build.rs setup</p>
+        </div>
+
+        <h3>Example: Nova Grammar with LALRPOP</h3>
+        <pre><code><span class="comment">// nova.lalrpop</span>
+<span class="keyword">use</span> crate::ast::{Expr, BinOp};
+
+grammar;
+
+<span class="keyword">pub</span> Expr: <span class="type">Box</span>&lt;<span class="type">Expr</span>&gt; = {
+    Expr ExprOp Factor => <span class="type">Box</span>::new(<span class="type">Expr</span>::Binary {
+        lhs: &lt;&gt;,
+        op: &lt;&gt;,
+        rhs: &lt;&gt;,
+    }),
+    Factor,
+};
+
+ExprOp: <span class="type">BinOp</span> = {
+    <span class="string">"+"</span> => <span class="type">BinOp</span>::Add,
+    <span class="string">"-"</span> => <span class="type">BinOp</span>::Sub,
+};
+
+Factor: <span class="type">Box</span>&lt;<span class="type">Expr</span>&gt; = {
+    Factor FactorOp Term => <span class="type">Box</span>::new(<span class="type">Expr</span>::Binary {
+        lhs: &lt;&gt;,
+        op: &lt;&gt;,
+        rhs: &lt;&gt;,
+    }),
+    Term,
+};
+
+FactorOp: <span class="type">BinOp</span> = {
+    <span class="string">"*"</span> => <span class="type">BinOp</span>::Mul,
+    <span class="string">"/"</span> => <span class="type">BinOp</span>::Div,
+};
+
+Term: <span class="type">Box</span>&lt;<span class="type">Expr</span>&gt; = {
+    Num => <span class="type">Box</span>::new(<span class="type">Expr</span>::Int(&lt;&gt;)),
+    Ident => <span class="type">Box</span>::new(<span class="type">Expr</span>::Ident(&lt;&gt;.to_string())),
+    <span class="string">"("</span> &lt;Expr&gt; <span class="string">")"</span>,
+};
+
+Num: <span class="type">i64</span> = r<span class="string">"[0-9]+"</span> => &lt;&gt;.parse().unwrap();
+Ident: &'input <span class="type">str</span> = r<span class="string">"[a-zA-Z_][a-zA-Z0-9_]*"</span>;</code></pre>
+
+        <h2>Option 3: Pratt Parsing (Hand-Rolled)</h2>
+        <p>Pratt parsing (operator-precedence parsing) is a simple, elegant algorithm for parsing expressions with operators at different precedence levels. This is what Nova uses.</p>
+
+        <div class="card">
+            <h4 class="pros">Pros</h4>
+            <p>Simple to understand, easy to extend, full control over error messages, no dependencies</p>
+            <h4 class="cons" style="margin-top: 1rem;">Cons</h4>
+            <p>More code to write, must implement error recovery manually</p>
+        </div>
+
+        <h3>Example: Pratt Parser Core</h3>
+        <pre><code><span class="keyword">impl</span> <span class="type">Parser</span>&lt;'_&gt; {
+    <span class="comment">/// Parse expression with precedence</span>
+    <span class="keyword">fn</span> <span class="function">parse_expr</span>(&<span class="keyword">mut self</span>, min_prec: <span class="type">u8</span>) -> <span class="type">Result</span>&lt;<span class="type">Expr</span>, <span class="type">ParseError</span>&gt; {
+        <span class="comment">// Parse the left-hand side (prefix expression)</span>
+        <span class="keyword">let mut</span> lhs = <span class="keyword">self</span>.parse_prefix()?;
+
+        <span class="comment">// Parse binary operators at or above min_prec</span>
+        <span class="keyword">while let</span> <span class="type">Some</span>((op, prec, assoc)) = <span class="keyword">self</span>.peek_binop() {
+            <span class="keyword">if</span> prec < min_prec {
+                <span class="keyword">break</span>;
+            }
+
+            <span class="keyword">self</span>.advance();  <span class="comment">// Consume operator</span>
+
+            <span class="comment">// Right associative: same precedence</span>
+            <span class="comment">// Left associative: higher precedence</span>
+            <span class="keyword">let</span> next_prec = <span class="keyword">if</span> assoc == <span class="type">Assoc</span>::Right { prec } <span class="keyword">else</span> { prec + 1 };
+            <span class="keyword">let</span> rhs = <span class="keyword">self</span>.parse_expr(next_prec)?;
+
+            lhs = <span class="type">Expr</span>::Binary {
+                op,
+                lhs: <span class="type">Box</span>::new(lhs),
+                rhs: <span class="type">Box</span>::new(rhs),
+                span: <span class="keyword">self</span>.span_from(start),
+            };
+        }
+
+        <span class="type">Ok</span>(lhs)
+    }
+
+    <span class="comment">/// Get binary operator info: (operator, precedence, associativity)</span>
+    <span class="keyword">fn</span> <span class="function">peek_binop</span>(&<span class="keyword">self</span>) -> <span class="type">Option</span>&lt;(<span class="type">BinOp</span>, <span class="type">u8</span>, <span class="type">Assoc</span>)&gt; {
+        <span class="keyword">let</span> kind = <span class="keyword">self</span>.current()?.kind();
+        <span class="keyword">match</span> kind {
+            <span class="comment">// Assignment (lowest, right assoc)</span>
+            <span class="type">TokenKind</span>::Eq => <span class="type">Some</span>((<span class="type">BinOp</span>::Assign, 1, <span class="type">Assoc</span>::Right)),
+
+            <span class="comment">// Logical OR</span>
+            <span class="type">TokenKind</span>::PipePipe => <span class="type">Some</span>((<span class="type">BinOp</span>::Or, 2, <span class="type">Assoc</span>::Left)),
+
+            <span class="comment">// Logical AND</span>
+            <span class="type">TokenKind</span>::AmpAmp => <span class="type">Some</span>((<span class="type">BinOp</span>::And, 3, <span class="type">Assoc</span>::Left)),
+
+            <span class="comment">// Equality</span>
+            <span class="type">TokenKind</span>::EqEq => <span class="type">Some</span>((<span class="type">BinOp</span>::Eq, 4, <span class="type">Assoc</span>::Left)),
+            <span class="type">TokenKind</span>::NotEq => <span class="type">Some</span>((<span class="type">BinOp</span>::Ne, 4, <span class="type">Assoc</span>::Left)),
+
+            <span class="comment">// Comparison</span>
+            <span class="type">TokenKind</span>::Lt => <span class="type">Some</span>((<span class="type">BinOp</span>::Lt, 5, <span class="type">Assoc</span>::Left)),
+            <span class="type">TokenKind</span>::Gt => <span class="type">Some</span>((<span class="type">BinOp</span>::Gt, 5, <span class="type">Assoc</span>::Left)),
+            <span class="type">TokenKind</span>::LtEq => <span class="type">Some</span>((<span class="type">BinOp</span>::Le, 5, <span class="type">Assoc</span>::Left)),
+            <span class="type">TokenKind</span>::GtEq => <span class="type">Some</span>((<span class="type">BinOp</span>::Ge, 5, <span class="type">Assoc</span>::Left)),
+
+            <span class="comment">// Additive</span>
+            <span class="type">TokenKind</span>::Plus => <span class="type">Some</span>((<span class="type">BinOp</span>::Add, 6, <span class="type">Assoc</span>::Left)),
+            <span class="type">TokenKind</span>::Minus => <span class="type">Some</span>((<span class="type">BinOp</span>::Sub, 6, <span class="type">Assoc</span>::Left)),
+
+            <span class="comment">// Multiplicative (highest)</span>
+            <span class="type">TokenKind</span>::Star => <span class="type">Some</span>((<span class="type">BinOp</span>::Mul, 7, <span class="type">Assoc</span>::Left)),
+            <span class="type">TokenKind</span>::Slash => <span class="type">Some</span>((<span class="type">BinOp</span>::Div, 7, <span class="type">Assoc</span>::Left)),
+            <span class="type">TokenKind</span>::Percent => <span class="type">Some</span>((<span class="type">BinOp</span>::Rem, 7, <span class="type">Assoc</span>::Left)),
+
+            _ => <span class="type">None</span>,
+        }
+    }
+}</code></pre>
+
+        <h2>Nova's Decision: Pratt Parsing</h2>
+        <p>Nova uses hand-rolled Pratt parsing for:</p>
+        <ul>
+            <li><strong>Minimal dependencies:</strong> Bootstrap compiler is self-contained</li>
+            <li><strong>Full control:</strong> Custom error recovery and reporting</li>
+            <li><strong>Performance:</strong> No abstraction overhead</li>
+            <li><strong>Security:</strong> Depth limits prevent stack overflow attacks</li>
+        </ul>
+
+        <h3>Security: Nesting Limits</h3>
+        <pre><code><span class="keyword">const</span> MAX_EXPR_DEPTH: <span class="type">usize</span> = 64;
+<span class="keyword">const</span> MAX_BLOCK_DEPTH: <span class="type">usize</span> = 64;
+
+<span class="keyword">fn</span> <span class="function">parse_expr_with_depth</span>(&<span class="keyword">mut self</span>, depth: <span class="type">usize</span>) -> <span class="type">Result</span>&lt;<span class="type">Expr</span>, <span class="type">ParseError</span>&gt; {
+    <span class="keyword">if</span> depth > MAX_EXPR_DEPTH {
+        <span class="keyword">return</span> <span class="type">Err</span>(<span class="type">ParseError</span>::NestingTooDeep {
+            depth,
+            max: MAX_EXPR_DEPTH,
+            span: <span class="keyword">self</span>.current_span(),
+        });
+    }
+    <span class="comment">// ... parse expression</span>
+}</code></pre>
+
+        <h2>Comparison: Error Messages</h2>
+        <p>Chumsky produces the best error messages out of the box:</p>
+
+        <pre><code><span class="comment">// Chumsky error output</span>
+Error: unexpected token '+', expected identifier
+  --> src/main.nova:3:5
+   |
+ 3 |     + invalid
+   |     ^
+
+Error: unclosed delimiter
+  --> src/main.nova:1:10
+   |
+ 1 | fn foo() {
+   |          ^ this opening brace...
+...
+ 5 |
+   | ^ ...was never closed</code></pre>
+
+        <h2>References</h2>
+        <ul>
+            <li><a href="https://github.com/zesterer/chumsky">Chumsky - Parser Combinator with Error Recovery</a></li>
+            <li><a href="https://lalrpop.github.io/lalrpop/">LALRPOP Book</a></li>
+            <li><a href="https://pest.rs/">Pest - The Elegant Parser</a></li>
+            <li><a href="https://docs.rs/winnow">Winnow - Fast Parser Combinators</a></li>
+            <li><a href="https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html">Simple but Powerful Pratt Parsing</a></li>
+            <li><a href="https://rustprojectprimer.com/ecosystem/parsing.html">Rust Project Primer - Parsing</a></li>
+        </ul>
+    </div>
+</body>
+</html>

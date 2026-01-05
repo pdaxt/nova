@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Type System Architecture - Nova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --code-bg: #1e1e2e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 4rem 2rem; }
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        h2 { font-size: 1.75rem; margin: 3rem 0 1rem; color: var(--accent); }
+        h3 { font-size: 1.25rem; margin: 2rem 0 1rem; }
+        p { color: var(--text-secondary); margin-bottom: 1rem; }
+        a { color: var(--accent); }
+        .badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        pre {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+        }
+        .inline-code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        th { color: var(--text); font-weight: 600; }
+        td { color: var(--text-secondary); }
+        .pros { color: var(--success); }
+        .cons { color: #ef4444; }
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .card h4 { margin-bottom: 0.5rem; }
+        .nav { padding: 1rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .nav a { color: var(--text-secondary); text-decoration: none; margin-right: 1.5rem; }
+        .nav a:hover { color: var(--text); }
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .type { color: #4ade80; }
+        .function { color: #60a5fa; }
+        .macro { color: #f472b6; }
+        .recommendation {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .recommendation h4 { color: var(--success); margin-bottom: 0.5rem; }
+        .judgment {
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="./lexer.html">Lexer</a>
+        <a href="./parser.html">Parser</a>
+        <a href="./errors.html">Errors</a>
+        <a href="./codegen.html">Codegen</a>
+    </nav>
+
+    <div class="container">
+        <span class="badge">Architecture</span>
+        <h1>Type System</h1>
+        <p>
+            Nova uses a <strong>bidirectional type system</strong> with refinement types for verification.
+            Bidirectional type checking provides better error messages than Hindley-Milner while supporting
+            advanced features like higher-rank polymorphism. Refinement types enable compile-time verification
+            of program properties.
+        </p>
+
+        <h2>Algorithm Comparison</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Algorithm</th>
+                    <th>Inference Power</th>
+                    <th>Error Messages</th>
+                    <th>Complexity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Hindley-Milner</strong></td>
+                    <td class="pros">Full inference</td>
+                    <td class="cons">Poor locality</td>
+                    <td>~800 LOC</td>
+                </tr>
+                <tr>
+                    <td><strong>Bidirectional</strong></td>
+                    <td>Partial inference</td>
+                    <td class="pros">Excellent</td>
+                    <td>~1000 LOC</td>
+                </tr>
+                <tr>
+                    <td><strong>Local Type Inference</strong></td>
+                    <td>Minimal</td>
+                    <td class="pros">Best</td>
+                    <td>~500 LOC</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Bidirectional Type Checking</h2>
+        <p>
+            Bidirectional type checking separates type <strong>checking</strong> (verifying an expression
+            has a known type) from type <strong>synthesis</strong> (inferring an expression's type).
+            This distinction enables precise error localization.
+        </p>
+
+        <h3>Core Judgments</h3>
+        <div class="judgment">
+            <strong>Check:</strong> &Gamma; |- e &lt;= A &nbsp;&nbsp; (e checks against A)
+        </div>
+        <div class="judgment">
+            <strong>Synth:</strong> &Gamma; |- e =&gt; A &nbsp;&nbsp; (e synthesizes A)
+        </div>
+
+        <h3>Type Representation</h3>
+<pre><code><span class="comment">/// Nova's type representation</span>
+<span class="keyword">pub enum</span> <span class="type">Type</span> {
+    <span class="comment">// Primitive types</span>
+    Int,
+    Float,
+    Bool,
+    String,
+    Unit,
+
+    <span class="comment">// Compound types</span>
+    Array(<span class="type">Box</span>&lt;<span class="type">Type</span>&gt;),
+    Tuple(Vec&lt;<span class="type">Type</span>&gt;),
+    Record(Vec&lt;(<span class="type">String</span>, <span class="type">Type</span>)&gt;),
+
+    <span class="comment">// Function types</span>
+    Function {
+        params: Vec&lt;<span class="type">Type</span>&gt;,
+        result: <span class="type">Box</span>&lt;<span class="type">Type</span>&gt;,
+    },
+
+    <span class="comment">// Polymorphism</span>
+    TypeVar(<span class="type">TypeVarId</span>),
+    Forall {
+        var: <span class="type">TypeVarId</span>,
+        body: <span class="type">Box</span>&lt;<span class="type">Type</span>&gt;,
+    },
+
+    <span class="comment">// Refinement types (Nova-specific)</span>
+    Refined {
+        base: <span class="type">Box</span>&lt;<span class="type">Type</span>&gt;,
+        predicate: <span class="type">Box</span>&lt;<span class="type">Expr</span>&gt;,  <span class="comment">// must evaluate to Bool</span>
+    },
+
+    <span class="comment">// Unknown (for inference)</span>
+    Unknown(<span class="type">UnknownId</span>),
+}</code></pre>
+
+        <h3>Bidirectional Checker Implementation</h3>
+<pre><code><span class="keyword">pub struct</span> <span class="type">TypeChecker</span> {
+    env: <span class="type">Environment</span>,
+    unknowns: Vec&lt;<span class="type">Option</span>&lt;<span class="type">Type</span>&gt;&gt;,
+    errors: Vec&lt;<span class="type">TypeError</span>&gt;,
+}
+
+<span class="keyword">impl</span> <span class="type">TypeChecker</span> {
+    <span class="comment">/// Check: verify expression has expected type</span>
+    <span class="keyword">pub fn</span> <span class="function">check</span>(&amp;<span class="keyword">mut</span> self, expr: &amp;<span class="type">Expr</span>, expected: &amp;<span class="type">Type</span>) -> <span class="type">Result</span>&lt;(), <span class="type">TypeError</span>&gt; {
+        <span class="keyword">match</span> (expr, expected) {
+            <span class="comment">// Lambda checks against function type</span>
+            (<span class="type">Expr</span>::Lambda { params, body, .. }, <span class="type">Type</span>::Function { params: param_tys, result }) => {
+                <span class="keyword">if</span> params.len() != param_tys.len() {
+                    <span class="keyword">return</span> <span class="keyword">Err</span>(<span class="type">TypeError</span>::ArityMismatch { .. });
+                }
+
+                <span class="comment">// Extend environment with parameter types</span>
+                <span class="keyword">let</span> extended = self.env.extend_many(
+                    params.iter().zip(param_tys).map(|(p, t)| (p.name.clone(), t.clone()))
+                );
+
+                <span class="comment">// Check body against result type</span>
+                self.with_env(extended, |tc| tc.check(body, result))
+            }
+
+            <span class="comment">// If-then-else checks both branches</span>
+            (<span class="type">Expr</span>::If { cond, then_branch, else_branch, .. }, ty) => {
+                self.check(cond, &amp;<span class="type">Type</span>::Bool)?;
+                self.check(then_branch, ty)?;
+                self.check(else_branch, ty)
+            }
+
+            <span class="comment">// Subsumption: synthesize and check subtype</span>
+            (expr, expected) => {
+                <span class="keyword">let</span> inferred = self.synth(expr)?;
+                self.subtype(&amp;inferred, expected)
+            }
+        }
+    }
+
+    <span class="comment">/// Synth: infer expression's type</span>
+    <span class="keyword">pub fn</span> <span class="function">synth</span>(&amp;<span class="keyword">mut</span> self, expr: &amp;<span class="type">Expr</span>) -> <span class="type">Result</span>&lt;<span class="type">Type</span>, <span class="type">TypeError</span>&gt; {
+        <span class="keyword">match</span> expr {
+            <span class="comment">// Literals synthesize their type</span>
+            <span class="type">Expr</span>::Int(_) => <span class="keyword">Ok</span>(<span class="type">Type</span>::Int),
+            <span class="type">Expr</span>::Float(_) => <span class="keyword">Ok</span>(<span class="type">Type</span>::Float),
+            <span class="type">Expr</span>::Bool(_) => <span class="keyword">Ok</span>(<span class="type">Type</span>::Bool),
+            <span class="type">Expr</span>::String(_) => <span class="keyword">Ok</span>(<span class="type">Type</span>::String),
+
+            <span class="comment">// Variables look up in environment</span>
+            <span class="type">Expr</span>::Var { name, .. } => {
+                self.env.lookup(name)
+                    .cloned()
+                    .ok_or(<span class="type">TypeError</span>::UndefinedVariable { name: name.clone(), .. })
+            }
+
+            <span class="comment">// Function application</span>
+            <span class="type">Expr</span>::Apply { func, args, .. } => {
+                <span class="keyword">let</span> func_ty = self.synth(func)?;
+                <span class="keyword">match</span> func_ty {
+                    <span class="type">Type</span>::Function { params, result } => {
+                        <span class="keyword">if</span> args.len() != params.len() {
+                            <span class="keyword">return</span> <span class="keyword">Err</span>(<span class="type">TypeError</span>::ArityMismatch { .. });
+                        }
+                        <span class="keyword">for</span> (arg, param_ty) <span class="keyword">in</span> args.iter().zip(&amp;params) {
+                            self.check(arg, param_ty)?;
+                        }
+                        <span class="keyword">Ok</span>(*result)
+                    }
+                    _ => <span class="keyword">Err</span>(<span class="type">TypeError</span>::NotAFunction { .. })
+                }
+            }
+
+            <span class="comment">// Annotated expressions</span>
+            <span class="type">Expr</span>::Annotated { expr, ty, .. } => {
+                self.check(expr, ty)?;
+                <span class="keyword">Ok</span>(ty.clone())
+            }
+
+            <span class="comment">// Binary operators</span>
+            <span class="type">Expr</span>::Binary { op, lhs, rhs, .. } => {
+                self.synth_binop(op, lhs, rhs)
+            }
+
+            _ => <span class="keyword">Err</span>(<span class="type">TypeError</span>::CannotInfer { .. })
+        }
+    }
+}</code></pre>
+
+        <h2>Refinement Types (Nova-Specific)</h2>
+        <p>
+            Refinement types attach predicates to base types, enabling compile-time verification.
+            This is Nova's key differentiator: contracts are not just runtime checks but are verified
+            at compile time when possible.
+        </p>
+
+        <h3>Refinement Syntax</h3>
+<pre><code><span class="comment">// A non-negative integer</span>
+<span class="keyword">type</span> Nat = { x: Int | x >= 0 }
+
+<span class="comment">// A non-empty array</span>
+<span class="keyword">type</span> NonEmpty&lt;T&gt; = { arr: Array&lt;T&gt; | len(arr) > 0 }
+
+<span class="comment">// A sorted array</span>
+<span class="keyword">type</span> Sorted&lt;T&gt; = { arr: Array&lt;T&gt; | forall i, j. i &lt; j => arr[i] &lt;= arr[j] }
+
+<span class="comment">// Function with precondition and postcondition</span>
+<span class="keyword">fn</span> sqrt(x: { n: Float | n >= 0.0 }) -> { r: Float | r >= 0.0 && r * r == x } {
+    <span class="comment">// ...</span>
+}</code></pre>
+
+        <h3>Refinement Type Checking</h3>
+<pre><code><span class="keyword">impl</span> <span class="type">TypeChecker</span> {
+    <span class="comment">/// Check refinement predicate validity</span>
+    <span class="keyword">fn</span> <span class="function">check_refinement</span>(
+        &amp;<span class="keyword">mut</span> self,
+        expr: &amp;<span class="type">Expr</span>,
+        refined: &amp;<span class="type">Type</span>,
+    ) -> <span class="type">Result</span>&lt;(), <span class="type">TypeError</span>&gt; {
+        <span class="keyword">match</span> refined {
+            <span class="type">Type</span>::Refined { base, predicate } => {
+                <span class="comment">// First check base type</span>
+                self.check(expr, base)?;
+
+                <span class="comment">// Try to verify predicate statically</span>
+                <span class="keyword">match</span> self.verify_predicate(expr, predicate) {
+                    <span class="type">VerifyResult</span>::Verified => <span class="keyword">Ok</span>(()),
+                    <span class="type">VerifyResult</span>::Falsified(counterexample) => {
+                        <span class="keyword">Err</span>(<span class="type">TypeError</span>::RefinementViolation {
+                            predicate: predicate.clone(),
+                            counterexample,
+                            ..
+                        })
+                    }
+                    <span class="type">VerifyResult</span>::Unknown => {
+                        <span class="comment">// Cannot verify statically, insert runtime check</span>
+                        self.insert_runtime_check(expr, predicate);
+                        <span class="keyword">Ok</span>(())
+                    }
+                }
+            }
+            _ => self.check(expr, refined)
+        }
+    }
+
+    <span class="comment">/// Attempt to verify predicate using SMT solver</span>
+    <span class="keyword">fn</span> <span class="function">verify_predicate</span>(
+        &amp;self,
+        expr: &amp;<span class="type">Expr</span>,
+        predicate: &amp;<span class="type">Expr</span>,
+    ) -> <span class="type">VerifyResult</span> {
+        <span class="comment">// Convert to SMT-LIB format</span>
+        <span class="keyword">let</span> smt = self.to_smt(expr, predicate);
+
+        <span class="comment">// Check with Z3 or similar</span>
+        <span class="keyword">match</span> self.smt_solver.check(&amp;smt) {
+            <span class="type">SatResult</span>::Unsat => <span class="type">VerifyResult</span>::Verified,
+            <span class="type">SatResult</span>::Sat(model) => <span class="type">VerifyResult</span>::Falsified(model),
+            <span class="type">SatResult</span>::Unknown => <span class="type">VerifyResult</span>::Unknown,
+        }
+    }
+}</code></pre>
+
+        <h2>Type Inference for Unknowns</h2>
+        <p>
+            While bidirectional checking reduces annotation burden, Nova still needs inference for
+            local variables and partial type information. This uses unification with unknown types.
+        </p>
+
+<pre><code><span class="keyword">impl</span> <span class="type">TypeChecker</span> {
+    <span class="comment">/// Create a fresh unknown type variable</span>
+    <span class="keyword">fn</span> <span class="function">fresh_unknown</span>(&amp;<span class="keyword">mut</span> self) -> <span class="type">Type</span> {
+        <span class="keyword">let</span> id = <span class="type">UnknownId</span>(self.unknowns.len());
+        self.unknowns.push(<span class="keyword">None</span>);
+        <span class="type">Type</span>::Unknown(id)
+    }
+
+    <span class="comment">/// Unify two types, solving unknowns</span>
+    <span class="keyword">fn</span> <span class="function">unify</span>(&amp;<span class="keyword">mut</span> self, a: &amp;<span class="type">Type</span>, b: &amp;<span class="type">Type</span>) -> <span class="type">Result</span>&lt;(), <span class="type">TypeError</span>&gt; {
+        <span class="keyword">let</span> a = self.resolve(a);
+        <span class="keyword">let</span> b = self.resolve(b);
+
+        <span class="keyword">match</span> (&amp;a, &amp;b) {
+            <span class="comment">// Same type</span>
+            (<span class="type">Type</span>::Int, <span class="type">Type</span>::Int) => <span class="keyword">Ok</span>(()),
+            (<span class="type">Type</span>::Float, <span class="type">Type</span>::Float) => <span class="keyword">Ok</span>(()),
+            (<span class="type">Type</span>::Bool, <span class="type">Type</span>::Bool) => <span class="keyword">Ok</span>(()),
+            (<span class="type">Type</span>::String, <span class="type">Type</span>::String) => <span class="keyword">Ok</span>(()),
+
+            <span class="comment">// Solve unknown</span>
+            (<span class="type">Type</span>::Unknown(id), ty) | (ty, <span class="type">Type</span>::Unknown(id)) => {
+                <span class="keyword">if</span> self.occurs_check(*id, ty) {
+                    <span class="keyword">return</span> <span class="keyword">Err</span>(<span class="type">TypeError</span>::InfiniteType { .. });
+                }
+                self.unknowns[id.0] = <span class="keyword">Some</span>(ty.clone());
+                <span class="keyword">Ok</span>(())
+            }
+
+            <span class="comment">// Structural types</span>
+            (<span class="type">Type</span>::Array(a), <span class="type">Type</span>::Array(b)) => self.unify(a, b),
+
+            (<span class="type">Type</span>::Function { params: p1, result: r1 },
+             <span class="type">Type</span>::Function { params: p2, result: r2 }) => {
+                <span class="keyword">if</span> p1.len() != p2.len() {
+                    <span class="keyword">return</span> <span class="keyword">Err</span>(<span class="type">TypeError</span>::ArityMismatch { .. });
+                }
+                <span class="keyword">for</span> (a, b) <span class="keyword">in</span> p1.iter().zip(p2) {
+                    self.unify(a, b)?;
+                }
+                self.unify(r1, r2)
+            }
+
+            _ => <span class="keyword">Err</span>(<span class="type">TypeError</span>::TypeMismatch { expected: a, found: b, .. })
+        }
+    }
+
+    <span class="comment">/// Resolve unknown to its solution (if any)</span>
+    <span class="keyword">fn</span> <span class="function">resolve</span>(&amp;self, ty: &amp;<span class="type">Type</span>) -> <span class="type">Type</span> {
+        <span class="keyword">match</span> ty {
+            <span class="type">Type</span>::Unknown(id) => {
+                <span class="keyword">match</span> &amp;self.unknowns[id.0] {
+                    <span class="keyword">Some</span>(resolved) => self.resolve(resolved),
+                    <span class="keyword">None</span> => ty.clone(),
+                }
+            }
+            _ => ty.clone()
+        }
+    }
+}</code></pre>
+
+        <div class="recommendation">
+            <h4>Recommendation for Nova</h4>
+            <p>
+                <strong>Use bidirectional type checking</strong> with refinement types. This approach:
+            </p>
+            <ul style="color: var(--text-secondary); margin: 0.5rem 0 0 1.5rem;">
+                <li>Provides excellent error messages with precise locations</li>
+                <li>Supports higher-rank polymorphism when needed</li>
+                <li>Enables natural integration with refinement predicates</li>
+                <li>Is easier to extend than Hindley-Milner</li>
+            </ul>
+            <p style="margin-top: 1rem;">
+                Reference implementations: <a href="https://github.com/nikomatsakis/bidir-type-infer">bidir-type-infer</a>
+                and <a href="https://sdiehl.github.io/typechecker-zoo/">Typechecker Zoo</a>.
+            </p>
+        </div>
+
+        <h2>Implementation Plan</h2>
+        <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li>Implement <code class="inline-code">Type</code> enum with all variants</li>
+            <li>Build bidirectional <code class="inline-code">check</code> and <code class="inline-code">synth</code> functions</li>
+            <li>Add unification for unknown types</li>
+            <li>Implement refinement type checking with predicate verification</li>
+            <li>Integrate SMT solver for static verification</li>
+            <li>Add runtime check insertion for unverifiable predicates</li>
+        </ol>
+
+        <h2>References</h2>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li><a href="https://arxiv.org/abs/1306.6032">Complete and Easy Bidirectional Type Checking</a> - Dunfield & Krishnaswami</li>
+            <li><a href="https://sdiehl.github.io/typechecker-zoo/">Typechecker Zoo</a> - Type system implementations in Rust</li>
+            <li><a href="https://github.com/nikomatsakis/bidir-type-infer">bidir-type-infer</a> - Rust implementation</li>
+            <li><a href="https://ucsd-progsys.github.io/liquidhaskell-blog/">Liquid Haskell</a> - Refinement types inspiration</li>
+            <li><a href="https://rustc-dev-guide.rust-lang.org/type-inference.html">Rust Type Inference</a> - rustc's approach</li>
+        </ul>
+    </div>
+</body>
+</html>

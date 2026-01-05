@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Reporting Architecture - Nova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --code-bg: #1e1e2e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 4rem 2rem; }
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        h2 { font-size: 1.75rem; margin: 3rem 0 1rem; color: var(--accent); }
+        h3 { font-size: 1.25rem; margin: 2rem 0 1rem; }
+        p { color: var(--text-secondary); margin-bottom: 1rem; }
+        a { color: var(--accent); }
+        .badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        pre {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+        }
+        .inline-code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        th { color: var(--text); font-weight: 600; }
+        td { color: var(--text-secondary); }
+        .pros { color: var(--success); }
+        .cons { color: #ef4444; }
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .card h4 { margin-bottom: 0.5rem; }
+        .nav { padding: 1rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .nav a { color: var(--text-secondary); text-decoration: none; margin-right: 1.5rem; }
+        .nav a:hover { color: var(--text); }
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .type { color: #4ade80; }
+        .function { color: #60a5fa; }
+        .macro { color: #f472b6; }
+        .recommendation {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .recommendation h4 { color: var(--success); margin-bottom: 0.5rem; }
+        .error-output {
+            background: #1a1a24;
+            border-left: 3px solid #ef4444;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            white-space: pre;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="./lexer.html">Lexer</a>
+        <a href="./parser.html">Parser</a>
+        <a href="./types.html">Types</a>
+        <a href="./codegen.html">Codegen</a>
+    </nav>
+
+    <div class="container">
+        <span class="badge">Architecture</span>
+        <h1>Error Reporting</h1>
+        <p>
+            Nova's error reporting system aims to provide Rust-quality diagnostics with rich context,
+            multi-span highlighting, and helpful suggestions. Beautiful errors are not just nice to have—
+            they're essential for developer productivity and AI-assisted debugging.
+        </p>
+
+        <h2>Library Comparison</h2>
+        <p>
+            Three mature Rust libraries dominate the diagnostic space. Each has different tradeoffs
+            for Nova's needs.
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Library</th>
+                    <th>Approach</th>
+                    <th>Multi-file</th>
+                    <th>Color Control</th>
+                    <th>Dependencies</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>ariadne</strong></td>
+                    <td>Builder API</td>
+                    <td class="pros">Excellent</td>
+                    <td class="pros">ColorGenerator</td>
+                    <td>Minimal</td>
+                </tr>
+                <tr>
+                    <td><strong>miette</strong></td>
+                    <td>Derive macro</td>
+                    <td>Good</td>
+                    <td class="pros">Auto + NO_COLOR</td>
+                    <td>More (fancy feature)</td>
+                </tr>
+                <tr>
+                    <td><strong>codespan-reporting</strong></td>
+                    <td>File database</td>
+                    <td class="pros">Primary/Secondary</td>
+                    <td>termcolor</td>
+                    <td>Minimal</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Option 1: ariadne (Recommended)</h2>
+        <div class="card">
+            <h4>Why ariadne?</h4>
+            <p>
+                Sister project of Chumsky parser (which we may use). Best-in-class visual output with
+                automatic label overlap handling. The ColorGenerator ensures distinct colors for each
+                diagnostic element without manual color management.
+            </p>
+        </div>
+
+        <h3>Complete Example</h3>
+<pre><code><span class="keyword">use</span> ariadne::{Color, ColorGenerator, Fmt, Label, Report, ReportKind, Source};
+
+<span class="keyword">fn</span> <span class="function">report_type_mismatch</span>(
+    source: &amp;<span class="type">str</span>,
+    filename: &amp;<span class="type">str</span>,
+    expected_span: Range&lt;<span class="type">usize</span>&gt;,
+    found_span: Range&lt;<span class="type">usize</span>&gt;,
+    expected_ty: &amp;<span class="type">str</span>,
+    found_ty: &amp;<span class="type">str</span>,
+) {
+    <span class="keyword">let mut</span> colors = ColorGenerator::new();
+    <span class="keyword">let</span> expected_color = colors.next();
+    <span class="keyword">let</span> found_color = colors.next();
+
+    Report::build(ReportKind::Error, (filename, found_span.clone()))
+        .with_code(<span class="string">"E0308"</span>)
+        .with_message(<span class="string">"incompatible types"</span>)
+        .with_label(
+            Label::new((filename, expected_span))
+                .with_message(<span class="macro">format!</span>(<span class="string">"expected type {}"</span>, expected_ty.fg(expected_color)))
+                .with_color(expected_color),
+        )
+        .with_label(
+            Label::new((filename, found_span))
+                .with_message(<span class="macro">format!</span>(<span class="string">"found type {}"</span>, found_ty.fg(found_color)))
+                .with_color(found_color),
+        )
+        .with_note(<span class="macro">format!</span>(
+            <span class="string">"expected {}, found {}"</span>,
+            expected_ty.fg(expected_color),
+            found_ty.fg(found_color)
+        ))
+        .finish()
+        .print((filename, Source::from(source)))
+        .unwrap();
+}</code></pre>
+
+        <h3>Sample Output</h3>
+        <div class="error-output">Error[E0308]: incompatible types
+   ┌─ main.nova:5:12
+   │
+ 5 │     let x: String = 42
+   │            ------   ^^ found type `Int`
+   │            │
+   │            expected type `String`
+   │
+   = note: expected String, found Int</div>
+
+        <h3>Multi-file Support</h3>
+<pre><code><span class="comment">// ariadne handles multi-file diagnostics elegantly</span>
+Report::build(ReportKind::Error, (<span class="string">"main.nova"</span>, 10..20))
+    .with_label(
+        Label::new((<span class="string">"utils.nova"</span>, 50..60))
+            .with_message(<span class="string">"function defined here"</span>)
+            .with_color(Color::Blue),
+    )
+    .with_label(
+        Label::new((<span class="string">"main.nova"</span>, 10..20))
+            .with_message(<span class="string">"called with wrong argument type"</span>)
+            .with_color(Color::Red),
+    )
+    .finish()
+    .print(sources)  <span class="comment">// Cache&lt;(filename, Source)&gt;</span>
+    .unwrap();</code></pre>
+
+        <h2>Option 2: miette</h2>
+        <div class="card">
+            <h4>When to consider miette</h4>
+            <p>
+                If Nova's errors are defined as Rust types (not just dynamic strings), miette's derive
+                macro provides excellent ergonomics. Integrates well with <code class="inline-code">thiserror</code>.
+            </p>
+        </div>
+
+        <h3>Derive-based Error Definition</h3>
+<pre><code><span class="keyword">use</span> miette::{Diagnostic, NamedSource, SourceSpan};
+<span class="keyword">use</span> thiserror::Error;
+
+<span class="macro">#[derive(Error, Debug, Diagnostic)]</span>
+<span class="macro">#[error("type mismatch")]</span>
+<span class="macro">#[diagnostic(
+    code(nova::type_error::E0308),
+    url(docsrs),
+    help("consider adding a type annotation or cast")
+)]</span>
+<span class="keyword">struct</span> <span class="type">TypeMismatch</span> {
+    <span class="comment">// The source code being diagnosed</span>
+    <span class="macro">#[source_code]</span>
+    src: NamedSource&lt;<span class="type">String</span>&gt;,
+
+    <span class="comment">// Primary label at the error location</span>
+    <span class="macro">#[label("expected {expected}, found {found}")]</span>
+    span: SourceSpan,
+
+    <span class="comment">// Additional context</span>
+    expected: <span class="type">String</span>,
+    found: <span class="type">String</span>,
+
+    <span class="comment">// Optional secondary label</span>
+    <span class="macro">#[label("type declared here")]</span>
+    declaration: <span class="type">Option</span>&lt;SourceSpan&gt;,
+}
+
+<span class="comment">// Usage</span>
+<span class="keyword">fn</span> <span class="function">check_types</span>() -> miette::Result&lt;()&gt; {
+    <span class="keyword">Err</span>(TypeMismatch {
+        src: NamedSource::new(<span class="string">"main.nova"</span>, source.to_string()),
+        span: (offset, length).into(),
+        expected: <span class="string">"String"</span>.to_string(),
+        found: <span class="string">"Int"</span>.to_string(),
+        declaration: <span class="keyword">Some</span>((decl_offset, decl_len).into()),
+    })?
+}</code></pre>
+
+        <h3>Cargo.toml Configuration</h3>
+<pre><code><span class="comment"># Enable fancy output only in the binary crate</span>
+[dependencies]
+miette = { version = <span class="string">"7.6"</span>, features = [<span class="string">"fancy"</span>] }
+thiserror = <span class="string">"2.0"</span></code></pre>
+
+        <h2>Option 3: codespan-reporting</h2>
+        <div class="card">
+            <h4>When to consider codespan-reporting</h4>
+            <p>
+                Minimal dependencies, battle-tested in production compilers. File database pattern
+                separates source management from diagnostic rendering. Inspired rustc's own diagnostics.
+            </p>
+        </div>
+
+        <h3>File Database Pattern</h3>
+<pre><code><span class="keyword">use</span> codespan_reporting::diagnostic::{Diagnostic, Label};
+<span class="keyword">use</span> codespan_reporting::files::SimpleFiles;
+<span class="keyword">use</span> codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
+<span class="keyword">use</span> codespan_reporting::term;
+
+<span class="keyword">fn</span> <span class="function">compile</span>(sources: Vec&lt;(&amp;<span class="type">str</span>, &amp;<span class="type">str</span>)&gt;) -> Result&lt;(), ()&gt; {
+    <span class="comment">// Build file database</span>
+    <span class="keyword">let mut</span> files = SimpleFiles::new();
+    <span class="keyword">for</span> (name, content) <span class="keyword">in</span> sources {
+        files.add(name, content);
+    }
+
+    <span class="comment">// Create diagnostic with primary and secondary labels</span>
+    <span class="keyword">let</span> diagnostic = Diagnostic::error()
+        .with_message(<span class="string">"`case` clauses have incompatible types"</span>)
+        .with_code(<span class="string">"E0308"</span>)
+        .with_labels(<span class="macro">vec!</span>[
+            Label::primary(file_id, 328..331)
+                .with_message(<span class="string">"expected `String`, found `Nat`"</span>),
+            Label::secondary(file_id, 186..192)
+                .with_message(<span class="string">"expected type `String` found here"</span>),
+            Label::secondary(file_id, 258..268)
+                .with_message(<span class="string">"this is of type `String`"</span>),
+        ])
+        .with_notes(<span class="macro">vec!</span>[
+            <span class="string">"expected type `String`\n   found type `Nat`"</span>.to_string(),
+        ]);
+
+    <span class="comment">// Render to stderr</span>
+    <span class="keyword">let</span> writer = StandardStream::stderr(ColorChoice::Always);
+    <span class="keyword">let</span> config = term::Config::default();
+    term::emit(&amp;<span class="keyword">mut</span> writer.lock(), &amp;config, &amp;files, &amp;diagnostic)?;
+
+    <span class="keyword">Err</span>(())
+}</code></pre>
+
+        <h2>Nova's Error Architecture</h2>
+
+        <h3>Error Types</h3>
+<pre><code><span class="comment">/// All Nova compiler errors</span>
+<span class="keyword">pub enum</span> <span class="type">NovaError</span> {
+    <span class="comment">// Lexer errors</span>
+    UnterminatedString { span: Span },
+    InvalidNumber { span: Span, reason: <span class="type">String</span> },
+    UnexpectedCharacter { span: Span, ch: <span class="type">char</span> },
+
+    <span class="comment">// Parser errors</span>
+    UnexpectedToken { span: Span, expected: Vec&lt;TokenKind&gt;, found: TokenKind },
+    MissingClosingDelimiter { open_span: Span, expected: <span class="type">char</span> },
+
+    <span class="comment">// Type errors</span>
+    TypeMismatch { span: Span, expected: <span class="type">Type</span>, found: <span class="type">Type</span>, context: <span class="type">Option</span>&lt;Span&gt; },
+    UndefinedVariable { span: Span, name: <span class="type">String</span>, suggestions: Vec&lt;<span class="type">String</span>&gt; },
+
+    <span class="comment">// Verification errors (Nova-specific)</span>
+    VerificationFailed { span: Span, property: <span class="type">String</span>, counterexample: <span class="type">Option</span>&lt;<span class="type">String</span>&gt; },
+    UnsatisfiableContract { span: Span, contract: <span class="type">String</span> },
+}</code></pre>
+
+        <h3>Span Definition</h3>
+<pre><code><span class="comment">/// Source location tracking</span>
+<span class="macro">#[derive(Clone, Copy, Debug)]</span>
+<span class="keyword">pub struct</span> <span class="type">Span</span> {
+    <span class="keyword">pub</span> file: FileId,
+    <span class="keyword">pub</span> start: <span class="type">u32</span>,
+    <span class="keyword">pub</span> end: <span class="type">u32</span>,
+}
+
+<span class="keyword">impl</span> <span class="type">Span</span> {
+    <span class="keyword">pub fn</span> <span class="function">merge</span>(self, other: <span class="type">Span</span>) -> <span class="type">Span</span> {
+        <span class="keyword">debug_assert_eq!</span>(self.file, other.file);
+        <span class="type">Span</span> {
+            file: self.file,
+            start: self.start.min(other.start),
+            end: self.end.max(other.end),
+        }
+    }
+}
+
+<span class="comment">/// Newtype for file identifiers</span>
+<span class="macro">#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]</span>
+<span class="keyword">pub struct</span> <span class="type">FileId</span>(<span class="type">u32</span>);</code></pre>
+
+        <h3>Error Rendering with ariadne</h3>
+<pre><code><span class="keyword">impl</span> <span class="type">NovaError</span> {
+    <span class="keyword">pub fn</span> <span class="function">render</span>(&amp;self, sources: &amp;<span class="type">SourceCache</span>) {
+        <span class="keyword">use</span> ariadne::{Report, ReportKind, Label, Color};
+
+        <span class="keyword">match</span> self {
+            <span class="type">NovaError</span>::TypeMismatch { span, expected, found, context } => {
+                <span class="keyword">let mut</span> report = Report::build(ReportKind::Error, span.file, span.start)
+                    .with_code(<span class="string">"E0308"</span>)
+                    .with_message(<span class="string">"type mismatch"</span>)
+                    .with_label(
+                        Label::new((span.file, span.start..span.end))
+                            .with_message(<span class="macro">format!</span>(<span class="string">"expected `{}`, found `{}`"</span>, expected, found))
+                            .with_color(Color::Red),
+                    );
+
+                <span class="keyword">if let</span> <span class="keyword">Some</span>(ctx) = context {
+                    report = report.with_label(
+                        Label::new((ctx.file, ctx.start..ctx.end))
+                            .with_message(<span class="string">"type expected due to this"</span>)
+                            .with_color(Color::Blue),
+                    );
+                }
+
+                report.finish().print(sources).unwrap();
+            }
+
+            <span class="type">NovaError</span>::UndefinedVariable { span, name, suggestions } => {
+                <span class="keyword">let mut</span> report = Report::build(ReportKind::Error, span.file, span.start)
+                    .with_code(<span class="string">"E0425"</span>)
+                    .with_message(<span class="macro">format!</span>(<span class="string">"undefined variable `{}`"</span>, name))
+                    .with_label(
+                        Label::new((span.file, span.start..span.end))
+                            .with_message(<span class="string">"not found in this scope"</span>)
+                            .with_color(Color::Red),
+                    );
+
+                <span class="keyword">if</span> !suggestions.is_empty() {
+                    report = report.with_help(<span class="macro">format!</span>(
+                        <span class="string">"did you mean: {}?"</span>,
+                        suggestions.join(<span class="string">", "</span>)
+                    ));
+                }
+
+                report.finish().print(sources).unwrap();
+            }
+
+            <span class="comment">// ... other error variants</span>
+        }
+    }
+}</code></pre>
+
+        <h2>AI-Friendly Error Format</h2>
+        <p>
+            For AI-assisted debugging, Nova errors include structured JSON output alongside human-readable
+            messages. This enables LLMs to understand and fix errors programmatically.
+        </p>
+
+<pre><code><span class="keyword">impl</span> <span class="type">NovaError</span> {
+    <span class="keyword">pub fn</span> <span class="function">to_json</span>(&amp;self) -> serde_json::Value {
+        <span class="macro">json!</span>({
+            <span class="string">"code"</span>: self.code(),
+            <span class="string">"severity"</span>: <span class="string">"error"</span>,
+            <span class="string">"message"</span>: self.message(),
+            <span class="string">"spans"</span>: self.spans().iter().map(|s| {
+                <span class="macro">json!</span>({
+                    <span class="string">"file"</span>: s.file.name(),
+                    <span class="string">"start"</span>: { <span class="string">"line"</span>: s.start_line, <span class="string">"column"</span>: s.start_col },
+                    <span class="string">"end"</span>: { <span class="string">"line"</span>: s.end_line, <span class="string">"column"</span>: s.end_col },
+                    <span class="string">"label"</span>: s.label,
+                    <span class="string">"primary"</span>: s.is_primary,
+                })
+            }).collect::&lt;Vec&lt;_&gt;&gt;(),
+            <span class="string">"suggestions"</span>: self.suggestions(),
+            <span class="string">"help"</span>: self.help(),
+        })
+    }
+}</code></pre>
+
+        <div class="recommendation">
+            <h4>Recommendation for Nova</h4>
+            <p>
+                <strong>Use ariadne</strong> for error rendering. It's a sister project of Chumsky (potential parser),
+                has the best visual output, and handles label overlap automatically. The ColorGenerator ensures
+                distinct colors without manual management.
+            </p>
+            <p style="margin-top: 1rem;">
+                Additionally, implement JSON error output for AI integration. Nova's value proposition includes
+                AI-assisted development, and structured errors enable LLMs to understand and fix issues automatically.
+            </p>
+        </div>
+
+        <h2>Implementation Plan</h2>
+        <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li>Define <code class="inline-code">NovaError</code> enum with all error variants</li>
+            <li>Implement <code class="inline-code">Span</code> tracking throughout lexer/parser/type-checker</li>
+            <li>Add <code class="inline-code">render()</code> method using ariadne for human-readable output</li>
+            <li>Add <code class="inline-code">to_json()</code> method for AI/LSP integration</li>
+            <li>Implement suggestion generation (typo detection, type coercions)</li>
+            <li>Add verification error formatting with counterexamples</li>
+        </ol>
+
+        <h2>References</h2>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li><a href="https://github.com/zesterer/ariadne">ariadne</a> - Fancy diagnostics & error reporting</li>
+            <li><a href="https://github.com/zkat/miette">miette</a> - Diagnostic derive macro system</li>
+            <li><a href="https://github.com/brendanzab/codespan">codespan-reporting</a> - File database approach</li>
+            <li><a href="https://rustc-dev-guide.rust-lang.org/diagnostics.html">rustc diagnostics</a> - Inspiration for error quality</li>
+        </ul>
+    </div>
+</body>
+</html>

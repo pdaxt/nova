@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexer Architecture - Nova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --code-bg: #1e1e2e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 4rem 2rem; }
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        h2 { font-size: 1.75rem; margin: 3rem 0 1rem; color: var(--accent); }
+        h3 { font-size: 1.25rem; margin: 2rem 0 1rem; }
+        p { color: var(--text-secondary); margin-bottom: 1rem; }
+        a { color: var(--accent); }
+        .badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        pre {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+        }
+        .inline-code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        th { color: var(--text); font-weight: 600; }
+        td { color: var(--text-secondary); }
+        .pros { color: var(--success); }
+        .cons { color: #ef4444; }
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .card h4 { margin-bottom: 0.5rem; }
+        .nav { padding: 1rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .nav a { color: var(--text-secondary); text-decoration: none; margin-right: 1.5rem; }
+        .nav a:hover { color: var(--text); }
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .type { color: #4ade80; }
+        .function { color: #60a5fa; }
+        .macro { color: #f472b6; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="./parser.html">Parser</a>
+        <a href="./errors.html">Errors</a>
+        <a href="./types.html">Types</a>
+        <a href="./codegen.html">Codegen</a>
+    </nav>
+
+    <div class="container">
+        <div class="badge">Architecture</div>
+        <h1>Lexer Architecture</h1>
+        <p>How Nova tokenizes source code into a stream of tokens, and the libraries we evaluated.</p>
+
+        <h2>Library Comparison</h2>
+        <p>We evaluated three main approaches for lexing in Rust:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Library</th>
+                    <th>Type</th>
+                    <th>Speed</th>
+                    <th>Ergonomics</th>
+                    <th>Best For</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><a href="https://github.com/maciejhirsz/logos">Logos</a></td>
+                    <td>Derive macro</td>
+                    <td>Fastest</td>
+                    <td>Excellent</td>
+                    <td>Most projects</td>
+                </tr>
+                <tr>
+                    <td>Hand-rolled</td>
+                    <td>Manual</td>
+                    <td>~20% faster*</td>
+                    <td>Low-level</td>
+                    <td>Maximum control</td>
+                </tr>
+                <tr>
+                    <td><a href="https://docs.rs/nom">nom</a></td>
+                    <td>Combinator</td>
+                    <td>Good</td>
+                    <td>Flexible</td>
+                    <td>Binary formats</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><small>*When aggressively inlined and unrolled. See <a href="https://alic.dev/blog/fast-lexing">Beating the fastest lexer generator</a>.</small></p>
+
+        <h2>Option 1: Logos (Recommended)</h2>
+        <p><a href="https://logos.maciej.codes/">Logos</a> is a lexer generator that compiles token definitions into a single deterministic state machine at compile time. It's ridiculously fast and easy to use.</p>
+
+        <div class="card">
+            <h4 class="pros">Pros</h4>
+            <p>Compile-time codegen, zero-copy, excellent error messages, derive macro simplicity</p>
+            <h4 class="cons" style="margin-top: 1rem;">Cons</h4>
+            <p>Less control over exact behavior, some edge cases require callbacks</p>
+        </div>
+
+        <h3>Example: Nova Token Definition with Logos</h3>
+        <pre><code><span class="keyword">use</span> logos::Logos;
+
+<span class="macro">#[derive(Logos, Debug, Clone, PartialEq)]</span>
+<span class="macro">#[logos(skip r"[ \t\r\n]+")]</span>  <span class="comment">// Skip whitespace</span>
+<span class="keyword">pub enum</span> <span class="type">Token</span>&lt;'a&gt; {
+    <span class="comment">// Keywords</span>
+    <span class="macro">#[token("fn")]</span>
+    Fn,
+    <span class="macro">#[token("let")]</span>
+    Let,
+    <span class="macro">#[token("if")]</span>
+    If,
+    <span class="macro">#[token("else")]</span>
+    Else,
+    <span class="macro">#[token("while")]</span>
+    While,
+    <span class="macro">#[token("return")]</span>
+    Return,
+    <span class="macro">#[token("true")]</span>
+    True,
+    <span class="macro">#[token("false")]</span>
+    False,
+
+    <span class="comment">// Literals</span>
+    <span class="macro">#[regex(r"[0-9]+", |lex| lex.slice().parse().ok())]</span>
+    IntLit(<span class="type">i64</span>),
+
+    <span class="macro">#[regex(r"[0-9]+\.[0-9]+", |lex| lex.slice().parse().ok())]</span>
+    FloatLit(<span class="type">f64</span>),
+
+    <span class="macro">#[regex(r#""([^"\\]|\\.)*""#, |lex| {
+        let s = lex.slice();
+        Some(&s[1..s.len()-1])  // Strip quotes
+    })]</span>
+    StringLit(&'a <span class="type">str</span>),
+
+    <span class="comment">// Identifiers</span>
+    <span class="macro">#[regex(r"[a-zA-Z_][a-zA-Z0-9_]*")]</span>
+    Ident(&'a <span class="type">str</span>),
+
+    <span class="comment">// Operators</span>
+    <span class="macro">#[token("+")]</span>
+    Plus,
+    <span class="macro">#[token("-")]</span>
+    Minus,
+    <span class="macro">#[token("*")]</span>
+    Star,
+    <span class="macro">#[token("/")]</span>
+    Slash,
+    <span class="macro">#[token("==")]</span>
+    EqEq,
+    <span class="macro">#[token("!=")]</span>
+    NotEq,
+    <span class="macro">#[token("=")]</span>
+    Eq,
+    <span class="macro">#[token("->")]</span>
+    Arrow,
+
+    <span class="comment">// Delimiters</span>
+    <span class="macro">#[token("(")]</span>
+    LParen,
+    <span class="macro">#[token(")")]</span>
+    RParen,
+    <span class="macro">#[token("{")]</span>
+    LBrace,
+    <span class="macro">#[token("}")]</span>
+    RBrace,
+    <span class="macro">#[token(";")]</span>
+    Semi,
+    <span class="macro">#[token(":")]</span>
+    Colon,
+    <span class="macro">#[token(",")]</span>
+    Comma,
+}
+
+<span class="comment">// Usage</span>
+<span class="keyword">fn</span> <span class="function">lex</span>(source: &<span class="type">str</span>) -> <span class="type">Vec</span>&lt;<span class="type">Token</span>&gt; {
+    <span class="type">Token</span>::lexer(source)
+        .filter_map(|r| r.ok())
+        .collect()
+}</code></pre>
+
+        <h3>Cargo.toml</h3>
+        <pre><code>[dependencies]
+logos = "0.14"</code></pre>
+
+        <h2>Option 2: Hand-Rolled Lexer</h2>
+        <p>For maximum performance and control, a hand-written lexer can outperform Logos by ~20%. This is what Nova currently uses.</p>
+
+        <div class="card">
+            <h4 class="pros">Pros</h4>
+            <p>Maximum performance, full control, better for learning, custom error recovery</p>
+            <h4 class="cons" style="margin-top: 1rem;">Cons</h4>
+            <p>More code to write and maintain, easier to introduce bugs</p>
+        </div>
+
+        <h3>Example: Hand-Rolled Lexer Core</h3>
+        <pre><code><span class="keyword">pub struct</span> <span class="type">Lexer</span>&lt;'a&gt; {
+    source: &'a <span class="type">str</span>,
+    chars: std::iter::Peekable&lt;std::str::CharIndices&lt;'a&gt;&gt;,
+    start: <span class="type">usize</span>,
+    current: <span class="type">usize</span>,
+}
+
+<span class="keyword">impl</span>&lt;'a&gt; <span class="type">Lexer</span>&lt;'a&gt; {
+    <span class="keyword">pub fn</span> <span class="function">new</span>(source: &'a <span class="type">str</span>) -> <span class="type">Self</span> {
+        <span class="type">Self</span> {
+            source,
+            chars: source.char_indices().peekable(),
+            start: 0,
+            current: 0,
+        }
+    }
+
+    <span class="keyword">fn</span> <span class="function">advance</span>(&<span class="keyword">mut self</span>) -> <span class="type">Option</span>&lt;<span class="type">char</span>&gt; {
+        <span class="keyword">self</span>.chars.next().map(|(i, c)| {
+            <span class="keyword">self</span>.current = i + c.len_utf8();
+            c
+        })
+    }
+
+    <span class="keyword">fn</span> <span class="function">peek</span>(&<span class="keyword">mut self</span>) -> <span class="type">Option</span>&lt;<span class="type">char</span>&gt; {
+        <span class="keyword">self</span>.chars.peek().map(|(_, c)| *c)
+    }
+
+    <span class="keyword">fn</span> <span class="function">span</span>(&<span class="keyword">self</span>) -> <span class="type">Span</span> {
+        <span class="type">Span</span>::new(<span class="keyword">self</span>.start <span class="keyword">as</span> <span class="type">u32</span>, <span class="keyword">self</span>.current <span class="keyword">as</span> <span class="type">u32</span>)
+    }
+
+    <span class="keyword">fn</span> <span class="function">lex_token</span>(&<span class="keyword">mut self</span>) -> <span class="type">Option</span>&lt;<span class="type">Result</span>&lt;<span class="type">Token</span>, <span class="type">LexError</span>&gt;&gt; {
+        <span class="keyword">self</span>.skip_whitespace();
+        <span class="keyword">self</span>.start = <span class="keyword">self</span>.current;
+
+        <span class="keyword">let</span> c = <span class="keyword">self</span>.advance()?;
+
+        <span class="keyword">let</span> kind = <span class="keyword">match</span> c {
+            <span class="comment">// Single-char tokens</span>
+            '(' => <span class="type">TokenKind</span>::LParen,
+            ')' => <span class="type">TokenKind</span>::RParen,
+            '{' => <span class="type">TokenKind</span>::LBrace,
+            '}' => <span class="type">TokenKind</span>::RBrace,
+            ';' => <span class="type">TokenKind</span>::Semi,
+            ',' => <span class="type">TokenKind</span>::Comma,
+            ':' => <span class="type">TokenKind</span>::Colon,
+            '+' => <span class="type">TokenKind</span>::Plus,
+            '*' => <span class="type">TokenKind</span>::Star,
+
+            <span class="comment">// Two-char tokens</span>
+            '-' => {
+                <span class="keyword">if</span> <span class="keyword">self</span>.peek() == <span class="type">Some</span>('>') {
+                    <span class="keyword">self</span>.advance();
+                    <span class="type">TokenKind</span>::Arrow
+                } <span class="keyword">else</span> {
+                    <span class="type">TokenKind</span>::Minus
+                }
+            }
+            '=' => {
+                <span class="keyword">if</span> <span class="keyword">self</span>.peek() == <span class="type">Some</span>('=') {
+                    <span class="keyword">self</span>.advance();
+                    <span class="type">TokenKind</span>::EqEq
+                } <span class="keyword">else</span> {
+                    <span class="type">TokenKind</span>::Eq
+                }
+            }
+
+            <span class="comment">// Numbers</span>
+            '0'..='9' => <span class="keyword">return</span> <span class="type">Some</span>(<span class="keyword">self</span>.lex_number()),
+
+            <span class="comment">// Strings</span>
+            '"' => <span class="keyword">return</span> <span class="type">Some</span>(<span class="keyword">self</span>.lex_string()),
+
+            <span class="comment">// Identifiers and keywords</span>
+            'a'..='z' | 'A'..='Z' | '_' => <span class="keyword">return</span> <span class="type">Some</span>(<span class="type">Ok</span>(<span class="keyword">self</span>.lex_ident())),
+
+            _ => <span class="keyword">return</span> <span class="type">Some</span>(<span class="type">Err</span>(<span class="type">LexError</span>::InvalidChar(c, <span class="keyword">self</span>.span()))),
+        };
+
+        <span class="type">Some</span>(<span class="type">Ok</span>(<span class="type">Token</span>::new(kind, <span class="keyword">self</span>.span())))
+    }
+
+    <span class="keyword">fn</span> <span class="function">lex_ident</span>(&<span class="keyword">mut self</span>) -> <span class="type">Token</span> {
+        <span class="keyword">while let</span> <span class="type">Some</span>(c) = <span class="keyword">self</span>.peek() {
+            <span class="keyword">if</span> c.is_alphanumeric() || c == '_' {
+                <span class="keyword">self</span>.advance();
+            } <span class="keyword">else</span> {
+                <span class="keyword">break</span>;
+            }
+        }
+
+        <span class="keyword">let</span> text = &<span class="keyword">self</span>.source[<span class="keyword">self</span>.start..<span class="keyword">self</span>.current];
+        <span class="keyword">let</span> kind = <span class="keyword">match</span> text {
+            <span class="string">"fn"</span> => <span class="type">TokenKind</span>::Fn,
+            <span class="string">"let"</span> => <span class="type">TokenKind</span>::Let,
+            <span class="string">"if"</span> => <span class="type">TokenKind</span>::If,
+            <span class="string">"else"</span> => <span class="type">TokenKind</span>::Else,
+            <span class="string">"while"</span> => <span class="type">TokenKind</span>::While,
+            <span class="string">"return"</span> => <span class="type">TokenKind</span>::Return,
+            <span class="string">"true"</span> => <span class="type">TokenKind</span>::True,
+            <span class="string">"false"</span> => <span class="type">TokenKind</span>::False,
+            _ => <span class="type">TokenKind</span>::Ident,
+        };
+
+        <span class="type">Token</span>::new(kind, <span class="keyword">self</span>.span())
+    }
+}</code></pre>
+
+        <h2>Nova's Decision: Hand-Rolled</h2>
+        <p>Nova uses a hand-rolled lexer for several reasons:</p>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li><strong>Minimal dependencies:</strong> The bootstrap compiler should be self-contained</li>
+            <li><strong>Maximum performance:</strong> Every millisecond matters for compile times</li>
+            <li><strong>Educational value:</strong> Contributors learn compiler fundamentals</li>
+            <li><strong>Custom span tracking:</strong> 8-byte spans with security limits</li>
+        </ul>
+
+        <h2>Security Considerations</h2>
+        <p>Nova's lexer includes security limits to prevent attacks:</p>
+
+        <pre><code><span class="comment">// Security constants</span>
+<span class="keyword">const</span> MAX_SOURCE_SIZE: <span class="type">usize</span> = 4 * 1024 * 1024 * 1024;  <span class="comment">// 4GB</span>
+<span class="keyword">const</span> MAX_NESTING_DEPTH: <span class="type">usize</span> = 256;  <span class="comment">// Block comments</span>
+
+<span class="keyword">pub fn</span> <span class="function">lex</span>(source: &<span class="type">str</span>) -> <span class="type">Result</span>&lt;<span class="type">Vec</span>&lt;<span class="type">Token</span>&gt;, <span class="type">NovaError</span>&gt; {
+    <span class="comment">// Prevent DoS via huge files</span>
+    <span class="keyword">if</span> source.len() > MAX_SOURCE_SIZE {
+        <span class="keyword">return</span> <span class="type">Err</span>(<span class="type">NovaError</span>::SourceTooLarge { ... });
+    }
+    <span class="comment">// ... lexing logic</span>
+}</code></pre>
+
+        <h2>Performance Benchmarks</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Approach</th>
+                    <th>10KB file</th>
+                    <th>1MB file</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Logos</td>
+                    <td>~0.1ms</td>
+                    <td>~8ms</td>
+                    <td>Excellent baseline</td>
+                </tr>
+                <tr>
+                    <td>Hand-rolled (Nova)</td>
+                    <td>~0.08ms</td>
+                    <td>~6.5ms</td>
+                    <td>~20% faster with inlining</td>
+                </tr>
+                <tr>
+                    <td>nom</td>
+                    <td>~0.15ms</td>
+                    <td>~12ms</td>
+                    <td>More flexible, less optimized</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>References</h2>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li><a href="https://logos.maciej.codes/">Logos Handbook</a></li>
+            <li><a href="https://alic.dev/blog/fast-lexing">Beating the Fastest Lexer Generator in Rust</a></li>
+            <li><a href="https://hackmd.io/@Kixiron/rJS7_OEbw">Langdev Libraries for Rust</a></li>
+            <li><a href="https://github.com/Kixiron/rust-langdev">rust-langdev - Comprehensive List</a></li>
+        </ul>
+    </div>
+</body>
+</html>

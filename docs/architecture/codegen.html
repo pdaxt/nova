@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Generation Architecture - Nova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --code-bg: #1e1e2e;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 4rem 2rem; }
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        h2 { font-size: 1.75rem; margin: 3rem 0 1rem; color: var(--accent); }
+        h3 { font-size: 1.25rem; margin: 2rem 0 1rem; }
+        p { color: var(--text-secondary); margin-bottom: 1rem; }
+        a { color: var(--accent); }
+        .badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        pre {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+        }
+        .inline-code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        th { color: var(--text); font-weight: 600; }
+        td { color: var(--text-secondary); }
+        .pros { color: var(--success); }
+        .cons { color: #ef4444; }
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .card h4 { margin-bottom: 0.5rem; }
+        .nav { padding: 1rem 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .nav a { color: var(--text-secondary); text-decoration: none; margin-right: 1.5rem; }
+        .nav a:hover { color: var(--text); }
+        .comment { color: #6b7280; }
+        .keyword { color: #c084fc; }
+        .string { color: #fbbf24; }
+        .type { color: #4ade80; }
+        .function { color: #60a5fa; }
+        .macro { color: #f472b6; }
+        .recommendation {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .recommendation h4 { color: var(--success); margin-bottom: 0.5rem; }
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        .pipeline-step {
+            background: var(--bg-card);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .pipeline-arrow {
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="./lexer.html">Lexer</a>
+        <a href="./parser.html">Parser</a>
+        <a href="./errors.html">Errors</a>
+        <a href="./types.html">Types</a>
+    </nav>
+
+    <div class="container">
+        <span class="badge">Architecture</span>
+        <h1>Code Generation</h1>
+        <p>
+            Nova compiles to WebAssembly (WASM) for universal portability. WASM runs in browsers,
+            on servers (via Wasmtime/Wasmer), and embedded systems. This architecture page compares
+            libraries for generating WASM binaries from Nova's type-checked AST.
+        </p>
+
+        <h2>Compilation Pipeline</h2>
+        <div class="pipeline">
+            <div class="pipeline-step">Nova AST</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step">Nova IR</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step">WASM</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step">Native (optional)</div>
+        </div>
+        <p>
+            Nova can target WASM directly for portability, or optionally use Cranelift for native
+            code generation when maximum performance is needed.
+        </p>
+
+        <h2>Library Comparison</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Library</th>
+                    <th>Purpose</th>
+                    <th>Complexity</th>
+                    <th>Best For</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>wasm-encoder</strong></td>
+                    <td>WASM binary encoding</td>
+                    <td class="pros">Low</td>
+                    <td>Direct WASM generation</td>
+                </tr>
+                <tr>
+                    <td><strong>walrus</strong></td>
+                    <td>WASM transformation</td>
+                    <td>Medium</td>
+                    <td>WASM optimization</td>
+                </tr>
+                <tr>
+                    <td><strong>Cranelift</strong></td>
+                    <td>Native code gen</td>
+                    <td class="cons">High</td>
+                    <td>JIT/Native backends</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Option 1: wasm-encoder (Recommended)</h2>
+        <div class="card">
+            <h4>Why wasm-encoder?</h4>
+            <p>
+                Part of the Bytecode Alliance ecosystem (same as Wasmtime). Minimal dependencies, direct
+                control over the output binary. Perfect for generating WASM from a custom AST without
+                an intermediate IR.
+            </p>
+        </div>
+
+        <h3>Complete Example: Addition Function</h3>
+<pre><code><span class="keyword">use</span> wasm_encoder::{
+    CodeSection, ExportKind, ExportSection, Function, FunctionSection,
+    Instruction, Module, TypeSection, ValType,
+};
+
+<span class="keyword">fn</span> <span class="function">generate_add_module</span>() -> Vec&lt;<span class="type">u8</span>&gt; {
+    <span class="keyword">let mut</span> module = Module::new();
+
+    <span class="comment">// Type section: define function signature (i32, i32) -> i32</span>
+    <span class="keyword">let mut</span> types = TypeSection::new();
+    types.ty().function(
+        <span class="macro">vec!</span>[ValType::I32, ValType::I32],  <span class="comment">// params</span>
+        <span class="macro">vec!</span>[ValType::I32],                <span class="comment">// results</span>
+    );
+    module.section(&amp;types);
+
+    <span class="comment">// Function section: declare function uses type 0</span>
+    <span class="keyword">let mut</span> functions = FunctionSection::new();
+    functions.function(0);  <span class="comment">// references type index 0</span>
+    module.section(&amp;functions);
+
+    <span class="comment">// Export section: expose "add" function</span>
+    <span class="keyword">let mut</span> exports = ExportSection::new();
+    exports.export(<span class="string">"add"</span>, ExportKind::Func, 0);
+    module.section(&amp;exports);
+
+    <span class="comment">// Code section: function body</span>
+    <span class="keyword">let mut</span> codes = CodeSection::new();
+    <span class="keyword">let mut</span> f = Function::new(<span class="macro">vec!</span>[]);  <span class="comment">// no locals</span>
+    f.instruction(&amp;Instruction::LocalGet(0));
+    f.instruction(&amp;Instruction::LocalGet(1));
+    f.instruction(&amp;Instruction::I32Add);
+    f.instruction(&amp;Instruction::End);
+    codes.function(&amp;f);
+    module.section(&amp;codes);
+
+    module.finish()
+}</code></pre>
+
+        <h3>Generating from Nova AST</h3>
+<pre><code><span class="keyword">pub struct</span> <span class="type">WasmCodegen</span> {
+    module: Module,
+    types: TypeSection,
+    functions: FunctionSection,
+    exports: ExportSection,
+    codes: CodeSection,
+    type_index: <span class="type">u32</span>,
+    func_index: <span class="type">u32</span>,
+}
+
+<span class="keyword">impl</span> <span class="type">WasmCodegen</span> {
+    <span class="keyword">pub fn</span> <span class="function">compile_function</span>(&amp;<span class="keyword">mut</span> self, func: &amp;<span class="type">nova_ast::Function</span>) {
+        <span class="comment">// Convert Nova types to WASM types</span>
+        <span class="keyword">let</span> params: Vec&lt;ValType&gt; = func.params.iter()
+            .map(|p| self.nova_type_to_wasm(&amp;p.ty))
+            .collect();
+        <span class="keyword">let</span> results: Vec&lt;ValType&gt; = <span class="keyword">match</span> &amp;func.return_type {
+            <span class="keyword">Some</span>(ty) => <span class="macro">vec!</span>[self.nova_type_to_wasm(ty)],
+            <span class="keyword">None</span> => <span class="macro">vec!</span>[],
+        };
+
+        <span class="comment">// Add type signature</span>
+        self.types.ty().function(params.clone(), results);
+        <span class="keyword">let</span> type_idx = self.type_index;
+        self.type_index += 1;
+
+        <span class="comment">// Declare function</span>
+        self.functions.function(type_idx);
+        <span class="keyword">let</span> func_idx = self.func_index;
+        self.func_index += 1;
+
+        <span class="comment">// Export if public</span>
+        <span class="keyword">if</span> func.is_public {
+            self.exports.export(&amp;func.name, ExportKind::Func, func_idx);
+        }
+
+        <span class="comment">// Compile body</span>
+        <span class="keyword">let mut</span> wasm_func = Function::new(<span class="macro">vec!</span>[]);
+        self.compile_expr(&amp;func.body, &amp;<span class="keyword">mut</span> wasm_func);
+        wasm_func.instruction(&amp;Instruction::End);
+        self.codes.function(&amp;wasm_func);
+    }
+
+    <span class="keyword">fn</span> <span class="function">compile_expr</span>(&amp;self, expr: &amp;<span class="type">nova_ast::Expr</span>, func: &amp;<span class="keyword">mut</span> Function) {
+        <span class="keyword">match</span> expr {
+            <span class="type">Expr</span>::Int(n) => {
+                func.instruction(&amp;Instruction::I32Const(*n <span class="keyword">as</span> i32));
+            }
+            <span class="type">Expr</span>::Binary { op, lhs, rhs } => {
+                self.compile_expr(lhs, func);
+                self.compile_expr(rhs, func);
+                <span class="keyword">match</span> op {
+                    <span class="type">BinOp</span>::Add => func.instruction(&amp;Instruction::I32Add),
+                    <span class="type">BinOp</span>::Sub => func.instruction(&amp;Instruction::I32Sub),
+                    <span class="type">BinOp</span>::Mul => func.instruction(&amp;Instruction::I32Mul),
+                    <span class="type">BinOp</span>::Div => func.instruction(&amp;Instruction::I32DivS),
+                };
+            }
+            <span class="type">Expr</span>::Var(idx) => {
+                func.instruction(&amp;Instruction::LocalGet(*idx));
+            }
+            <span class="comment">// ... more expression types</span>
+        }
+    }
+
+    <span class="keyword">fn</span> <span class="function">nova_type_to_wasm</span>(&amp;self, ty: &amp;<span class="type">nova_ast::Type</span>) -> ValType {
+        <span class="keyword">match</span> ty {
+            <span class="type">Type</span>::Int => ValType::I32,
+            <span class="type">Type</span>::Float => ValType::F64,
+            <span class="type">Type</span>::Bool => ValType::I32,  <span class="comment">// booleans as i32</span>
+            <span class="type">Type</span>::String => ValType::I32, <span class="comment">// pointer to memory</span>
+            _ => <span class="macro">panic!</span>(<span class="string">"unsupported type"</span>),
+        }
+    }
+}</code></pre>
+
+        <h2>Option 2: walrus</h2>
+        <div class="card">
+            <h4>When to consider walrus</h4>
+            <p>
+                If Nova needs to perform WASM-level optimizations or transformations after initial
+                code generation. Powers wasm-bindgen. Preserves DWARF debug info through transformations.
+            </p>
+        </div>
+
+        <h3>Building a Module with walrus</h3>
+<pre><code><span class="keyword">use</span> walrus::{Module, ModuleConfig, ValType, FunctionBuilder, InstrSeqBuilder};
+
+<span class="keyword">fn</span> <span class="function">build_factorial</span>() -> Module {
+    <span class="keyword">let</span> config = ModuleConfig::new();
+    <span class="keyword">let mut</span> module = Module::with_config(config);
+
+    <span class="comment">// Import a logging function from host</span>
+    <span class="keyword">let</span> log_ty = module.types.add(&amp;[ValType::I32], &amp;[]);
+    <span class="keyword">let</span> (log_fn, _) = module.add_import_func(<span class="string">"env"</span>, <span class="string">"log"</span>, log_ty);
+
+    <span class="comment">// Define factorial function type: (i32) -> i32</span>
+    <span class="keyword">let</span> fact_ty = module.types.add(&amp;[ValType::I32], &amp;[ValType::I32]);
+
+    <span class="comment">// Build factorial function</span>
+    <span class="keyword">let mut</span> builder = FunctionBuilder::new(&amp;<span class="keyword">mut</span> module.types, &amp;[ValType::I32], &amp;[ValType::I32]);
+
+    <span class="comment">// Local variables</span>
+    <span class="keyword">let</span> n = module.locals.add(ValType::I32);
+    <span class="keyword">let</span> result = module.locals.add(ValType::I32);
+
+    <span class="comment">// Build function body</span>
+    builder
+        .func_body()
+        .i32_const(1)
+        .local_set(result)
+        .block(None, |block| {
+            block.loop_(None, |loop_| {
+                loop_
+                    .local_get(n)
+                    .i32_eqz()
+                    .br_if(block.id())
+                    .local_get(result)
+                    .local_get(n)
+                    .binop(walrus::ir::BinaryOp::I32Mul)
+                    .local_set(result)
+                    .local_get(n)
+                    .i32_const(1)
+                    .binop(walrus::ir::BinaryOp::I32Sub)
+                    .local_set(n)
+                    .br(loop_.id());
+            });
+        })
+        .local_get(result);
+
+    <span class="keyword">let</span> fact_fn = builder.finish(<span class="macro">vec!</span>[n], &amp;<span class="keyword">mut</span> module.funcs);
+
+    <span class="comment">// Export the function</span>
+    module.exports.add(<span class="string">"factorial"</span>, fact_fn);
+
+    module
+}</code></pre>
+
+        <h2>Option 3: Cranelift (Native Backend)</h2>
+        <div class="card">
+            <h4>When to consider Cranelift</h4>
+            <p>
+                For maximum performance when WASM overhead is unacceptable. Cranelift generates native
+                code (x86-64, ARM64, RISC-V) at ~10x faster compilation than LLVM while achieving ~86%
+                of LLVM's runtime performance. 200k LOC vs LLVM's 20M LOC.
+            </p>
+        </div>
+
+        <h3>Key Cranelift Features</h3>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li><strong>No undefined behavior</strong> in IR by design</li>
+            <li><strong>Fast compilation</strong> - 10x faster than LLVM</li>
+            <li><strong>E-graph optimization</strong> - innovative optimization technique</li>
+            <li><strong>ISLE DSL</strong> - pattern matching for instruction selection</li>
+            <li><strong>Rust compiler backend</strong> - experimental rustc integration</li>
+        </ul>
+
+        <h3>Cranelift IR Example</h3>
+<pre><code><span class="keyword">use</span> cranelift::prelude::*;
+<span class="keyword">use</span> cranelift_module::{Module, Linkage};
+<span class="keyword">use</span> cranelift_jit::{JITModule, JITBuilder};
+
+<span class="keyword">fn</span> <span class="function">compile_add_native</span>() -> *<span class="keyword">const</span> <span class="type">u8</span> {
+    <span class="comment">// Create JIT module</span>
+    <span class="keyword">let</span> builder = JITBuilder::new(cranelift_module::default_libcall_names())?;
+    <span class="keyword">let mut</span> module = JITModule::new(builder);
+
+    <span class="comment">// Define function signature</span>
+    <span class="keyword">let mut</span> sig = module.make_signature();
+    sig.params.push(AbiParam::new(types::I64));
+    sig.params.push(AbiParam::new(types::I64));
+    sig.returns.push(AbiParam::new(types::I64));
+
+    <span class="comment">// Declare function</span>
+    <span class="keyword">let</span> func_id = module.declare_function(<span class="string">"add"</span>, Linkage::Export, &amp;sig)?;
+
+    <span class="comment">// Create function context</span>
+    <span class="keyword">let mut</span> ctx = module.make_context();
+    ctx.func.signature = sig.clone();
+
+    <span class="comment">// Build function body with Cranelift IR</span>
+    <span class="keyword">let mut</span> builder_ctx = FunctionBuilderContext::new();
+    <span class="keyword">let mut</span> builder = FunctionBuilder::new(&amp;<span class="keyword">mut</span> ctx.func, &amp;<span class="keyword">mut</span> builder_ctx);
+
+    <span class="keyword">let</span> block = builder.create_block();
+    builder.append_block_params_for_function_params(block);
+    builder.switch_to_block(block);
+    builder.seal_block(block);
+
+    <span class="comment">// Get parameters and add them</span>
+    <span class="keyword">let</span> a = builder.block_params(block)[0];
+    <span class="keyword">let</span> b = builder.block_params(block)[1];
+    <span class="keyword">let</span> result = builder.ins().iadd(a, b);
+    builder.ins().return_(&amp;[result]);
+
+    builder.finalize();
+
+    <span class="comment">// Compile and get native function pointer</span>
+    module.define_function(func_id, &amp;<span class="keyword">mut</span> ctx)?;
+    module.finalize_definitions()?;
+
+    module.get_finalized_function(func_id)
+}</code></pre>
+
+        <h2>Nova's Codegen Strategy</h2>
+
+        <h3>Phase 1: WASM Target (MVP)</h3>
+        <p>
+            For the initial release, Nova compiles directly to WASM using <code class="inline-code">wasm-encoder</code>.
+            This provides:
+        </p>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-bottom: 1rem;">
+            <li>Browser compatibility (runs in any modern browser)</li>
+            <li>Server-side execution via Wasmtime/Wasmer</li>
+            <li>Minimal dependencies and fast compilation</li>
+            <li>WASI support for system access</li>
+        </ul>
+
+        <h3>Phase 2: Optimization (Future)</h3>
+        <p>
+            Add walrus-based optimizations for WASM output:
+        </p>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-bottom: 1rem;">
+            <li>Dead code elimination</li>
+            <li>Function inlining</li>
+            <li>Constant folding</li>
+            <li>Debug info preservation</li>
+        </ul>
+
+        <h3>Phase 3: Native Backend (Future)</h3>
+        <p>
+            Add optional Cranelift backend for performance-critical applications:
+        </p>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-bottom: 1rem;">
+            <li>JIT compilation for REPL</li>
+            <li>AOT compilation for standalone binaries</li>
+            <li>Native SIMD support</li>
+        </ul>
+
+        <div class="recommendation">
+            <h4>Recommendation for Nova</h4>
+            <p>
+                <strong>Start with wasm-encoder</strong> for direct WASM generation. It's simple, well-maintained
+                by the Bytecode Alliance, and gives full control over the output binary. Add walrus for
+                optimizations when needed, and consider Cranelift for a native backend in v2.
+            </p>
+            <p style="margin-top: 1rem;">
+                The WASM-first approach aligns with Nova's goals: portability, safety, and AI-friendly
+                execution. WASM sandboxing provides security guarantees that complement Nova's verification system.
+            </p>
+        </div>
+
+        <h2>Implementation Plan</h2>
+        <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li>Implement <code class="inline-code">WasmCodegen</code> struct with wasm-encoder</li>
+            <li>Add Nova type → WASM type mapping</li>
+            <li>Compile basic expressions (arithmetic, locals, function calls)</li>
+            <li>Add control flow (if/else, loops, blocks)</li>
+            <li>Implement memory management for strings and arrays</li>
+            <li>Add WASI imports for I/O operations</li>
+            <li>Integrate verification results as WASM custom sections</li>
+        </ol>
+
+        <h2>References</h2>
+        <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li><a href="https://docs.rs/wasm-encoder">wasm-encoder</a> - Low-level WASM binary encoding</li>
+            <li><a href="https://github.com/rustwasm/walrus">walrus</a> - WASM transformation library</li>
+            <li><a href="https://cranelift.dev/">Cranelift</a> - Fast code generator</li>
+            <li><a href="https://webassembly.github.io/spec/">WebAssembly Spec</a> - Official specification</li>
+            <li><a href="https://wasi.dev/">WASI</a> - WebAssembly System Interface</li>
+        </ul>
+    </div>
+</body>
+</html>
