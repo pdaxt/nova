@@ -2,7 +2,29 @@
 
 This document validates WHY the foundation has exactly 5 components, breaks each into atomic pieces, and provides step-by-step implementation instructions.
 
-![The Irreducible 5 - Nova Foundation Components](docs/images/nova-foundation-overview.png)
+```mermaid
+flowchart TB
+    subgraph Foundation["The Irreducible 5"]
+        direction TB
+        S["Span<br/>📍 Where"]
+        T["Token<br/>🔤 What"]
+        SR["Source<br/>📄 Content"]
+        E["Error<br/>⚠️ Report"]
+        L["Lexer<br/>⚙️ How"]
+    end
+
+    SR --> L
+    L --> T
+    T --> S
+    S --> E
+    SR --> E
+
+    style S fill:#06b6d4,stroke:#0891b2,color:#fff
+    style T fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SR fill:#3b82f6,stroke:#2563eb,color:#fff
+    style E fill:#f59e0b,stroke:#d97706,color:#fff
+    style L fill:#14b8a6,stroke:#0d9488,color:#fff
+```
 
 > **Related Documents:**
 > - [DECISIONS.md](DECISIONS.md) - Full architectural decision records with alternatives considered
@@ -18,7 +40,31 @@ This document validates WHY the foundation has exactly 5 components, breaks each
 
 ## Why Exactly 5? (Research-Backed Validation)
 
-![Why Exactly 5 Components - Decision Analysis](docs/images/nova-why-5-components.png)
+```mermaid
+flowchart LR
+    subgraph merge["Why Not 4? (No Valid Merges)"]
+        M1["Span + Source<br/>❌ Different lifetimes"]
+        M2["Token + Span<br/>❌ Span used everywhere"]
+        M3["Error + Span<br/>❌ Producer/Consumer"]
+        M4["Lexer + Token<br/>❌ Data vs Process"]
+    end
+
+    subgraph add["Why Not 6? (All Belong Inside 5)"]
+        A1["Symbol Interning<br/>→ Token"]
+        A2["Keyword Table<br/>→ Lexer"]
+        A3["Line Map<br/>→ Source"]
+        A4["File ID<br/>→ Span"]
+    end
+
+    style M1 fill:#ef4444,stroke:#dc2626,color:#fff
+    style M2 fill:#ef4444,stroke:#dc2626,color:#fff
+    style M3 fill:#ef4444,stroke:#dc2626,color:#fff
+    style M4 fill:#ef4444,stroke:#dc2626,color:#fff
+    style A1 fill:#22c55e,stroke:#16a34a,color:#fff
+    style A2 fill:#22c55e,stroke:#16a34a,color:#fff
+    style A3 fill:#22c55e,stroke:#16a34a,color:#fff
+    style A4 fill:#22c55e,stroke:#16a34a,color:#fff
+```
 
 ### The Question
 Could we have 4? Could we need 6? What is the **minimal complete** foundation?
@@ -101,7 +147,34 @@ Could we have 4? Could we need 6? What is the **minimal complete** foundation?
 > - [ADR-002: Span Size (8 bytes)](DECISIONS.md#adr-002-span-size-8-bytes) - Why exactly 8 bytes, not 16 or 12
 > - [ADR-003: FileId Outside Span](DECISIONS.md#adr-003-fileid-outside-span) - Why FileId is not embedded in Span
 
-![Span Size Comparison - Why 8 Bytes](docs/images/nova-span-comparison.png)
+```mermaid
+flowchart LR
+    subgraph Nova["Nova Span (8 bytes)"]
+        direction LR
+        N1["start: u32<br/>4 bytes"]
+        N2["end: u32<br/>4 bytes"]
+    end
+
+    subgraph Rust["Rust Span (12 bytes)"]
+        direction LR
+        R1["lo: BytePos<br/>4 bytes"]
+        R2["hi: BytePos<br/>4 bytes"]
+        R3["ctxt: SyntaxContext<br/>4 bytes"]
+    end
+
+    subgraph Other["Naive (24+ bytes)"]
+        direction LR
+        O1["file: String<br/>24 bytes"]
+        O2["line: usize<br/>8 bytes"]
+        O3["col: usize<br/>8 bytes"]
+    end
+
+    style Nova fill:#22c55e,stroke:#16a34a,color:#fff
+    style Rust fill:#f59e0b,stroke:#d97706,color:#fff
+    style Other fill:#ef4444,stroke:#dc2626,color:#fff
+```
+
+**Nova: 8 bytes** | Rust: 12 bytes | Naive: 40+ bytes
 
 ### What Is It?
 A span is a range of byte offsets in source code. It's the **atomic unit of location**.
@@ -475,7 +548,27 @@ mod tests {
 > - [ADR-013: Keyword Selection](DECISIONS.md#adr-013-keyword-selection) - Why these 30 keywords
 > - [ADR-014: Operator Precedence Table](DECISIONS.md#adr-014-operator-precedence-table) - Why this precedence order
 
-![Token Memory Layout - 12 Bytes](docs/images/nova-token-structure.png)
+```mermaid
+flowchart LR
+    subgraph Token["Token (12 bytes total)"]
+        direction LR
+        K["kind: TokenKind<br/>1 byte"]
+        P["padding<br/>3 bytes"]
+        S["span: Span<br/>8 bytes"]
+    end
+
+    subgraph Comparison["Size Comparison"]
+        direction TB
+        C1["Nova: 12 bytes ✓"]
+        C2["Rust: 16 bytes"]
+        C3["With String: 40+ bytes"]
+    end
+
+    style Token fill:#6366f1,stroke:#4f46e5,color:#fff
+    style C1 fill:#22c55e,stroke:#16a34a,color:#fff
+    style C2 fill:#f59e0b,stroke:#d97706,color:#fff
+    style C3 fill:#ef4444,stroke:#dc2626,color:#fff
+```
 
 ### What Is It?
 A token is the atomic unit of syntax. It's what the lexer produces and the parser consumes.
@@ -1409,7 +1502,42 @@ mod tests {
 > **Design Decisions:**
 > - [ADR-008: Error Codes System](DECISIONS.md#adr-008-error-codes-system) - Why EXXXX codes like Rust
 
-![Error Reporting Flow](docs/images/nova-error-flow.png)
+```mermaid
+flowchart LR
+    subgraph Detection
+        ERR["Error<br/>Detected"]
+    end
+
+    subgraph Context
+        SPAN["Span<br/>Lookup"]
+        SRC["Source<br/>Retrieval"]
+        CTX["Context<br/>Gathering"]
+    end
+
+    subgraph Rendering
+        FMT["Format<br/>(ariadne)"]
+    end
+
+    subgraph Output
+        TERM["Terminal<br/>🎨 Colored"]
+        LSP["LSP<br/>💡 IDE"]
+        JSON["JSON<br/>🤖 AI"]
+    end
+
+    ERR --> SPAN --> SRC --> CTX
+    CTX --> FMT
+    FMT --> TERM
+    FMT --> LSP
+    FMT --> JSON
+
+    style ERR fill:#ef4444,stroke:#dc2626,color:#fff
+    style SPAN fill:#06b6d4,stroke:#0891b2,color:#fff
+    style SRC fill:#3b82f6,stroke:#2563eb,color:#fff
+    style FMT fill:#a855f7,stroke:#9333ea,color:#fff
+    style TERM fill:#22c55e,stroke:#16a34a,color:#fff
+    style LSP fill:#22c55e,stroke:#16a34a,color:#fff
+    style JSON fill:#22c55e,stroke:#16a34a,color:#fff
+```
 
 ### What Is It?
 Error creates, stores, and displays diagnostics to users.
