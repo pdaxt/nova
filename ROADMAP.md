@@ -224,9 +224,9 @@ This document outlines the development phases for Nova. Our goal is to self-host
 
 | Stage | Duration | Target |
 |-------|----------|--------|
-| Stage 0 | 2-3 months | Q1 2025 |
-| Stage 1 | 2-3 months | Q2 2025 |
-| Stage 2 | 6-9 months | Q4 2025 |
+| Stage 0 | 2-3 months | Q1 2026 |
+| Stage 1 | 2-3 months | Q2 2026 |
+| Stage 2 | 6-9 months | Q4 2026 |
 | Stage 3 | Ongoing | 2026+ |
 
 *Note: These are rough estimates. Open source projects depend on contributor availability.*
@@ -257,10 +257,10 @@ Major decisions are recorded here for posterity.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2025-01-03 | Use WASM as first backend | Simpler than native, runs anywhere |
-| 2025-01-03 | Self-host before features | Proves the language, reduces technical debt |
-| 2025-01-03 | Rust for bootstrap | Familiar, safe, good tooling |
+| 2026-01-03 | Use WASM as first backend | Simpler than native, runs anywhere |
+| 2026-01-03 | Self-host before features | Proves the language, reduces technical debt |
+| 2026-01-03 | Rust for bootstrap | Familiar, safe, good tooling |
 
 ---
 
-*Last updated: 2025-01-03*
+*Last updated: 2026-01-03*

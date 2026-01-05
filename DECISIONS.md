@@ -42,7 +42,7 @@ Each decision is numbered (ADR-XXX) for reference.
 ### ADR-001: Five Foundation Components
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -96,7 +96,7 @@ This convergence across independent implementations suggests this is the natural
 ### ADR-002: Span Size (8 bytes)
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -145,7 +145,7 @@ pub struct Span {
 ### ADR-003: FileId Outside Span
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -195,7 +195,7 @@ All major compilers keep file tracking separate from span storage.
 ### ADR-004: Token Size Optimization
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -244,7 +244,7 @@ pub struct Token {
 ### ADR-005: Literal Values External to Tokens
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -293,7 +293,7 @@ let value: i64 = text.parse()?;
 ### ADR-006: 1-Indexed Line/Column Numbers
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -337,7 +337,7 @@ pub struct Position {
 ### ADR-007: Binary Search for Line Lookup
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -396,7 +396,7 @@ This is the standard approach across all major compilers.
 ### ADR-008: Error Codes System
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -455,7 +455,7 @@ Error codes are standard practice in mature compilers.
 ### ADR-009: Nested Block Comments
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -502,7 +502,7 @@ Modern languages overwhelmingly support nesting.
 ### ADR-010: Lexer Error Recovery Strategy
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -553,7 +553,7 @@ fn next_token(&mut self) -> Token {
 ### ADR-011: Types Separate from Parsing
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -604,7 +604,7 @@ Quote from Swift docs: "Semantic analysis is responsible for taking the parsed A
 ### ADR-012: Syntax Types vs Semantic Types
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -667,7 +667,7 @@ pub enum SemanticType {
 ### ADR-013: Keyword Selection
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -721,7 +721,7 @@ as, in, where, self, Self, super, crate, true, false
 ### ADR-014: Operator Precedence Table
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -775,7 +775,7 @@ Standard mathematical precedence with 13 levels:
 ### ADR-015: Assignment as Expression vs Statement
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -824,7 +824,7 @@ if x = 5 { }  // Error: expected bool, found ()
 ### ADR-016: Rust for Bootstrap Compiler
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 
@@ -873,7 +873,7 @@ Languages with systems-level goals (Rust, Go, Zig) use systems languages for boo
 ### ADR-017: WASM as Primary Target
 
 **Status**: Accepted
-**Date**: 2025-01-03
+**Date**: 2026-01-03
 
 #### Context
 

@@ -1,12 +1,12 @@
 {
-  "last_updated": "2025-01-04T00:00:00Z",
+  "last_updated": "2026-01-04T00:00:00Z",
   "agents": {
     "architect": {
       "current_version": 1,
       "generations": [
         {
           "version": 1,
-          "born": "2025-01-04T00:00:00Z",
+          "born": "2026-01-04T00:00:00Z",
           "status": "active",
           "lessons_inherited": 0
         }
@@ -17,7 +17,7 @@
       "generations": [
         {
           "version": 1,
-          "born": "2025-01-04T00:00:00Z",
+          "born": "2026-01-04T00:00:00Z",
           "status": "active",
           "lessons_inherited": 0
         }
@@ -28,7 +28,7 @@
       "generations": [
         {
           "version": 1,
-          "born": "2025-01-04T00:00:00Z",
+          "born": "2026-01-04T00:00:00Z",
           "status": "active",
           "lessons_inherited": 0
         }
@@ -39,7 +39,7 @@
       "generations": [
         {
           "version": 1,
-          "born": "2025-01-04T00:00:00Z",
+          "born": "2026-01-04T00:00:00Z",
           "status": "active",
           "lessons_inherited": 0
         }
@@ -50,7 +50,7 @@
       "generations": [
         {
           "version": 1,
-          "born": "2025-01-04T00:00:00Z",
+          "born": "2026-01-04T00:00:00Z",
           "status": "active",
           "lessons_inherited": 0
         }
@@ -61,7 +61,7 @@
       "generations": [
         {
           "version": 1,
-          "born": "2025-01-04T00:00:00Z",
+          "born": "2026-01-04T00:00:00Z",
           "status": "active",
           "lessons_inherited": 0
         }
@@ -72,7 +72,7 @@
       "generations": [
         {
           "version": 1,
-          "born": "2025-01-04T00:00:00Z",
+          "born": "2026-01-04T00:00:00Z",
           "status": "active",
           "lessons_inherited": 0
         }
@@ -83,7 +83,7 @@
       "generations": [
         {
           "version": 1,
-          "born": "2025-01-04T00:00:00Z",
+          "born": "2026-01-04T00:00:00Z",
           "status": "active",
           "lessons_inherited": 0
         }
@@ -94,7 +94,7 @@
       "generations": [
         {
           "version": 1,
-          "born": "2025-01-04T00:00:00Z",
+          "born": "2026-01-04T00:00:00Z",
           "status": "active",
           "lessons_inherited": 0
         }
