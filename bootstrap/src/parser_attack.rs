@@ -36,7 +36,10 @@ mod attack_tests {
         let tokens = lex(&source).unwrap();
         let result = parse(&source, tokens);
 
-        assert!(result.is_err(), "Should block >64 levels of expression nesting");
+        assert!(
+            result.is_err(),
+            "Should block >64 levels of expression nesting"
+        );
 
         match result {
             Err(NovaError::NestingTooDeep { max, .. }) => {
@@ -237,7 +240,10 @@ mod attack_tests {
         let tokens = lex(source).unwrap();
         let result = parse(source, tokens);
 
-        assert!(result.is_ok(), "Empty source should be valid (empty program)");
+        assert!(
+            result.is_ok(),
+            "Empty source should be valid (empty program)"
+        );
         let program = result.unwrap();
         assert_eq!(program.items.len(), 0);
     }

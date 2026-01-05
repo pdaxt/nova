@@ -58,7 +58,11 @@ mod codegen;
 mod error;
 mod ir;
 mod lexer;
+#[cfg(test)]
+mod lexer_attack;
 mod parser;
+#[cfg(test)]
+mod parser_attack;
 mod span;
 #[cfg(test)]
 mod span_attack;
@@ -66,10 +70,6 @@ mod token;
 #[cfg(test)]
 mod token_attack;
 mod types;
-#[cfg(test)]
-mod lexer_attack;
-#[cfg(test)]
-mod parser_attack;
 
 use std::env;
 use std::fs;

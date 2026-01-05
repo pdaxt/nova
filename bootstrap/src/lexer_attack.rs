@@ -144,7 +144,10 @@ mod attack_tests {
 
         let result = lex(source);
         // Currently we only support ASCII identifiers
-        assert!(result.is_err(), "Should reject non-ASCII identifiers for now");
+        assert!(
+            result.is_err(),
+            "Should reject non-ASCII identifiers for now"
+        );
     }
 
     /// Attack: Zero-width characters in identifiers
@@ -184,7 +187,10 @@ mod attack_tests {
         let source = "let x = 999999999999999999999999999999";
 
         let result = lex(source);
-        assert!(result.is_ok(), "Should lex large numbers (parsing is later)");
+        assert!(
+            result.is_ok(),
+            "Should lex large numbers (parsing is later)"
+        );
 
         let tokens = result.unwrap();
         assert_eq!(tokens[3].kind(), TokenKind::IntLit);

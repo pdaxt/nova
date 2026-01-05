@@ -114,16 +114,10 @@ impl NovaError {
                 format!("Invalid {} literal", kind)
             }
             NovaError::SourceTooLarge { size, max } => {
-                format!(
-                    "Source file too large: {} bytes (max: {} bytes)",
-                    size, max
-                )
+                format!("Source file too large: {} bytes (max: {} bytes)", size, max)
             }
             NovaError::NestingTooDeep { depth, max, .. } => {
-                format!(
-                    "Nesting too deep: {} levels (max: {} levels)",
-                    depth, max
-                )
+                format!("Nesting too deep: {} levels (max: {} levels)", depth, max)
             }
             NovaError::UnexpectedToken {
                 expected, found, ..
