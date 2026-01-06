@@ -800,6 +800,32 @@ $ wasmtime program.wasm --invoke add <span class="number">3</span> <span class="
 
         <p>Nova is designed with the Component Model in mind. As WASM evolves, Nova's output will too — giving you access to cutting-edge capabilities while maintaining backward compatibility.</p>
 
+        <h2>Why WASM for Nova?</h2>
+
+        <p>We chose WebAssembly as Nova's target for specific reasons that align with our verification goals.</p>
+
+        <div class="problem-solution" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0;">
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1.5rem;">
+                <h4 style="color: #ef4444; margin-bottom: 1rem;">The Problem</h4>
+                <p style="margin-bottom: 0;">Native compilation targets (x86, ARM) have undefined behavior, memory unsafety, and platform-specific quirks. Verified code can still crash due to runtime environment issues.</p>
+            </div>
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.5rem;">
+                <h4 style="color: #22c55e; margin-bottom: 1rem;">How Nova Solves It</h4>
+                <p style="margin-bottom: 0;">WASM provides a <strong>sandboxed, deterministic execution model</strong>. Memory is bounds-checked, there's no undefined behavior, and the same code runs identically everywhere. Verified code stays verified.</p>
+            </div>
+        </div>
+
+        <p>This matters for Nova because:</p>
+
+        <ul>
+            <li><strong>Verified properties are preserved</strong> — What we prove at compile time holds at runtime</li>
+            <li><strong>Capability-based security</strong> — WASM's sandbox model matches Nova's capability system</li>
+            <li><strong>AI-generated code is contained</strong> — Even if AI generates unexpected code, it can't escape the sandbox</li>
+            <li><strong>Universal deployment</strong> — Browser, server, edge, embedded — one target, all platforms</li>
+        </ul>
+
+        <p>As we build out Nova's capability system, WASM's permission model will let us enforce that verified code <em>only accesses what it's allowed to</em> — from files to network to system calls.</p>
+
         <div class="callout success">
             <h4>Key Takeaway</h4>
             <p>Code generation transforms your verified AST into WebAssembly bytecode. WASM's stack-based model makes code generation straightforward — just emit instructions in the right order. The result is portable, fast, and secure code that runs anywhere.</p>

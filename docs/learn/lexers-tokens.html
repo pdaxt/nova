@@ -830,6 +830,32 @@ error[E0001]: undefined variable
             <p>The lexer transforms a stream of characters into a stream of tokens. Each token has a type (what it is), optionally a value (its content), and a span (where it is). This structured data is much easier for the next stage — the parser — to work with.</p>
         </div>
 
+        <h2>Why This Matters for Nova</h2>
+
+        <p>Lexing might seem like a solved problem, but how a language handles this first stage affects everything downstream — especially error messages.</p>
+
+        <div class="problem-solution" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0;">
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1.5rem;">
+                <h4 style="color: #ef4444; margin-bottom: 1rem;">The Problem</h4>
+                <p style="margin-bottom: 0;">Many languages lose precise position information during lexing. When an error occurs later, the compiler can only give vague locations like "somewhere on line 42." Debugging becomes guesswork.</p>
+            </div>
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.5rem;">
+                <h4 style="color: #22c55e; margin-bottom: 1rem;">How Nova Solves It</h4>
+                <p style="margin-bottom: 0;">Nova's lexer preserves <strong>byte-accurate spans</strong> for every token. When verification fails, we can point to the exact character that caused the problem — not just the line, but the precise column and length.</p>
+            </div>
+        </div>
+
+        <p>Nova also tokenizes special keywords that other languages don't have:</p>
+
+        <ul>
+            <li><code class="inline-code">requires</code> — preconditions for function contracts</li>
+            <li><code class="inline-code">ensures</code> — postconditions the function guarantees</li>
+            <li><code class="inline-code">invariant</code> — conditions that must always hold</li>
+            <li><code class="inline-code">where</code> — type constraints and refinements</li>
+        </ul>
+
+        <p>These keywords are the foundation of Nova's verification system — they let you write <em>contracts</em> that the compiler can mathematically prove.</p>
+
         <h2>What's Next?</h2>
 
         <p>Now you understand how code becomes tokens. But tokens are still a flat list — we don't yet know that <code class="inline-code">fn add(...) { ... }</code> is a function definition.</p>

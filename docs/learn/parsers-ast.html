@@ -788,6 +788,40 @@ error: expected `{` to start function body
             <p>The parser transforms a flat list of tokens into a tree structure (AST) that captures the meaning and structure of your code. The grammar defines what valid programs look like, and the parser builds the tree by following those rules. This structured representation is what the rest of the compiler works with.</p>
         </div>
 
+        <h2>Why This Matters for Nova</h2>
+
+        <p>Nova's parser does something most parsers don't — it understands <strong>contracts</strong> as first-class syntax.</p>
+
+        <div class="problem-solution" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0;">
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1.5rem;">
+                <h4 style="color: #ef4444; margin-bottom: 1rem;">The Problem</h4>
+                <p style="margin-bottom: 0;">Most languages treat assertions and contracts as runtime checks buried in function bodies. They're invisible to the compiler, can't be used for optimization, and only fail when code is already running.</p>
+            </div>
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.5rem;">
+                <h4 style="color: #22c55e; margin-bottom: 1rem;">How Nova Solves It</h4>
+                <p style="margin-bottom: 0;">Nova's grammar includes <code style="background: rgba(0,0,0,0.3); padding: 0.1rem 0.4rem; border-radius: 4px;">requires</code> and <code style="background: rgba(0,0,0,0.3); padding: 0.1rem 0.4rem; border-radius: 4px;">ensures</code> clauses as part of function definitions. The AST captures them, and the verifier can reason about them <em>before</em> the code ever runs.</p>
+            </div>
+        </div>
+
+        <p>Here's what a Nova function definition looks like in the AST:</p>
+
+<pre><code><span class="node">FunctionDef</span>
+├── <span class="field">name:</span> <span class="string">"divide"</span>
+├── <span class="field">params:</span> [a: Int, b: Int]
+├── <span class="field">return_type:</span> <span class="value">Int</span>
+├── <span class="field">requires:</span> [<span class="node">BinaryExpr</span>(b != 0)]  <span class="comment">← Contract!</span>
+├── <span class="field">ensures:</span> [...]                      <span class="comment">← Guarantees!</span>
+└── <span class="field">body:</span> <span class="node">BinaryExpr</span>(a / b)</code></pre>
+
+        <p>Because contracts are in the AST, the compiler can:</p>
+
+        <ul>
+            <li><strong>Verify</strong> — Prove the contract holds for all possible inputs</li>
+            <li><strong>Optimize</strong> — Remove runtime checks when proven unnecessary</li>
+            <li><strong>Document</strong> — Generate API docs with contract information</li>
+            <li><strong>Aid AI</strong> — Give code generators clear specifications to implement</li>
+        </ul>
+
         <h2>What's Next?</h2>
 
         <p>We've built our tree, but we still don't know if the code makes sense. Is <code class="inline-code">add("hello", 5)</code> valid? That's the job of the <strong>type checker</strong>, which we'll explore in the next lesson.</p>
