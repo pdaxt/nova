@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Syntax Reference - Quick Reference Guide</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Complete syntax reference for the Nova programming language. Keywords, operators, types, expressions, and code examples.">
+    <meta name="keywords" content="Nova syntax, programming language syntax, Nova reference, Nova keywords, Nova operators">
+    <meta name="author" content="Pranjal Gupta">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/syntax/">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:creator" content="@dataxlr8r">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Nova Syntax Reference">
+    <meta property="og:description" content="Complete syntax reference for the Nova programming language.">
+    <meta property="og:image" content="https://pdaxt.github.io/nova/brand/nova-logo.svg">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+    <meta name="theme-color" content="#22c55e">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #1a1a24;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --code-bg: #1e1e2e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; width: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--success); }
+
+        /* Main Content */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        /* Table of Contents */
+        .toc {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .toc h2 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .toc a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .toc a:hover { text-decoration: underline; }
+
+        /* Sections */
+        section {
+            margin-bottom: 4rem;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--success);
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        p code, li code, td code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* Syntax highlighting */
+        .kw { color: #c792ea; } /* keyword */
+        .fn { color: #82aaff; } /* function */
+        .ty { color: #ffcb6b; } /* type */
+        .str { color: #c3e88d; } /* string */
+        .num { color: #f78c6c; } /* number */
+        .cm { color: #676e95; } /* comment */
+        .op { color: #89ddff; } /* operator */
+        .var { color: #eeffff; } /* variable */
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        th {
+            background: var(--bg-card);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        td:first-child code {
+            color: var(--success);
+        }
+
+        /* Keyword Grid */
+        .keyword-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .keyword-grid code {
+            background: var(--code-bg);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+            color: #c792ea;
+        }
+
+        /* Callout */
+        .callout {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .callout.success {
+            background: rgba(34, 197, 94, 0.1);
+            border-left-color: var(--success);
+        }
+
+        .callout strong {
+            color: var(--text);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            main { padding: 6rem 1rem 2rem; }
+            .nav-links { display: none; }
+            .toc-grid { grid-template-columns: 1fr 1fr; }
+            .keyword-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                Nova
+            </a>
+            <ul class="nav-links">
+                <li><a href="../learn/">Learn</a></li>
+                <li><a href="./" class="active">Syntax</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <h1>Syntax Reference</h1>
+        <p class="subtitle">Complete quick reference for Nova language syntax. Copy-paste ready examples.</p>
+
+        <div class="toc">
+            <h2>Quick Navigation</h2>
+            <div class="toc-grid">
+                <a href="#keywords">Keywords</a>
+                <a href="#literals">Literals</a>
+                <a href="#operators">Operators</a>
+                <a href="#types">Types</a>
+                <a href="#functions">Functions</a>
+                <a href="#structs">Structs</a>
+                <a href="#enums">Enums</a>
+                <a href="#traits">Traits</a>
+                <a href="#control-flow">Control Flow</a>
+                <a href="#patterns">Patterns</a>
+                <a href="#expressions">Expressions</a>
+            </div>
+        </div>
+
+        <!-- Keywords -->
+        <section id="keywords">
+            <h2>Keywords</h2>
+            <p>Nova has 32 reserved keywords:</p>
+            <div class="keyword-grid">
+                <code>as</code>
+                <code>async</code>
+                <code>await</code>
+                <code>break</code>
+                <code>const</code>
+                <code>continue</code>
+                <code>else</code>
+                <code>enum</code>
+                <code>false</code>
+                <code>fn</code>
+                <code>for</code>
+                <code>if</code>
+                <code>impl</code>
+                <code>in</code>
+                <code>let</code>
+                <code>loop</code>
+                <code>match</code>
+                <code>mod</code>
+                <code>mut</code>
+                <code>pub</code>
+                <code>return</code>
+                <code>self</code>
+                <code>Self</code>
+                <code>static</code>
+                <code>struct</code>
+                <code>trait</code>
+                <code>true</code>
+                <code>type</code>
+                <code>unsafe</code>
+                <code>use</code>
+                <code>where</code>
+                <code>while</code>
+            </div>
+        </section>
+
+        <!-- Literals -->
+        <section id="literals">
+            <h2>Literals</h2>
+
+            <h3>Integers</h3>
+            <pre><code><span class="num">42</span>          <span class="cm">// decimal</span>
+<span class="num">1_000_000</span>   <span class="cm">// with separators</span>
+<span class="num">0xFF</span>        <span class="cm">// hexadecimal</span>
+<span class="num">0o77</span>        <span class="cm">// octal</span>
+<span class="num">0b1010</span>      <span class="cm">// binary</span></code></pre>
+
+            <h3>Floats</h3>
+            <pre><code><span class="num">3.14</span>        <span class="cm">// basic</span>
+<span class="num">1e10</span>        <span class="cm">// scientific</span>
+<span class="num">2.5e-3</span>      <span class="cm">// with exponent</span>
+<span class="num">1_000.5</span>     <span class="cm">// with separators</span></code></pre>
+
+            <h3>Strings</h3>
+            <pre><code><span class="str">"hello"</span>           <span class="cm">// basic string</span>
+<span class="str">"line\nbreak"</span>     <span class="cm">// escape sequences</span>
+<span class="str">"tab\there"</span>       <span class="cm">// tab character</span>
+<span class="str">"quote: \""</span>       <span class="cm">// escaped quote</span></code></pre>
+
+            <h3>Characters</h3>
+            <pre><code><span class="str">'a'</span>    <span class="cm">// character</span>
+<span class="str">'\n'</span>   <span class="cm">// newline</span>
+<span class="str">'\t'</span>   <span class="cm">// tab</span>
+<span class="str">'\\'</span>   <span class="cm">// backslash</span></code></pre>
+
+            <h3>Booleans</h3>
+            <pre><code><span class="kw">true</span>
+<span class="kw">false</span></code></pre>
+        </section>
+
+        <!-- Operators -->
+        <section id="operators">
+            <h2>Operators</h2>
+
+            <h3>Arithmetic</h3>
+            <table>
+                <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
+                <tr><td><code>+</code></td><td>Addition</td><td><code>a + b</code></td></tr>
+                <tr><td><code>-</code></td><td>Subtraction</td><td><code>a - b</code></td></tr>
+                <tr><td><code>*</code></td><td>Multiplication</td><td><code>a * b</code></td></tr>
+                <tr><td><code>/</code></td><td>Division</td><td><code>a / b</code></td></tr>
+                <tr><td><code>%</code></td><td>Remainder</td><td><code>a % b</code></td></tr>
+            </table>
+
+            <h3>Comparison</h3>
+            <table>
+                <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
+                <tr><td><code>==</code></td><td>Equal</td><td><code>a == b</code></td></tr>
+                <tr><td><code>!=</code></td><td>Not equal</td><td><code>a != b</code></td></tr>
+                <tr><td><code>&lt;</code></td><td>Less than</td><td><code>a &lt; b</code></td></tr>
+                <tr><td><code>&gt;</code></td><td>Greater than</td><td><code>a &gt; b</code></td></tr>
+                <tr><td><code>&lt;=</code></td><td>Less or equal</td><td><code>a &lt;= b</code></td></tr>
+                <tr><td><code>&gt;=</code></td><td>Greater or equal</td><td><code>a &gt;= b</code></td></tr>
+            </table>
+
+            <h3>Logical</h3>
+            <table>
+                <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
+                <tr><td><code>&&</code></td><td>Logical AND</td><td><code>a && b</code></td></tr>
+                <tr><td><code>||</code></td><td>Logical OR</td><td><code>a || b</code></td></tr>
+                <tr><td><code>!</code></td><td>Logical NOT</td><td><code>!a</code></td></tr>
+            </table>
+
+            <h3>Bitwise</h3>
+            <table>
+                <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
+                <tr><td><code>&</code></td><td>Bitwise AND</td><td><code>a & b</code></td></tr>
+                <tr><td><code>|</code></td><td>Bitwise OR</td><td><code>a | b</code></td></tr>
+                <tr><td><code>^</code></td><td>Bitwise XOR</td><td><code>a ^ b</code></td></tr>
+                <tr><td><code>~</code></td><td>Bitwise NOT</td><td><code>~a</code></td></tr>
+                <tr><td><code>&lt;&lt;</code></td><td>Left shift</td><td><code>a &lt;&lt; 2</code></td></tr>
+                <tr><td><code>&gt;&gt;</code></td><td>Right shift</td><td><code>a &gt;&gt; 2</code></td></tr>
+            </table>
+
+            <h3>Assignment</h3>
+            <table>
+                <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
+                <tr><td><code>=</code></td><td>Assign</td><td><code>a = b</code></td></tr>
+                <tr><td><code>+=</code></td><td>Add and assign</td><td><code>a += b</code></td></tr>
+                <tr><td><code>-=</code></td><td>Subtract and assign</td><td><code>a -= b</code></td></tr>
+                <tr><td><code>*=</code></td><td>Multiply and assign</td><td><code>a *= b</code></td></tr>
+                <tr><td><code>/=</code></td><td>Divide and assign</td><td><code>a /= b</code></td></tr>
+                <tr><td><code>%=</code></td><td>Remainder and assign</td><td><code>a %= b</code></td></tr>
+            </table>
+
+            <h3>Range</h3>
+            <table>
+                <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
+                <tr><td><code>..</code></td><td>Exclusive range</td><td><code>0..10</code></td></tr>
+                <tr><td><code>..=</code></td><td>Inclusive range</td><td><code>0..=10</code></td></tr>
+            </table>
+
+            <h3>Other</h3>
+            <table>
+                <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
+                <tr><td><code>-></code></td><td>Return type</td><td><code>fn foo() -> i32</code></td></tr>
+                <tr><td><code>=></code></td><td>Match arm</td><td><code>x => x + 1</code></td></tr>
+                <tr><td><code>::</code></td><td>Path separator</td><td><code>std::io::Read</code></td></tr>
+                <tr><td><code>.</code></td><td>Field access</td><td><code>point.x</code></td></tr>
+                <tr><td><code>?</code></td><td>Try operator</td><td><code>result?</code></td></tr>
+                <tr><td><code>&</code></td><td>Reference</td><td><code>&value</code></td></tr>
+                <tr><td><code>*</code></td><td>Dereference</td><td><code>*ptr</code></td></tr>
+            </table>
+        </section>
+
+        <!-- Types -->
+        <section id="types">
+            <h2>Types</h2>
+
+            <h3>Named Types</h3>
+            <pre><code><span class="ty">i32</span>                      <span class="cm">// 32-bit signed integer</span>
+<span class="ty">u64</span>                      <span class="cm">// 64-bit unsigned integer</span>
+<span class="ty">f64</span>                      <span class="cm">// 64-bit float</span>
+<span class="ty">bool</span>                     <span class="cm">// boolean</span>
+<span class="ty">String</span>                   <span class="cm">// string type</span>
+<span class="ty">Vec</span>&lt;<span class="ty">i32</span>&gt;                 <span class="cm">// generic type</span>
+<span class="ty">HashMap</span>&lt;<span class="ty">String</span>, <span class="ty">i32</span>&gt;    <span class="cm">// multiple type parameters</span></code></pre>
+
+            <h3>Compound Types</h3>
+            <pre><code>(<span class="ty">i32</span>, <span class="ty">i32</span>)              <span class="cm">// tuple</span>
+[<span class="ty">i32</span>; <span class="num">10</span>]               <span class="cm">// array with size</span>
+[<span class="ty">i32</span>]                   <span class="cm">// slice</span></code></pre>
+
+            <h3>Reference Types</h3>
+            <pre><code>&<span class="ty">i32</span>                    <span class="cm">// immutable reference</span>
+&<span class="kw">mut</span> <span class="ty">i32</span>                <span class="cm">// mutable reference</span></code></pre>
+
+            <h3>Function Types</h3>
+            <pre><code><span class="kw">fn</span>(<span class="ty">i32</span>) -> <span class="ty">i32</span>         <span class="cm">// function type</span>
+<span class="kw">fn</span>(<span class="ty">i32</span>, <span class="ty">i32</span>) -> <span class="ty">bool</span>   <span class="cm">// multiple parameters</span></code></pre>
+
+            <h3>Special Types</h3>
+            <pre><code>!                       <span class="cm">// never type (function doesn't return)</span>
+_                       <span class="cm">// inferred type (let compiler decide)</span></code></pre>
+        </section>
+
+        <!-- Functions -->
+        <section id="functions">
+            <h2>Functions</h2>
+
+            <h3>Basic Function</h3>
+            <pre><code><span class="kw">fn</span> <span class="fn">greet</span>() {
+    <span class="fn">println</span>(<span class="str">"Hello!"</span>);
+}</code></pre>
+
+            <h3>With Parameters</h3>
+            <pre><code><span class="kw">fn</span> <span class="fn">add</span>(a: <span class="ty">i32</span>, b: <span class="ty">i32</span>) -> <span class="ty">i32</span> {
+    a + b
+}</code></pre>
+
+            <h3>With Generics</h3>
+            <pre><code><span class="kw">fn</span> <span class="fn">first</span>&lt;<span class="ty">T</span>&gt;(items: <span class="ty">Vec</span>&lt;<span class="ty">T</span>&gt;) -> <span class="ty">Option</span>&lt;<span class="ty">T</span>&gt; {
+    items.get(<span class="num">0</span>)
+}</code></pre>
+
+            <h3>With Where Clause</h3>
+            <pre><code><span class="kw">fn</span> <span class="fn">print_all</span>&lt;<span class="ty">T</span>&gt;(items: <span class="ty">Vec</span>&lt;<span class="ty">T</span>&gt;)
+<span class="kw">where</span>
+    <span class="ty">T</span>: <span class="ty">Display</span>
+{
+    <span class="kw">for</span> item <span class="kw">in</span> items {
+        <span class="fn">println</span>(item);
+    }
+}</code></pre>
+
+            <h3>Closures</h3>
+            <pre><code><span class="kw">let</span> add = |a, b| a + b;
+<span class="kw">let</span> square = |x: <span class="ty">i32</span>| -> <span class="ty">i32</span> { x * x };
+<span class="kw">let</span> sum = numbers.<span class="fn">fold</span>(<span class="num">0</span>, |acc, x| acc + x);</code></pre>
+        </section>
+
+        <!-- Structs -->
+        <section id="structs">
+            <h2>Structs</h2>
+
+            <h3>Basic Struct</h3>
+            <pre><code><span class="kw">struct</span> <span class="ty">Point</span> {
+    x: <span class="ty">f64</span>,
+    y: <span class="ty">f64</span>,
+}</code></pre>
+
+            <h3>Generic Struct</h3>
+            <pre><code><span class="kw">struct</span> <span class="ty">Pair</span>&lt;<span class="ty">T</span>, <span class="ty">U</span>&gt; {
+    first: <span class="ty">T</span>,
+    second: <span class="ty">U</span>,
+}</code></pre>
+
+            <h3>Creating Instances</h3>
+            <pre><code><span class="kw">let</span> origin = <span class="ty">Point</span> { x: <span class="num">0.0</span>, y: <span class="num">0.0</span> };
+<span class="kw">let</span> pair = <span class="ty">Pair</span> { first: <span class="str">"hello"</span>, second: <span class="num">42</span> };</code></pre>
+
+            <h3>Impl Block</h3>
+            <pre><code><span class="kw">impl</span> <span class="ty">Point</span> {
+    <span class="kw">fn</span> <span class="fn">new</span>(x: <span class="ty">f64</span>, y: <span class="ty">f64</span>) -> <span class="ty">Self</span> {
+        <span class="ty">Point</span> { x, y }
+    }
+
+    <span class="kw">fn</span> <span class="fn">distance</span>(&<span class="kw">self</span>, other: &<span class="ty">Point</span>) -> <span class="ty">f64</span> {
+        <span class="kw">let</span> dx = <span class="kw">self</span>.x - other.x;
+        <span class="kw">let</span> dy = <span class="kw">self</span>.y - other.y;
+        (dx * dx + dy * dy).<span class="fn">sqrt</span>()
+    }
+}</code></pre>
+        </section>
+
+        <!-- Enums -->
+        <section id="enums">
+            <h2>Enums</h2>
+
+            <h3>Unit Variants</h3>
+            <pre><code><span class="kw">enum</span> <span class="ty">Direction</span> {
+    North,
+    South,
+    East,
+    West,
+}</code></pre>
+
+            <h3>Tuple Variants</h3>
+            <pre><code><span class="kw">enum</span> <span class="ty">Color</span> {
+    Rgb(<span class="ty">u8</span>, <span class="ty">u8</span>, <span class="ty">u8</span>),
+    Hex(<span class="ty">String</span>),
+}</code></pre>
+
+            <h3>Struct Variants</h3>
+            <pre><code><span class="kw">enum</span> <span class="ty">Message</span> {
+    Quit,
+    Move { x: <span class="ty">i32</span>, y: <span class="ty">i32</span> },
+    Write(<span class="ty">String</span>),
+}</code></pre>
+
+            <h3>Generic Enum</h3>
+            <pre><code><span class="kw">enum</span> <span class="ty">Option</span>&lt;<span class="ty">T</span>&gt; {
+    Some(<span class="ty">T</span>),
+    None,
+}
+
+<span class="kw">enum</span> <span class="ty">Result</span>&lt;<span class="ty">T</span>, <span class="ty">E</span>&gt; {
+    Ok(<span class="ty">T</span>),
+    Err(<span class="ty">E</span>),
+}</code></pre>
+        </section>
+
+        <!-- Traits -->
+        <section id="traits">
+            <h2>Traits</h2>
+
+            <h3>Defining a Trait</h3>
+            <pre><code><span class="kw">trait</span> <span class="ty">Drawable</span> {
+    <span class="kw">fn</span> <span class="fn">draw</span>(&<span class="kw">self</span>);
+
+    <span class="cm">// Default implementation</span>
+    <span class="kw">fn</span> <span class="fn">clear</span>(&<span class="kw">self</span>) {
+        <span class="fn">println</span>(<span class="str">"Clearing..."</span>);
+    }
+}</code></pre>
+
+            <h3>Implementing a Trait</h3>
+            <pre><code><span class="kw">impl</span> <span class="ty">Drawable</span> <span class="kw">for</span> <span class="ty">Point</span> {
+    <span class="kw">fn</span> <span class="fn">draw</span>(&<span class="kw">self</span>) {
+        <span class="fn">println</span>(<span class="str">"Drawing point at ({}, {})"</span>, <span class="kw">self</span>.x, <span class="kw">self</span>.y);
+    }
+}</code></pre>
+
+            <h3>Trait Bounds</h3>
+            <pre><code><span class="kw">fn</span> <span class="fn">draw_all</span>&lt;<span class="ty">T</span>: <span class="ty">Drawable</span>&gt;(items: <span class="ty">Vec</span>&lt;<span class="ty">T</span>&gt;) {
+    <span class="kw">for</span> item <span class="kw">in</span> items {
+        item.<span class="fn">draw</span>();
+    }
+}</code></pre>
+        </section>
+
+        <!-- Control Flow -->
+        <section id="control-flow">
+            <h2>Control Flow</h2>
+
+            <h3>If Expression</h3>
+            <pre><code><span class="kw">if</span> x > <span class="num">0</span> {
+    <span class="fn">println</span>(<span class="str">"positive"</span>);
+} <span class="kw">else</span> <span class="kw">if</span> x < <span class="num">0</span> {
+    <span class="fn">println</span>(<span class="str">"negative"</span>);
+} <span class="kw">else</span> {
+    <span class="fn">println</span>(<span class="str">"zero"</span>);
+}
+
+<span class="cm">// If as expression</span>
+<span class="kw">let</span> sign = <span class="kw">if</span> x >= <span class="num">0</span> { <span class="num">1</span> } <span class="kw">else</span> { <span class="num">-1</span> };</code></pre>
+
+            <h3>Match Expression</h3>
+            <pre><code><span class="kw">match</span> value {
+    <span class="num">0</span> => <span class="fn">println</span>(<span class="str">"zero"</span>),
+    <span class="num">1</span> | <span class="num">2</span> => <span class="fn">println</span>(<span class="str">"one or two"</span>),
+    <span class="num">3</span>..<span class="num">10</span> => <span class="fn">println</span>(<span class="str">"three to nine"</span>),
+    n <span class="kw">if</span> n > <span class="num">100</span> => <span class="fn">println</span>(<span class="str">"big: {}"</span>, n),
+    _ => <span class="fn">println</span>(<span class="str">"something else"</span>),
+}</code></pre>
+
+            <h3>While Loop</h3>
+            <pre><code><span class="kw">while</span> count > <span class="num">0</span> {
+    <span class="fn">println</span>(count);
+    count -= <span class="num">1</span>;
+}</code></pre>
+
+            <h3>For Loop</h3>
+            <pre><code><span class="kw">for</span> i <span class="kw">in</span> <span class="num">0</span>..<span class="num">10</span> {
+    <span class="fn">println</span>(i);
+}
+
+<span class="kw">for</span> item <span class="kw">in</span> items {
+    <span class="fn">process</span>(item);
+}</code></pre>
+
+            <h3>Loop</h3>
+            <pre><code><span class="kw">loop</span> {
+    <span class="kw">if</span> done {
+        <span class="kw">break</span>;
+    }
+    <span class="fn">do_work</span>();
+}
+
+<span class="cm">// Loop with value</span>
+<span class="kw">let</span> result = <span class="kw">loop</span> {
+    <span class="kw">if</span> found {
+        <span class="kw">break</span> value;
+    }
+};</code></pre>
+
+            <h3>Break and Continue</h3>
+            <pre><code><span class="kw">for</span> i <span class="kw">in</span> <span class="num">0</span>..<span class="num">100</span> {
+    <span class="kw">if</span> i % <span class="num">2</span> == <span class="num">0</span> {
+        <span class="kw">continue</span>;  <span class="cm">// skip even numbers</span>
+    }
+    <span class="kw">if</span> i > <span class="num">50</span> {
+        <span class="kw">break</span>;     <span class="cm">// stop at 50</span>
+    }
+}</code></pre>
+        </section>
+
+        <!-- Patterns -->
+        <section id="patterns">
+            <h2>Patterns</h2>
+
+            <h3>Pattern Types</h3>
+            <pre><code><span class="cm">// Wildcard</span>
+<span class="kw">let</span> _ = ignored_value;
+
+<span class="cm">// Variable binding</span>
+<span class="kw">let</span> x = <span class="num">42</span>;
+<span class="kw">let</span> <span class="kw">mut</span> y = <span class="num">0</span>;
+
+<span class="cm">// Tuple destructuring</span>
+<span class="kw">let</span> (a, b) = (<span class="num">1</span>, <span class="num">2</span>);
+<span class="kw">let</span> (first, _, third) = triple;
+
+<span class="cm">// Struct destructuring</span>
+<span class="kw">let</span> <span class="ty">Point</span> { x, y } = point;
+<span class="kw">let</span> <span class="ty">Point</span> { x: px, y: py } = point;</code></pre>
+
+            <h3>Match Patterns</h3>
+            <pre><code><span class="kw">match</span> option {
+    <span class="ty">Some</span>(value) => <span class="fn">use_value</span>(value),
+    <span class="ty">None</span> => <span class="fn">default</span>(),
+}
+
+<span class="kw">match</span> result {
+    <span class="ty">Ok</span>(data) => <span class="fn">process</span>(data),
+    <span class="ty">Err</span>(e) => <span class="fn">handle_error</span>(e),
+}
+
+<span class="cm">// Or patterns</span>
+<span class="kw">match</span> x {
+    <span class="num">1</span> | <span class="num">2</span> | <span class="num">3</span> => <span class="fn">small</span>(),
+    _ => <span class="fn">other</span>(),
+}
+
+<span class="cm">// Guard clauses</span>
+<span class="kw">match</span> x {
+    n <span class="kw">if</span> n < <span class="num">0</span> => <span class="fn">negative</span>(),
+    n <span class="kw">if</span> n > <span class="num">0</span> => <span class="fn">positive</span>(),
+    _ => <span class="fn">zero</span>(),
+}</code></pre>
+        </section>
+
+        <!-- Expressions -->
+        <section id="expressions">
+            <h2>Expressions</h2>
+
+            <h3>Variables</h3>
+            <pre><code><span class="kw">let</span> x = <span class="num">42</span>;                  <span class="cm">// immutable</span>
+<span class="kw">let</span> <span class="kw">mut</span> y = <span class="num">0</span>;               <span class="cm">// mutable</span>
+<span class="kw">let</span> z: <span class="ty">i32</span> = <span class="num">100</span>;            <span class="cm">// with type</span></code></pre>
+
+            <h3>Function Calls</h3>
+            <pre><code><span class="fn">foo</span>();                      <span class="cm">// no arguments</span>
+<span class="fn">add</span>(<span class="num">1</span>, <span class="num">2</span>);                   <span class="cm">// with arguments</span>
+object.<span class="fn">method</span>();            <span class="cm">// method call</span>
+object.<span class="fn">method</span>(arg);         <span class="cm">// method with argument</span></code></pre>
+
+            <h3>Field Access</h3>
+            <pre><code>point.x                     <span class="cm">// struct field</span>
+tuple.<span class="num">0</span>                     <span class="cm">// tuple index</span></code></pre>
+
+            <h3>Array/Index</h3>
+            <pre><code>[<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]                   <span class="cm">// array literal</span>
+array[<span class="num">0</span>]                    <span class="cm">// indexing</span>
+array[<span class="num">1</span>..<span class="num">3</span>]                 <span class="cm">// slicing</span></code></pre>
+
+            <h3>References</h3>
+            <pre><code>&value                      <span class="cm">// immutable reference</span>
+&<span class="kw">mut</span> value                  <span class="cm">// mutable reference</span>
+*ptr                        <span class="cm">// dereference</span></code></pre>
+
+            <h3>Block Expressions</h3>
+            <pre><code><span class="kw">let</span> result = {
+    <span class="kw">let</span> a = <span class="num">1</span>;
+    <span class="kw">let</span> b = <span class="num">2</span>;
+    a + b  <span class="cm">// last expression is the value</span>
+};</code></pre>
+
+            <h3>Async/Await</h3>
+            <pre><code><span class="kw">async</span> <span class="kw">fn</span> <span class="fn">fetch_data</span>() -> <span class="ty">Result</span>&lt;<span class="ty">Data</span>, <span class="ty">Error</span>&gt; {
+    <span class="kw">let</span> response = client.<span class="fn">get</span>(url).<span class="kw">await</span>?;
+    <span class="kw">let</span> data = response.<span class="fn">json</span>().<span class="kw">await</span>?;
+    <span class="ty">Ok</span>(data)
+}</code></pre>
+        </section>
+
+        <div class="callout success">
+            <strong>Copy-Paste Ready!</strong><br>
+            All examples on this page use Nova syntax and can be used in your code.
+            The language is designed to be familiar to Rust developers while adding verification features.
+        </div>
+    </main>
+
+    <footer>
+        <p>
+            <a href="../">Nova</a> &middot;
+            <a href="../learn/">Learn</a> &middot;
+            <a href="https://github.com/pdaxt/nova">GitHub</a> &middot;
+            Created by <a href="https://bskiller.com">Pranjal Gupta</a>
+        </p>
+    </footer>
+</body>
+</html>
