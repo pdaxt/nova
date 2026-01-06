@@ -28,6 +28,8 @@ Current languages were designed for humans to write and machines to execute. Nov
 
 ### Why Nova?
 
+> **[Read the full story: The Credit Card Bug That Started It All →](docs/WHY-NOVA.md)**
+
 | Today's Reality | Nova's Vision |
 |-----------------|---------------|
 | Runtime errors crash production | Errors are impossible by construction |
@@ -118,6 +120,7 @@ See [ROADMAP.md](ROADMAP.md) for the full plan.
 
 | Document | Description |
 |----------|-------------|
+| [WHY-NOVA.md](docs/WHY-NOVA.md) | The origin story and capability-based security |
 | [ROADMAP.md](ROADMAP.md) | Development stages and milestones |
 | [COMPONENTS.md](COMPONENTS.md) | 43-component architecture with QA criteria |
 | [FOUNDATION.md](FOUNDATION.md) | The 5 irreducible foundation components |
