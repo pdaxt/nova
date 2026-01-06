@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Roadmap - From Vision to Reality | Learn Nova</title>
+
+    <meta name="description" content="The complete Nova programming language roadmap. See what's built, what's in progress, and what's coming next.">
+    <meta name="author" content="Pranjal Gupta">
+    <meta name="twitter:creator" content="@dataxlr8r">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/learn/roadmap.html">
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #1e1e2e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--success); }
+
+        .article {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .page-badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .meta {
+            display: flex;
+            gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            margin: 3rem 0 1.5rem;
+            color: var(--accent);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin: 2rem 0 1rem;
+        }
+
+        p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        strong { color: var(--text); }
+        a { color: var(--accent); }
+
+        .callout {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        .callout.success { border-color: var(--success); }
+        .callout h4 { margin-bottom: 0.5rem; }
+        .callout p { margin-bottom: 0; }
+
+        ul, ol {
+            margin: 1rem 0 1.5rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        li { margin-bottom: 0.5rem; }
+
+        /* Phase sections */
+        .phase {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .phase-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .phase-icon.complete { background: var(--success); }
+        .phase-icon.active { background: var(--accent); }
+        .phase-icon.future { background: #374151; }
+
+        .phase-title h3 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .phase-title span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .phase-status {
+            margin-left: auto;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .phase-status.complete {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+
+        .phase-status.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+        }
+
+        .phase-status.future {
+            background: rgba(107, 114, 128, 0.1);
+            color: #9ca3af;
+        }
+
+        .milestone-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .milestone-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .milestone-list li:last-child {
+            border-bottom: none;
+        }
+
+        .milestone-check {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .milestone-check.done {
+            background: var(--success);
+            color: white;
+        }
+
+        .milestone-check.wip {
+            background: var(--accent);
+            color: white;
+        }
+
+        .milestone-check.todo {
+            background: transparent;
+            border: 2px solid #4b5563;
+        }
+
+        .milestone-content {
+            flex: 1;
+        }
+
+        .milestone-content strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .milestone-content span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Vision box */
+        .vision-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(34, 197, 94, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .vision-box h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .vision-box p {
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Timeline */
+        .timeline-visual {
+            display: flex;
+            gap: 0;
+            margin: 3rem 0;
+            overflow-x: auto;
+            padding: 1rem 0;
+        }
+
+        .timeline-item {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            position: relative;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            width: 100%;
+            height: 4px;
+            background: #374151;
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .timeline-item.complete::after {
+            background: var(--success);
+        }
+
+        .timeline-item.active::after {
+            background: linear-gradient(90deg, var(--accent), #374151);
+        }
+
+        .timeline-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #374151;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-item.complete .timeline-dot {
+            background: var(--success);
+        }
+
+        .timeline-item.active .timeline-dot {
+            background: var(--accent);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .timeline-label {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Contributing */
+        .contribute-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .contribute-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .contribute-card h4 {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .contribute-card p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .phase-header {
+                flex-wrap: wrap;
+            }
+            .phase-status {
+                margin-left: 0;
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                <span>Nova</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="./index.html" class="active">Learn</a></li>
+                <li><a href="../architecture/lexer.html">Architecture</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <article class="article">
+        <span class="page-badge">Roadmap</span>
+        <h1>Nova Roadmap</h1>
+        <p class="subtitle">From experimental language to production-ready platform. Here's where we're headed.</p>
+
+        <div class="meta">
+            <span>Last updated: January 2026</span>
+            <span>Open for contributions</span>
+        </div>
+
+        <div class="vision-box">
+            <h3>The Vision</h3>
+            <p>A programming language where <strong>AI generates code that proves itself correct</strong>. No runtime errors. No security vulnerabilities. Mathematical certainty that your code does what it says.</p>
+        </div>
+
+        <h2>Development Timeline</h2>
+
+        <div class="timeline-visual">
+            <div class="timeline-item complete">
+                <div class="timeline-dot">1</div>
+                <div class="timeline-label">Foundation</div>
+                <div class="timeline-date">Q4 2025</div>
+            </div>
+            <div class="timeline-item complete">
+                <div class="timeline-dot">2</div>
+                <div class="timeline-label">Core Compiler</div>
+                <div class="timeline-date">Q1 2026</div>
+            </div>
+            <div class="timeline-item active">
+                <div class="timeline-dot">3</div>
+                <div class="timeline-label">Type System</div>
+                <div class="timeline-date">Q2 2026</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot">4</div>
+                <div class="timeline-label">Verification</div>
+                <div class="timeline-date">Q3 2026</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot">5</div>
+                <div class="timeline-label">Beta</div>
+                <div class="timeline-date">Q4 2026</div>
+            </div>
+        </div>
+
+        <h2>Phase 1: Foundation</h2>
+
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-icon complete">✓</div>
+                <div class="phase-title">
+                    <h3>Language Foundation</h3>
+                    <span>Core infrastructure and design</span>
+                </div>
+                <span class="phase-status complete">Complete</span>
+            </div>
+
+            <ul class="milestone-list">
+                <li>
+                    <span class="milestone-check done">✓</span>
+                    <div class="milestone-content">
+                        <strong>Language Specification</strong>
+                        <span>Core syntax, semantics, and type system design documented in FOUNDATION.md</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check done">✓</span>
+                    <div class="milestone-content">
+                        <strong>Project Structure</strong>
+                        <span>Rust workspace with bootstrap compiler, documentation, and examples</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check done">✓</span>
+                    <div class="milestone-content">
+                        <strong>Documentation Site</strong>
+                        <span>GitHub Pages with architecture docs, learn section, and brand assets</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check done">✓</span>
+                    <div class="milestone-content">
+                        <strong>Community Setup</strong>
+                        <span>GitHub Issues, Discussions, Contributing guidelines, Code of Conduct</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <h2>Phase 2: Core Compiler</h2>
+
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-icon complete">✓</div>
+                <div class="phase-title">
+                    <h3>Compiler Pipeline</h3>
+                    <span>Lexer, Parser, and basic code generation</span>
+                </div>
+                <span class="phase-status complete">Complete</span>
+            </div>
+
+            <ul class="milestone-list">
+                <li>
+                    <span class="milestone-check done">✓</span>
+                    <div class="milestone-content">
+                        <strong>Lexer with Logos</strong>
+                        <span>Fast tokenization with comprehensive token types and span tracking</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check done">✓</span>
+                    <div class="milestone-content">
+                        <strong>Parser with Chumsky</strong>
+                        <span>Recursive descent parser producing typed AST with error recovery</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check done">✓</span>
+                    <div class="milestone-content">
+                        <strong>Error Reporting with Ariadne</strong>
+                        <span>Beautiful, context-rich error messages with source highlighting</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check done">✓</span>
+                    <div class="milestone-content">
+                        <strong>WebAssembly Codegen</strong>
+                        <span>Basic WASM output using wasm-encoder for simple programs</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <h2>Phase 3: Type System</h2>
+
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-icon active">→</div>
+                <div class="phase-title">
+                    <h3>Advanced Type System</h3>
+                    <span>Bidirectional checking, inference, and refinements</span>
+                </div>
+                <span class="phase-status active">In Progress</span>
+            </div>
+
+            <ul class="milestone-list">
+                <li>
+                    <span class="milestone-check done">✓</span>
+                    <div class="milestone-content">
+                        <strong>Basic Type Checking</strong>
+                        <span>Primitive types, function types, and simple inference</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check wip">→</span>
+                    <div class="milestone-content">
+                        <strong>Bidirectional Type Checking</strong>
+                        <span>Synthesis and checking modes for better inference</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Refinement Types</strong>
+                        <span>Types with logical predicates: <code>{ x: Int | x > 0 }</code></span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Dependent Types (Limited)</strong>
+                        <span>Types that depend on values for array bounds, etc.</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Algebraic Data Types</strong>
+                        <span>Sum types, product types, pattern matching</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <h2>Phase 4: Verification</h2>
+
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-icon future">4</div>
+                <div class="phase-title">
+                    <h3>Formal Verification</h3>
+                    <span>Contracts, SMT solving, and mathematical proofs</span>
+                </div>
+                <span class="phase-status future">Planned</span>
+            </div>
+
+            <ul class="milestone-list">
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Contract Syntax</strong>
+                        <span><code>requires</code> and <code>ensures</code> clauses for pre/postconditions</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Z3 Integration</strong>
+                        <span>SMT solver for automatic verification of contracts</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Loop Invariants</strong>
+                        <span>Annotations for proving loop correctness</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Capability System</strong>
+                        <span>Tracked capabilities for I/O, network, filesystem access</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Termination Checking</strong>
+                        <span>Prove that functions terminate (no infinite loops)</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <h2>Phase 5: Production Ready</h2>
+
+        <div class="phase">
+            <div class="phase-header">
+                <div class="phase-icon future">5</div>
+                <div class="phase-title">
+                    <h3>Beta & Beyond</h3>
+                    <span>Tooling, ecosystem, and real-world usage</span>
+                </div>
+                <span class="phase-status future">Future</span>
+            </div>
+
+            <ul class="milestone-list">
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Standard Library</strong>
+                        <span>Core data structures, I/O, networking with verified implementations</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>Package Manager</strong>
+                        <span>Dependency management with verification metadata</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>IDE Support</strong>
+                        <span>Language server, VSCode extension, syntax highlighting</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>AI Code Generation</strong>
+                        <span>Tooling for AI to generate verified Nova code</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="milestone-check todo"></span>
+                    <div class="milestone-content">
+                        <strong>WASM Component Model</strong>
+                        <span>Full support for WASM components and interface types</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <h2>How Nova Solves Real Problems</h2>
+
+        <p>Here's how each phase addresses the problems we discussed in Lesson 1:</p>
+
+        <div class="contribute-grid">
+            <div class="contribute-card">
+                <h4>🚫 No Runtime Errors</h4>
+                <p><strong>Phase 3 (Types)</strong> catches type mismatches. <strong>Phase 4 (Verification)</strong> proves division-by-zero, null access, and bounds checks are impossible.</p>
+            </div>
+            <div class="contribute-card">
+                <h4>🔒 Security by Design</h4>
+                <p><strong>Phase 4 (Capabilities)</strong> ensures code can only access what it's explicitly given. No hidden network calls or file access.</p>
+            </div>
+            <div class="contribute-card">
+                <h4>🤖 AI-Ready</h4>
+                <p><strong>Phase 5 (AI Tooling)</strong> provides infrastructure for AI to generate code that the compiler can verify is correct.</p>
+            </div>
+            <div class="contribute-card">
+                <h4>📜 Contracts as Code</h4>
+                <p><strong>Phase 4 (Contracts)</strong> lets you write specifications that are mathematically verified, not just tested.</p>
+            </div>
+        </div>
+
+        <h2>Get Involved</h2>
+
+        <p>Nova is open source and we're actively looking for contributors. Here's how you can help:</p>
+
+        <div class="contribute-grid">
+            <div class="contribute-card">
+                <h4>🐛 Report Issues</h4>
+                <p>Found a bug or have a suggestion? Open an issue on GitHub.</p>
+            </div>
+            <div class="contribute-card">
+                <h4>💻 Contribute Code</h4>
+                <p>Check out the "good first issue" label for beginner-friendly tasks.</p>
+            </div>
+            <div class="contribute-card">
+                <h4>📖 Improve Docs</h4>
+                <p>Help make the documentation clearer and more comprehensive.</p>
+            </div>
+            <div class="contribute-card">
+                <h4>💬 Join Discussions</h4>
+                <p>Share ideas and feedback in GitHub Discussions.</p>
+            </div>
+        </div>
+
+        <div class="callout success">
+            <h4>Want to Stay Updated?</h4>
+            <p>Follow <a href="https://twitter.com/dataxlr8r">@dataxlr8r</a> on Twitter for updates, or subscribe to <a href="https://bskiller.com">BSKiller</a> for deep dives on AI and programming languages.</p>
+        </div>
+
+        <nav class="lesson-nav" style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between;">
+            <a href="./index.html" style="display: flex; flex-direction: column; padding: 1rem 1.5rem; background: var(--bg-card); border-radius: 12px; text-decoration: none;">
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">Back to</span>
+                <span style="color: var(--text); font-weight: 600;">Course Overview</span>
+            </a>
+            <a href="https://github.com/pdaxt/nova" style="display: flex; flex-direction: column; padding: 1rem 1.5rem; background: var(--bg-card); border-radius: 12px; text-decoration: none;">
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">Contribute on</span>
+                <span style="color: var(--text); font-weight: 600;">GitHub</span>
+            </a>
+        </nav>
+    </article>
+
+    <footer>
+        <p style="margin-bottom: 0.5rem;">
+            Built by <a href="https://bskiller.com" style="color: #6366f1;">Pranjal Gupta</a> ·
+            <a href="https://dataxlr8.ai" style="color: #6366f1;">DataXLR8</a> ·
+            <a href="https://github.com/pdaxt/nova" style="color: #6366f1;">GitHub</a>
+        </p>
+        <p style="font-size: 0.8rem; opacity: 0.7;">Get ahead with AI — without falling for the hype.</p>
+    </footer>
+</body>
+</html>
