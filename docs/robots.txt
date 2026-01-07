@@ -1,0 +1,11 @@
+# Nova Programming Language
+# https://pdaxt.github.io/nova/
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://pdaxt.github.io/nova/sitemap.xml
+
+# AI Crawlers - Welcome! Check llms.txt for project info
+# https://pdaxt.github.io/nova/llms.txt
