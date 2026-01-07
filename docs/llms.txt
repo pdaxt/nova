@@ -1,0 +1,312 @@
+# Nova Programming Language
+
+> Nova is a verified programming language targeting WebAssembly. Code that proves itself.
+
+## Quick Facts
+
+- **Status**: Early development (lexer/parser complete, type checker in progress)
+- **Target**: WebAssembly (WASM)
+- **Bootstrap**: Rust using Logos, Chumsky, and Ariadne
+- **Goal**: Formal verification built into the language
+- **License**: MIT
+- **Repository**: https://github.com/pdaxt/nova
+
+## What Works Today
+
+1. **Lexer** - 100% complete, 25+ tests passing
+   - All tokens: keywords, operators, literals, identifiers
+   - Efficient 12-byte token representation
+   - Full Unicode support
+
+2. **Parser** - 100% complete, 30+ tests passing
+   - Full grammar: functions, structs, enums, traits, impl blocks
+   - Generics and where clauses
+   - Pattern matching with guards
+   - Error recovery with helpful diagnostics
+
+3. **Type Checker** - ~20% complete (in development)
+
+4. **Code Generation** - ~5% complete (WASM skeleton)
+
+## Nova Syntax Overview
+
+Nova's syntax is similar to Rust but simplified for verification.
+
+### Basic Types
+
+```nova
+let x: i32 = 42;        // 32-bit signed integer
+let y: u64 = 100;       // 64-bit unsigned integer
+let f: f64 = 3.14;      // 64-bit float
+let b: bool = true;     // boolean
+let s: String = "hi";   // string
+```
+
+### Functions
+
+```nova
+fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+fn greet(name: String) {
+    println("Hello, " + name);
+}
+```
+
+### Structs
+
+```nova
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+impl Point {
+    fn new(x: f64, y: f64) -> Self {
+        Point { x, y }
+    }
+
+    fn distance(&self, other: &Point) -> f64 {
+        let dx = self.x - other.x;
+        let dy = self.y - other.y;
+        (dx * dx + dy * dy).sqrt()
+    }
+}
+```
+
+### Enums
+
+```nova
+enum Option<T> {
+    Some(T),
+    None,
+}
+
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+
+enum Color {
+    Red,
+    Green,
+    Blue,
+    Rgb(u8, u8, u8),
+}
+```
+
+### Control Flow
+
+```nova
+// If expression
+if x > 0 {
+    println("positive");
+} else if x < 0 {
+    println("negative");
+} else {
+    println("zero");
+}
+
+// Match expression
+match value {
+    0 => println("zero"),
+    1 | 2 => println("one or two"),
+    n if n > 100 => println("big"),
+    _ => println("other"),
+}
+
+// Loops
+for i in 0..10 {
+    println(i);
+}
+
+while condition {
+    do_work();
+}
+
+loop {
+    if done {
+        break result;
+    }
+}
+```
+
+### Traits
+
+```nova
+trait Drawable {
+    fn draw(&self);
+
+    fn clear(&self) {
+        println("Clearing...");
+    }
+}
+
+impl Drawable for Point {
+    fn draw(&self) {
+        println("Drawing point");
+    }
+}
+```
+
+### Generics
+
+```nova
+fn first<T>(items: Vec<T>) -> Option<T> {
+    items.get(0)
+}
+
+struct Pair<T, U> {
+    first: T,
+    second: U,
+}
+
+fn print_all<T>(items: Vec<T>)
+where
+    T: Display
+{
+    for item in items {
+        println(item);
+    }
+}
+```
+
+## Keywords (32 total)
+
+as, async, await, break, const, continue, else, enum, false, fn, for, if,
+impl, in, let, loop, match, mod, mut, pub, return, self, Self, static,
+struct, trait, true, type, unsafe, use, where, while
+
+## Operators
+
+### Arithmetic: + - * / %
+### Comparison: == != < > <= >=
+### Logical: && || !
+### Bitwise: & | ^ ~ << >>
+### Assignment: = += -= *= /= %= &= |= ^= <<= >>=
+### Range: .. ..=
+### Other: -> => :: . ? &
+
+## Future: Verification Features (Planned)
+
+Nova will add verification annotations:
+
+```nova
+// Pre/post conditions
+fn divide(a: i32, b: i32) -> i32
+    requires b != 0
+    ensures result * b == a
+{
+    a / b
+}
+
+// Invariants
+struct BoundedCounter {
+    value: i32,
+
+    invariant value >= 0 && value <= 100
+}
+
+// Proof annotations
+fn binary_search<T: Ord>(arr: &[T], target: &T) -> Option<usize>
+    requires is_sorted(arr)
+    ensures result.is_some() => arr[result.unwrap()] == target
+{
+    // Implementation with proof obligations
+}
+```
+
+## For AI Code Generation
+
+When generating Nova code:
+
+1. **Use Rust-like syntax** - Nova follows Rust conventions
+2. **Types are required** - All function parameters need type annotations
+3. **Expressions over statements** - Last expression is the return value
+4. **Pattern matching preferred** - Use match over if-else chains
+5. **Immutable by default** - Use `mut` for mutable bindings
+
+## Example Programs
+
+### Hello World
+
+```nova
+fn main() {
+    println("Hello, World!");
+}
+```
+
+### Fibonacci
+
+```nova
+fn fibonacci(n: u64) -> u64 {
+    match n {
+        0 => 0,
+        1 => 1,
+        _ => fibonacci(n - 1) + fibonacci(n - 2),
+    }
+}
+```
+
+### Binary Search
+
+```nova
+fn binary_search<T: Ord>(arr: &[T], target: &T) -> Option<usize> {
+    let mut low = 0;
+    let mut high = arr.len();
+
+    while low < high {
+        let mid = low + (high - low) / 2;
+
+        match arr[mid].cmp(target) {
+            Ordering::Less => low = mid + 1,
+            Ordering::Greater => high = mid,
+            Ordering::Equal => return Some(mid),
+        }
+    }
+
+    None
+}
+```
+
+### Struct with Methods
+
+```nova
+struct Rectangle {
+    width: f64,
+    height: f64,
+}
+
+impl Rectangle {
+    fn new(width: f64, height: f64) -> Self {
+        Rectangle { width, height }
+    }
+
+    fn area(&self) -> f64 {
+        self.width * self.height
+    }
+
+    fn perimeter(&self) -> f64 {
+        2.0 * (self.width + self.height)
+    }
+
+    fn is_square(&self) -> bool {
+        self.width == self.height
+    }
+}
+```
+
+## Resources
+
+- Website: https://pdaxt.github.io/nova/
+- Learn: https://pdaxt.github.io/nova/learn/
+- Syntax Reference: https://pdaxt.github.io/nova/syntax/
+- Source Code: https://github.com/pdaxt/nova
+- Issues: https://github.com/pdaxt/nova/issues
+
+## Contact
+
+Created by Pranjal Gupta
+- Website: https://bskiller.com
+- GitHub: https://github.com/pdaxt
