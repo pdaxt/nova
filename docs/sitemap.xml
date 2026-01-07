@@ -79,6 +79,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://pdaxt.github.io/nova/faq/</loc>
+    <lastmod>2025-01-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://pdaxt.github.io/nova/llms.txt</loc>
     <lastmod>2025-01-07</lastmod>
     <changefreq>monthly</changefreq>

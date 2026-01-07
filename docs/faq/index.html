@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova FAQ - Frequently Asked Questions</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Frequently asked questions about the Nova programming language. Get answers about verification, syntax, learning, and contributing.">
+    <meta name="keywords" content="Nova FAQ, Nova programming language questions, Nova help">
+    <meta name="author" content="Pranjal Gupta">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/faq/">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Nova FAQ">
+    <meta property="og:description" content="Frequently asked questions about Nova programming language.">
+    <meta property="og:image" content="https://pdaxt.github.io/nova/brand/nova-logo.svg">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+    <meta name="theme-color" content="#22c55e">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --code-bg: #1e1e2e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; width: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+
+        /* Main Content */
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        /* FAQ Sections */
+        .faq-section {
+            margin-bottom: 3rem;
+        }
+
+        .faq-section h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* FAQ Item */
+        .faq-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 1.25rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .faq-question:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .faq-question::after {
+            content: "+";
+            font-size: 1.5rem;
+            color: var(--accent);
+            transition: transform 0.2s;
+        }
+
+        .faq-item.active .faq-question::after {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            padding: 0 1.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            color: var(--text-secondary);
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 1.5rem 1.5rem;
+            max-height: 1000px;
+        }
+
+        .faq-answer p {
+            margin-bottom: 1rem;
+        }
+
+        .faq-answer p:last-child {
+            margin-bottom: 0;
+        }
+
+        .faq-answer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .faq-answer a:hover {
+            text-decoration: underline;
+        }
+
+        .faq-answer code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .faq-answer ul {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .faq-answer li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* CTA */
+        .cta-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .cta-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .cta-button.primary {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: white;
+        }
+
+        .cta-button.secondary {
+            background: var(--code-bg);
+            color: var(--text);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            main { padding: 6rem 1rem 2rem; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                Nova
+            </a>
+            <ul class="nav-links">
+                <li><a href="../learn/">Learn</a></li>
+                <li><a href="../syntax/">Syntax</a></li>
+                <li><a href="../status/">Status</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <h1>FAQ</h1>
+        <p class="subtitle">Answers to common questions about Nova.</p>
+
+        <!-- General -->
+        <section class="faq-section">
+            <h2>General</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">What is Nova?</div>
+                <div class="faq-answer">
+                    <p>Nova is a programming language designed for the AI age. It combines familiar Rust-like syntax with built-in formal verification, letting you write code that proves itself correct.</p>
+                    <p>Nova compiles to WebAssembly (WASM), making it run anywhere: browsers, servers, edge functions, and embedded systems.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Is Nova ready for production use?</div>
+                <div class="faq-answer">
+                    <p><strong>Not yet.</strong> Nova is in early development. The lexer and parser are complete (100% of tests passing), but type checking and code generation are still in progress.</p>
+                    <p>Check our <a href="../status/">Status Page</a> for an honest assessment of what works today.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Why create another programming language?</div>
+                <div class="faq-answer">
+                    <p>AI is writing more code every day, but it makes mistakes. Verification helps catch these mistakes before they cause problems.</p>
+                    <p>Most verified languages are academic and hard to learn. Nova aims to be:</p>
+                    <ul>
+                        <li>Familiar to Rust/TypeScript developers</li>
+                        <li>Practical for real-world use</li>
+                        <li>AI-friendly (clear syntax, good error messages)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What's the license?</div>
+                <div class="faq-answer">
+                    <p>Nova is open source under the <strong>MIT License</strong>. You can use it for any purpose, including commercial projects.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical -->
+        <section class="faq-section">
+            <h2>Technical</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">What does Nova's syntax look like?</div>
+                <div class="faq-answer">
+                    <p>Nova uses Rust-like syntax that should feel familiar:</p>
+                    <p><code>fn add(a: i32, b: i32) -> i32 { a + b }</code></p>
+                    <p>See the full <a href="../syntax/">Syntax Reference</a> for all language constructs.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What does "verification" mean?</div>
+                <div class="faq-answer">
+                    <p>Verification means mathematically proving your code is correct. Instead of just testing, you prove properties like:</p>
+                    <ul>
+                        <li>A function always returns a positive number</li>
+                        <li>An array index is always within bounds</li>
+                        <li>A division never divides by zero</li>
+                    </ul>
+                    <p>This is done through preconditions (<code>requires</code>), postconditions (<code>ensures</code>), and invariants.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Why target WebAssembly?</div>
+                <div class="faq-answer">
+                    <p>WASM provides:</p>
+                    <ul>
+                        <li><strong>Portability</strong> - Run the same code everywhere</li>
+                        <li><strong>Security</strong> - Sandboxed execution by default</li>
+                        <li><strong>Performance</strong> - Near-native speed</li>
+                        <li><strong>Interoperability</strong> - Call from JavaScript, Rust, Python, etc.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">How does Nova compare to Rust?</div>
+                <div class="faq-answer">
+                    <p>Nova is inspired by Rust but makes different tradeoffs:</p>
+                    <ul>
+                        <li><strong>Rust</strong>: Memory safety through ownership/borrowing</li>
+                        <li><strong>Nova</strong>: Correctness through formal verification</li>
+                    </ul>
+                    <p>Nova doesn't have Rust's borrow checker. Instead, it uses verification to prove properties at compile time.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">How does Nova compare to Dafny or F*?</div>
+                <div class="faq-answer">
+                    <p>Dafny and F* are excellent verified languages, but they're academic in nature. Nova aims to be:</p>
+                    <ul>
+                        <li>More familiar syntax (Rust-like vs. custom)</li>
+                        <li>Better tooling and error messages</li>
+                        <li>Easier to learn for mainstream developers</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Learning -->
+        <section class="faq-section">
+            <h2>Learning</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">How do I get started?</div>
+                <div class="faq-answer">
+                    <p>Start with our <a href="../learn/">Learn section</a>. It teaches how programming languages work by walking through Nova's implementation.</p>
+                    <p>You don't need prior compiler experience - we start from the basics.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Do I need to know Rust?</div>
+                <div class="faq-answer">
+                    <p>No, but it helps. Nova's syntax is similar to Rust, so Rust knowledge transfers directly.</p>
+                    <p>If you know TypeScript, C++, or any C-family language, you'll pick up Nova quickly.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Is there a playground to try Nova?</div>
+                <div class="faq-answer">
+                    <p>Not yet. An interactive playground is planned but requires working code generation, which is still in development.</p>
+                    <p>For now, you can clone the <a href="https://github.com/pdaxt/nova">repository</a> and run the lexer/parser locally.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contributing -->
+        <section class="faq-section">
+            <h2>Contributing</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">How can I contribute?</div>
+                <div class="faq-answer">
+                    <p>We welcome contributions at all levels:</p>
+                    <ul>
+                        <li>Documentation improvements</li>
+                        <li>Bug reports and feature suggestions</li>
+                        <li>Code contributions (see <a href="https://github.com/pdaxt/nova/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">good first issues</a>)</li>
+                        <li>Sharing Nova with others</li>
+                    </ul>
+                    <p>Read our <a href="https://github.com/pdaxt/nova/blob/main/CONTRIBUTING.md">Contributing Guide</a> to get started.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Where can I ask questions?</div>
+                <div class="faq-answer">
+                    <p>Use <a href="https://github.com/pdaxt/nova/discussions">GitHub Discussions</a> for questions, ideas, and general conversation about Nova.</p>
+                    <p>For bug reports or feature requests, <a href="https://github.com/pdaxt/nova/issues">open an issue</a>.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="cta-section">
+            <h3>Still have questions?</h3>
+            <p>Join the community and ask directly.</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/pdaxt/nova/discussions" class="cta-button primary">GitHub Discussions</a>
+                <a href="../learn/" class="cta-button secondary">Start Learning</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>
+            <a href="../">Nova</a> &middot;
+            <a href="../learn/">Learn</a> &middot;
+            <a href="../syntax/">Syntax</a> &middot;
+            <a href="https://github.com/pdaxt/nova">GitHub</a> &middot;
+            Created by <a href="https://bskiller.com">Pranjal Gupta</a>
+        </p>
+    </footer>
+
+    <script>
+        // Toggle FAQ items
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentElement;
+                item.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>
