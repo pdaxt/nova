@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Status - What Works Today</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Current development status of Nova programming language. See what works today, what's in progress, and our roadmap.">
+    <meta name="keywords" content="Nova status, Nova programming language, development status, roadmap">
+    <meta name="author" content="Pranjal Gupta">
+    <link rel="canonical" href="https://pdaxt.github.io/nova/status/">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Nova Status - What Works Today">
+    <meta property="og:description" content="Current development status of Nova programming language.">
+    <meta property="og:image" content="https://pdaxt.github.io/nova/brand/nova-logo.svg">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../brand/nova-mark.svg">
+    <meta name="theme-color" content="#22c55e">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #1e1e2e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo img { height: 32px; width: 32px; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--success); }
+
+        /* Main Content */
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .last-updated {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        /* Status Grid */
+        .status-section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h2 .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+        }
+
+        h2 .icon.complete { background: var(--success); }
+        h2 .icon.progress { background: var(--warning); }
+        h2 .icon.planned { background: var(--accent); }
+
+        /* Status Cards */
+        .status-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .status-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-card p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .status-card ul {
+            list-style: none;
+            color: var(--text-secondary);
+        }
+
+        .status-card li {
+            padding: 0.25rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .status-card li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.complete { background: var(--success); }
+        .progress-fill.progress { background: var(--warning); }
+        .progress-fill.planned { background: var(--accent); }
+
+        .progress-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        /* Badge */
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .badge.complete {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        .badge.progress {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .badge.planned {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--accent);
+        }
+
+        /* Callout */
+        .callout {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 2rem 0;
+        }
+
+        .callout.success {
+            background: rgba(34, 197, 94, 0.1);
+            border-left-color: var(--success);
+        }
+
+        .callout strong {
+            color: var(--text);
+        }
+
+        .callout a {
+            color: var(--accent);
+        }
+
+        /* Code */
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            main { padding: 6rem 1rem 2rem; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../" class="logo">
+                <img src="../brand/nova-mark.svg" alt="Nova">
+                Nova
+            </a>
+            <ul class="nav-links">
+                <li><a href="../learn/">Learn</a></li>
+                <li><a href="../syntax/">Syntax</a></li>
+                <li><a href="./" class="active">Status</a></li>
+                <li><a href="https://github.com/pdaxt/nova">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <h1>Project Status</h1>
+        <p class="subtitle">An honest look at what works today, what we're building, and what's next.</p>
+        <div class="last-updated">Last updated: January 2025</div>
+
+        <!-- Complete -->
+        <section class="status-section">
+            <h2><span class="icon complete">✓</span> Complete</h2>
+
+            <div class="status-card">
+                <h3>Lexer <span class="badge complete">100%</span></h3>
+                <div class="progress-bar"><div class="progress-fill complete" style="width: 100%"></div></div>
+                <div class="progress-label">25+ tests passing</div>
+                <p>The lexer is fully implemented and production-ready.</p>
+                <ul>
+                    <li>All 32 keywords recognized</li>
+                    <li>All operators and punctuation</li>
+                    <li>Integer, float, string, and char literals</li>
+                    <li>Binary, octal, and hex number formats</li>
+                    <li>Efficient 12-byte token representation</li>
+                    <li>Full Unicode identifier support</li>
+                    <li>Zero-copy design for performance</li>
+                </ul>
+            </div>
+
+            <div class="status-card">
+                <h3>Parser <span class="badge complete">100%</span></h3>
+                <div class="progress-bar"><div class="progress-fill complete" style="width: 100%"></div></div>
+                <div class="progress-label">30+ tests passing</div>
+                <p>The parser handles the complete Nova grammar.</p>
+                <ul>
+                    <li>Functions with generics and where clauses</li>
+                    <li>Structs, enums, traits, and impl blocks</li>
+                    <li>All expression types (binary, unary, calls, etc.)</li>
+                    <li>Pattern matching with guards</li>
+                    <li>Control flow (if, match, while, for, loop)</li>
+                    <li>Error recovery with helpful diagnostics</li>
+                    <li>Type annotations on all bindings</li>
+                </ul>
+            </div>
+
+            <div class="status-card">
+                <h3>Error Reporting <span class="badge complete">100%</span></h3>
+                <div class="progress-bar"><div class="progress-fill complete" style="width: 100%"></div></div>
+                <p>Beautiful, helpful error messages using Ariadne.</p>
+                <ul>
+                    <li>Source code snippets with line numbers</li>
+                    <li>Color-coded error highlighting</li>
+                    <li>Suggestions for common mistakes</li>
+                    <li>Multiple errors per file</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- In Progress -->
+        <section class="status-section">
+            <h2><span class="icon progress">⚡</span> In Progress</h2>
+
+            <div class="status-card">
+                <h3>Type Checker <span class="badge progress">~20%</span></h3>
+                <div class="progress-bar"><div class="progress-fill progress" style="width: 20%"></div></div>
+                <p>Type inference and checking are being implemented.</p>
+                <ul>
+                    <li>Basic type resolution for primitives</li>
+                    <li>Function signature validation</li>
+                </ul>
+                <p style="margin-top: 0.5rem;"><strong>Next:</strong> Generic type instantiation, trait resolution</p>
+            </div>
+
+            <div class="status-card">
+                <h3>Documentation <span class="badge progress">~60%</span></h3>
+                <div class="progress-bar"><div class="progress-fill progress" style="width: 60%"></div></div>
+                <p>Learning materials and reference documentation.</p>
+                <ul>
+                    <li>7-lesson compiler construction course</li>
+                    <li>Syntax quick reference</li>
+                    <li>Architecture documentation</li>
+                </ul>
+                <p style="margin-top: 0.5rem;"><strong>Next:</strong> API reference, more examples</p>
+            </div>
+        </section>
+
+        <!-- Planned -->
+        <section class="status-section">
+            <h2><span class="icon planned">◎</span> Planned</h2>
+
+            <div class="status-card">
+                <h3>Code Generation <span class="badge planned">~5%</span></h3>
+                <div class="progress-bar"><div class="progress-fill planned" style="width: 5%"></div></div>
+                <p>Targeting WebAssembly for cross-platform execution.</p>
+                <ul>
+                    <li>Basic WASM module structure (done)</li>
+                </ul>
+                <p style="margin-top: 0.5rem;"><strong>Planned:</strong> Function codegen, memory management, runtime</p>
+            </div>
+
+            <div class="status-card">
+                <h3>Verification System <span class="badge planned">0%</span></h3>
+                <div class="progress-bar"><div class="progress-fill planned" style="width: 0%"></div></div>
+                <p>The core innovation: formal verification built into Nova.</p>
+                <ul style="list-style: disc; padding-left: 2rem;">
+                    <li style="padding-left: 0;">Preconditions and postconditions (<code>requires</code>, <code>ensures</code>)</li>
+                    <li style="padding-left: 0;">Invariants for structs and loops</li>
+                    <li style="padding-left: 0;">Proof obligations and discharge</li>
+                    <li style="padding-left: 0;">SMT solver integration</li>
+                </ul>
+                <p style="margin-top: 0.5rem;"><em>This is the long-term goal that makes Nova unique.</em></p>
+            </div>
+
+            <div class="status-card">
+                <h3>Standard Library <span class="badge planned">0%</span></h3>
+                <div class="progress-bar"><div class="progress-fill planned" style="width: 0%"></div></div>
+                <p>Core types and utilities for Nova programs.</p>
+            </div>
+
+            <div class="status-card">
+                <h3>Interactive Playground <span class="badge planned">0%</span></h3>
+                <div class="progress-bar"><div class="progress-fill planned" style="width: 0%"></div></div>
+                <p>Write Nova code in your browser. Requires working codegen.</p>
+            </div>
+        </section>
+
+        <div class="callout success">
+            <strong>Want to contribute?</strong><br>
+            Nova is open source and welcomes contributors at all levels.
+            Check out our <a href="https://github.com/pdaxt/nova/blob/main/CONTRIBUTING.md">Contributing Guide</a>
+            or browse <a href="https://github.com/pdaxt/nova/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22">good first issues</a>.
+        </div>
+
+        <div class="callout">
+            <strong>Why be this honest?</strong><br>
+            Many language projects overpromise. We believe in transparency.
+            The lexer and parser genuinely work. The type checker is coming.
+            Verification is the long-term vision that makes this worth building.
+        </div>
+    </main>
+
+    <footer>
+        <p>
+            <a href="../">Nova</a> &middot;
+            <a href="../learn/">Learn</a> &middot;
+            <a href="../syntax/">Syntax</a> &middot;
+            <a href="https://github.com/pdaxt/nova">GitHub</a> &middot;
+            Created by <a href="https://bskiller.com">Pranjal Gupta</a>
+        </p>
+    </footer>
+</body>
+</html>
